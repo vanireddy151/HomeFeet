@@ -38,8 +38,8 @@ Includes a custom-built chatbot and Supabase-based user authentication system.
 ## 🛠️ Setup Instructions
 
 1. Clone the repo:
-   git clone https://github.com/NandiniBommireddy/LandsDevelop.git
-   cd LandsDevelop
+   git clone https://github.com/vanikalavala/HomeFeet.git
+   cd HomeFeet
 2.Install dependencies:
   npm install
 

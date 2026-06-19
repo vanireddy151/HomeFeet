@@ -1,4 +1,4 @@
-# 🌐 LandsDevelop - Full Stack Property Listing Platform
+git branch -M main# 🌐 LandsDevelop - Full Stack Property Listing Platform
 
 This is a full-stack web application that allows users to post, browse, and express interest in real estate development properties.
 

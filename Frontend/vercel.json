@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://landsdevelop25.onrender.com/api/:path*"
+      "destination": "https://homefeet.onrender.com/api/:path*"
     },
     {
       "source": "/share/property/:id",
-      "destination": "https://landsdevelop25.onrender.com/share/property/:id"
+      "destination": "https://homefeet.onrender.com/share/property/:id"
     },
     {
       "source": "/(.*)",

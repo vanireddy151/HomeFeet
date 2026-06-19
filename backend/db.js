@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 mongoose.connect(
-  'mongodb+srv://landsdevelop_db:6QcD1L9CQ4iwOOuK@cluster0.zo75qcs.mongodb.net/findland?retryWrites=true&w=majority&appName=Cluster0',
+  'mongodb+srv://HomeFeet_db:GemdVJ1n3SH8CZOl@cluster0.ztld8k3.mongodb.net/findland?retryWrites=true&w=majority&appName=Cluster0',
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
