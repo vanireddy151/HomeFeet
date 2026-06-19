@@ -1,0 +1,28 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check:razorpay": "node scripts/check-razorpay-config.js"
+  },
+  "license": "ISC",
+  "engines": {
+    "node": "^18 || ^20"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "debug": "4.3.4",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.15.1",
+    "msg91-lib": "^2.0.2",
+    "multer": "^2.0.2",
+    "tr46": "^5.1.1",
+    "whatwg-url": "^14.2.0"
+  }
+}

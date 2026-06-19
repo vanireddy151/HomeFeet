@@ -1,0 +1,235 @@
+const mongoose = require('mongoose');
+
+const propertySchema = new mongoose.Schema({
+  projectName: { 
+    type: String, 
+    default: ''  // Made optional
+  },
+  listingIntent: {
+    type: String,
+    enum: ['development', 'buy', 'sell'],
+    default: 'development',
+    index: true
+  },
+  developmentType: { 
+    type: String, 
+    required: true 
+  },
+  totalArea: { 
+    type: String, 
+    required: true 
+  },
+  areaUnit: { 
+    type: String, 
+    default: 'Sq Yards' 
+  },
+  // Plot dimensions for all four sides (in feet)
+  northSideLength: { 
+    type: String, 
+    default: '' 
+  },
+  southSideLength: { 
+    type: String, 
+    default: '' 
+  },
+  eastSideLength: { 
+    type: String, 
+    default: '' 
+  },
+  westSideLength: { 
+    type: String, 
+    default: '' 
+  },
+  dimensions: { 
+    type: String, 
+    default: '' 
+  },
+  roadSize: { 
+    type: String, 
+    default: ''  // In feet now
+  },
+  frontageWidth: {
+    type: String,
+    default: ''
+  },
+  roadFacingDirection: {
+    type: String,
+    default: ''
+  },
+  pincode: {
+    type: String,
+    default: '',
+    index: true
+  },
+  zoningClassification: {
+    type: String,
+    default: ''
+  },
+  developerRatio: { 
+    type: String, 
+    default: '' 
+  },
+  partlySale: {
+    type: String,
+    enum: ['', 'yes', 'no'],
+    default: ''
+  },
+  partlySaleUnit: {
+    type: String,
+    enum: ['', 'Square Yard', 'Square Feet', 'Acres'],
+    default: 'Square Yard'
+  },
+  partlySaleValue: {
+    type: String,
+    default: '0'
+  },
+  partlySalePrice: {
+    type: String,
+    default: ''
+  },
+  facing: { 
+    type: String, 
+    default: '' 
+  },
+  goodwill: { 
+    type: String, 
+    default: ''  // Optional
+  },
+  advance: { 
+    type: String, 
+    default: ''  // Optional
+  },
+  squareYardPrice: {
+    type: String,
+    default: ''
+  },
+  purchaseTimeline: {
+    type: String,
+    default: ''
+  },
+  address: { 
+    type: String, 
+    default: '' 
+  },
+  city: { 
+    type: String, 
+    required: true 
+  },
+  state: {
+    type: String,
+    default: ''
+  },
+  landmark: { 
+    type: String, 
+    required: true  // Made required
+  },
+  locality: { 
+    type: String, 
+    required: true 
+  },
+  societyName: {  // NEW: For apartment/society name
+    type: String,
+    default: ''
+  },
+  map: { 
+    type: String, 
+    default: '' 
+  },
+  coordinates: { 
+    type: String, 
+    default: '' 
+  },
+  description: { 
+    type: String, 
+    default: ''  // Optional
+  },
+  selectedAmenities: { 
+    type: [String], 
+    default: [] 
+  },
+  imageUrl: { 
+    type: String, 
+    default: '' 
+  },
+  plotDiagramUrl: {  // NEW: For 2D plot diagram
+    type: String,
+    default: ''
+  },
+  videoUrl: {
+    type: String,
+    default: ''
+  },
+  contactEmail: { 
+    type: String, 
+    default: '' 
+  },
+  contactPhone: { 
+    type: String, 
+    default: '' 
+  },
+  userId: { 
+    type: String, 
+    required: true,
+    index: true 
+  },
+  phone: { 
+    type: String, 
+    default: '',
+    index: true 
+  },
+  dealStatus: { 
+    type: String, 
+    default: 'open',
+    enum: ['open', 'closed']
+  },
+  status: {  // NEW: For admin approval
+    type: String,
+    default: 'pending',
+    enum: ['pending', 'approved', 'rejected'],
+    index: true
+  },
+  rejectionReason: {
+    type: String,
+    default: ''
+  },
+  approvedAt: {
+    type: Date,
+    default: null
+  },
+  contactRevealRule: {
+    type: String,
+    enum: ['mutual_interest'],
+    default: 'mutual_interest'
+  },
+  source: {
+    type: String,
+    enum: ['', 'manual', 'admin_assisted', 'whatsapp_webhook', 'whatsapp_manual'],
+    default: '',
+    index: true
+  },
+  whatsappIntakeId: {
+    type: String,
+    default: '',
+    index: true
+  },
+  whatsappMediaIds: {
+    type: [String],
+    default: []
+  },
+  intakePeriod: {
+    type: String,
+    enum: ['', 'morning', 'evening'],
+    default: '',
+    index: true
+  }
+}, { 
+  timestamps: true 
+});
+
+// Add indexes for common queries
+propertySchema.index({ city: 1, locality: 1 });
+propertySchema.index({ developmentType: 1 });
+propertySchema.index({ dealStatus: 1 });
+propertySchema.index({ status: 1 });
+
+module.exports = mongoose.model('Property', propertySchema);

@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /edit-property
+Disallow: /chat
+Disallow: /interest-shown
+Disallow: /interested-in-your-properties
+Disallow: /user-posted-properties
+
+Sitemap: https://www.landsdevelop.com/sitemap.xml

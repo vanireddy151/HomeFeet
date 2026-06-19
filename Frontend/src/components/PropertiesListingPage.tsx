@@ -1,0 +1,2237 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Building,
+  Building2,
+  ChevronDown,
+  Grid,
+  Home,
+  Layers,
+  List,
+  Lock,
+  MapPin,
+  Search,
+  SlidersHorizontal,
+  X
+} from 'lucide-react';
+import { API_BASE, API_ORIGIN } from '../lib/api';
+import LoginModal from './LoginModal';
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+interface Property {
+  _id: string;
+  phone?: string;
+  contactPhone?: string;
+  projectName: string;
+  listingIntent?: string;
+  developmentType: string;
+  totalArea: string;
+  areaUnit: string;
+  city: string;
+  locality: string;
+  societyName?: string;
+  address?: string;
+  pincode?: string;
+  state?: string;
+  landmark: string;
+  coordinates: string;
+  map?: string;
+  goodwill: string;
+  advance: string;
+  imageUrl: string;
+  plotDiagramUrl?: string;
+  dealStatus: string;
+  facing: string;
+  roadSize: string;
+  developerRatio: string;
+  squareYardPrice?: string;
+  purchaseTimeline?: string;
+  description?: string;
+  createdAt: string;
+}
+
+const PRICE_RANGE_MIN = 1000000;
+const PRICE_RANGE_MAX = 1000000000;
+const PRICE_RANGE_STEP = 100000;
+const DEFAULT_CITY = 'Hyderabad';
+const METRO_CITIES = [
+  'Hyderabad',
+  'Bengaluru',
+  'Chennai',
+  'Mumbai',
+  'Delhi',
+  'Kolkata',
+  'Pune',
+  'Ahmedabad',
+  'Jaipur',
+  'Kochi',
+  'Lucknow',
+  'Chandigarh',
+];
+const CITY_CENTERS: Record<string, { lat: number; lng: number; zoom: number }> = {
+  Hyderabad: { lat: 17.385, lng: 78.4867, zoom: 10 },
+  Bengaluru: { lat: 12.9716, lng: 77.5946, zoom: 11 },
+  Chennai: { lat: 13.0827, lng: 80.2707, zoom: 11 },
+  Mumbai: { lat: 19.076, lng: 72.8777, zoom: 11 },
+  Delhi: { lat: 28.6139, lng: 77.209, zoom: 10 },
+  Kolkata: { lat: 22.5726, lng: 88.3639, zoom: 11 },
+  Pune: { lat: 18.5204, lng: 73.8567, zoom: 11 },
+  Ahmedabad: { lat: 23.0225, lng: 72.5714, zoom: 11 },
+  Jaipur: { lat: 26.9124, lng: 75.7873, zoom: 11 },
+  Kochi: { lat: 9.9312, lng: 76.2673, zoom: 11 },
+  Lucknow: { lat: 26.8467, lng: 80.9462, zoom: 11 },
+  Chandigarh: { lat: 30.7333, lng: 76.7794, zoom: 11 },
+};
+const getStoredSelectedCity = () => localStorage.getItem('selectedCity') || DEFAULT_CITY;
+const getCityCenter = (city?: string) => CITY_CENTERS[city || DEFAULT_CITY] || CITY_CENTERS[DEFAULT_CITY];
+const getPropertyNumberPrefix = (property: Pick<Property, 'listingIntent' | 'developmentType'>, fallbackIntent = 'development') => {
+  const intent = String(property.listingIntent || fallbackIntent || 'development').toLowerCase();
+  const type = String(property.developmentType || '').toLowerCase();
+  if (type === 'commercial-plot') return 'CP';
+  if (intent === 'buy') return 'BY';
+  if (intent === 'sell') return 'SP';
+  return 'DP';
+};
+
+const getPropertyStatePrefix = (property: Pick<Property, 'state' | 'city'>) => {
+  const state = String(property.state || property.city || 'Telangana').replace(/[^a-z]/gi, '').toUpperCase();
+  return (state || 'TEL').slice(0, 3).padEnd(3, 'X');
+};
+
+const getPropertyNumber = (property: Pick<Property, '_id' | 'listingIntent' | 'developmentType' | 'state' | 'city'>, fallbackIntent = 'development') => {
+  const id = String(property._id || '');
+  const stableNumber = id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return `${getPropertyStatePrefix(property)}-${getPropertyNumberPrefix(property, fallbackIntent)}-${101 + (stableNumber % 900)}`;
+};
+
+const PropertiesListingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const routeView = searchParams.get('view');
+  const isDeveloperView = routeView === 'developers';
+  const isMarketplaceView = routeView === 'marketplace' || !routeView;
+  const showDashboardLayout = isDeveloperView || isMarketplaceView;
+  const listingIntent = searchParams.get('listingIntent') || 'development';
+  const getUrlDevelopmentType = (params: URLSearchParams, intent = listingIntent) =>
+    params.get('developmentType') || (intent === 'sell' ? params.get('propertyType') : '') || 'All';
+  const isPlotDealView = listingIntent === 'buy' || listingIntent === 'sell';
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const autocompleteRef = React.useRef<any>(null);
+  const developerMapRef = React.useRef<HTMLDivElement>(null);
+  const developerMapInstanceRef = React.useRef<any>(null);
+  const developerMarkersRef = React.useRef<any[]>([]);
+  const geocodedPropertyCoordsRef = React.useRef<Record<string, { lat: number; lng: number }>>({});
+  const pendingGeocodePropertyIdsRef = React.useRef<Set<string>>(new Set());
+  const pendingGeocodeCallbacksRef = React.useRef<Record<string, Array<(coords: { lat: number; lng: number }) => void>>>({});
+  const fetchRequestRef = React.useRef(0);
+  const [selectedCity, setSelectedCity] = useState(() => searchParams.get('city') || getStoredSelectedCity());
+  const [focusedPropertyId, setFocusedPropertyId] = useState('');
+  const [geocodeTick, setGeocodeTick] = useState(0);
+  const [showPropertyTypes, setShowPropertyTypes] = useState(false);
+  const [showQuickSearch, setShowQuickSearch] = useState(false);
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [propertyNumberQuery, setPropertyNumberQuery] = useState('');
+  const [filters, setFilters] = useState({
+    developmentType: getUrlDevelopmentType(searchParams),
+    minArea: searchParams.get('minArea') || '',
+    maxArea: searchParams.get('maxArea') || '',
+    ratio: searchParams.get('ratio') || 'All',
+    facing: searchParams.get('facing') || 'All',
+    minGoodwill: searchParams.get('minGoodwill') || '',
+    maxGoodwill: searchParams.get('maxGoodwill') || '',
+    city: searchParams.get('city') || (showDashboardLayout ? getStoredSelectedCity() : 'All'),
+    zoningClassification: searchParams.get('zoningClassification') || 'All',
+    maxOwnerShare: searchParams.get('maxOwnerShare') || ''
+  });
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [pendingPropertyId, setPendingPropertyId] = useState('');
+  const [detailLoadingId, setDetailLoadingId] = useState('');
+  const [mapLoadError, setMapLoadError] = useState('');
+
+  // Filter options
+  const ratios = ['All', '50:50', '60:40', '70:30', '80:20'];
+  const facings = ['All', 'North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'];
+  const cities = ['All', ...METRO_CITIES];
+  const zoningOptions = ['All', 'Residential', 'Commercial', 'Mixed Use', 'Agricultural', 'Industrial'];
+  const getCityFilterValues = (city: string) => {
+    if (city === 'All') return [];
+    const cityKey = city.toLowerCase();
+    const metroFilters: Record<string, string[]> = {
+      hyderabad: [
+        'hyderabad',
+        'telangana',
+        'secunderabad',
+        'injapur',
+        'miyapur',
+        'nadergul',
+        'nadargul',
+        'maheshwaram',
+        'tukkuguda',
+        'turkayamjal',
+        'bongulur',
+        'isnapur',
+        'tatti annaram',
+        'lb nagar',
+        'bowrampet',
+        'kandlakoya',
+        'mancherial',
+        'agriculture colony',
+        'avn colony'
+      ],
+      bengaluru: [
+        'bengaluru',
+        'bangalore',
+        'karnataka',
+        'bengaluru rural',
+        'bengaluru urban',
+        'nelamangala',
+        'chikkaballapura',
+        'chikkaballapur',
+        'rajanukunte',
+        'rajanukunte',
+        'nandi hills',
+        'nandihills',
+        'igani',
+        'jigani',
+        'yeshwanthpur',
+        'yelahanka',
+        'devanahalli',
+        'hoskote',
+        'sarjapur',
+        'anekal'
+      ],
+      mumbai: ['mumbai', 'maharashtra', 'bombay', 'navi mumbai', 'thane', 'south mumbai', 'western suburbs', 'central suburbs'],
+      chennai: ['chennai', 'tamil nadu'],
+      delhi: ['delhi', 'new delhi', 'ncr'],
+      kolkata: ['kolkata', 'west bengal', 'calcutta'],
+      pune: ['pune', 'maharashtra'],
+      ahmedabad: ['ahmedabad', 'gujarat'],
+      jaipur: ['jaipur', 'rajasthan'],
+      kochi: ['kochi', 'kerala', 'cochin'],
+      lucknow: ['lucknow', 'uttar pradesh'],
+      chandigarh: ['chandigarh']
+    };
+    return metroFilters[cityKey] || [cityKey];
+  };
+  const propertyMatchesCity = (property: Property, city: string) => {
+    const cityFilters = getCityFilterValues(city);
+    if (!cityFilters.length) return true;
+    const locationText = [
+      property.city,
+      property.state,
+      property.locality,
+      property.location,
+      property.societyName,
+      property.projectName,
+      property.address,
+      property.landmark,
+      property.pincode
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return cityFilters.some((value) => locationText.includes(value));
+  };
+
+  // Fetch properties
+  useEffect(() => {
+    fetchProperties();
+  }, [searchParams]);
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get('q') || '');
+    setFilters({
+      developmentType: getUrlDevelopmentType(searchParams),
+      minArea: searchParams.get('minArea') || '',
+      maxArea: searchParams.get('maxArea') || '',
+      ratio: searchParams.get('ratio') || 'All',
+      facing: searchParams.get('facing') || 'All',
+      minGoodwill: searchParams.get('minGoodwill') || '',
+      maxGoodwill: searchParams.get('maxGoodwill') || '',
+      city: searchParams.get('city') || (showDashboardLayout ? selectedCity || getStoredSelectedCity() : 'All'),
+      zoningClassification: searchParams.get('zoningClassification') || 'All',
+      maxOwnerShare: searchParams.get('maxOwnerShare') || ''
+    });
+  }, [searchParams, showDashboardLayout, selectedCity]);
+
+  useEffect(() => {
+    if (!showDashboardLayout) return;
+
+    const cityFromUrl = searchParams.get('city');
+    const nextCity = cityFromUrl || selectedCity || getStoredSelectedCity();
+    const legacyMixedFilter = searchParams.get('developmentType') === 'mixed';
+
+    if (!cityFromUrl || legacyMixedFilter) {
+      const params = new URLSearchParams(searchParams);
+      params.set('view', isMarketplaceView ? 'marketplace' : 'developers');
+      params.set('listingIntent', listingIntent);
+      params.set('city', nextCity);
+      if (legacyMixedFilter) params.delete('developmentType');
+      setSearchParams(params, { replace: true });
+      return;
+    }
+
+    if (cityFromUrl !== selectedCity) {
+      setSelectedCity(cityFromUrl);
+      localStorage.setItem('selectedCity', cityFromUrl);
+      setProperties([]);
+    }
+
+    setFilters((prev) => prev.city === nextCity ? prev : { ...prev, city: nextCity });
+  }, [isMarketplaceView, listingIntent, searchParams, selectedCity, setSearchParams, showDashboardLayout]);
+
+  useEffect(() => {
+    const focusDeveloperMapOnCity = (city: string) => {
+      if (!developerMapInstanceRef.current) return;
+      const center = getCityCenter(city);
+      developerMapInstanceRef.current.setCenter({ lat: center.lat, lng: center.lng });
+      developerMapInstanceRef.current.setZoom(center.zoom);
+    };
+
+    const handleCityChange = (event: Event) => {
+      const nextCity = (event as CustomEvent<string>).detail || getStoredSelectedCity();
+      setSelectedCity(nextCity);
+      if (!showDashboardLayout) return;
+
+      setSearchQuery('');
+      setPropertyNumberQuery('');
+      setFocusedPropertyId('');
+      fetchRequestRef.current += 1;
+      setProperties([]);
+      setFilters((prev) => ({ ...prev, city: nextCity }));
+      if (isDeveloperView) focusDeveloperMapOnCity(nextCity);
+
+      const params = new URLSearchParams(searchParams);
+      params.set('view', isMarketplaceView ? 'marketplace' : 'developers');
+      params.set('listingIntent', listingIntent);
+      params.set('city', nextCity);
+      params.delete('q');
+      setSearchParams(params);
+    };
+
+    window.addEventListener('selectedCityChange', handleCityChange);
+    return () => window.removeEventListener('selectedCityChange', handleCityChange);
+  }, [isDeveloperView, isMarketplaceView, listingIntent, searchParams, setSearchParams, showDashboardLayout]);
+
+  // Initialize Google Maps Autocomplete
+  useEffect(() => {
+    const loadGoogleMaps = () => {
+      if (window.google?.maps?.places && searchInputRef.current && !autocompleteRef.current) {
+        try {
+          autocompleteRef.current = new window.google.maps.places.Autocomplete(
+            searchInputRef.current,
+            {
+              types: ['geocode', 'establishment'],
+              componentRestrictions: { country: 'IN' },
+              fields: ['formatted_address', 'geometry', 'address_components', 'name'],
+              strictBounds: false
+            }
+          );
+
+          autocompleteRef.current.addListener('place_changed', () => {
+            const place = autocompleteRef.current?.getPlace();
+            if (place && place.name) {
+              let locationName = '';
+              if (place.address_components) {
+                const locality = place.address_components.find((c: any) =>
+                  c.types?.includes('sublocality_level_1') ||
+                  c.types?.includes('sublocality') ||
+                  c.types?.includes('locality')
+                );
+                locationName = locality?.long_name || place.name;
+              } else {
+                locationName = place.name;
+              }
+              setSearchQuery(locationName);
+              handleSearch(locationName);
+            }
+          });
+        } catch (error) {
+          console.warn('Failed to initialize Google Maps Autocomplete:', error);
+        }
+      }
+    };
+
+    if (!window.google?.maps) {
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        console.error('Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY to enable location autocomplete.');
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&v=3.55`;
+      script.async = true;
+      script.onload = () => {
+        setTimeout(loadGoogleMaps, 500);
+      };
+      document.head.appendChild(script);
+    } else {
+      loadGoogleMaps();
+    }
+  }, []);
+
+  const fetchProperties = async () => {
+    const requestId = fetchRequestRef.current + 1;
+    fetchRequestRef.current = requestId;
+    setLoading(true);
+    try {
+      const activeListingIntent = isMarketplaceView
+        ? ''
+        : searchParams.get('listingIntent') || (showDashboardLayout ? 'development' : '');
+      const activeFilters = {
+        developmentType: getUrlDevelopmentType(searchParams, activeListingIntent || listingIntent),
+        minArea: searchParams.get('minArea') || '',
+        maxArea: searchParams.get('maxArea') || '',
+        ratio: searchParams.get('ratio') || 'All',
+        facing: searchParams.get('facing') || 'All',
+        minGoodwill: searchParams.get('minGoodwill') || '',
+        maxGoodwill: searchParams.get('maxGoodwill') || '',
+        city: searchParams.get('city') || (showDashboardLayout ? selectedCity : 'All'),
+        zoningClassification: searchParams.get('zoningClassification') || 'All',
+        maxOwnerShare: searchParams.get('maxOwnerShare') || ''
+      };
+      const activeQuery = searchParams.get('q') || '';
+      const params = new URLSearchParams();
+      if (activeQuery) params.append('q', activeQuery);
+      if (activeListingIntent && activeListingIntent !== 'development') params.append('listingIntent', activeListingIntent);
+      if (activeFilters.developmentType !== 'All') params.append('developmentType', activeFilters.developmentType);
+      if (activeFilters.minArea) params.append('minArea', activeFilters.minArea);
+      if (activeFilters.maxArea) params.append('maxArea', activeFilters.maxArea);
+      if (listingIntent === 'development' && activeFilters.ratio !== 'All') params.append('ratio', activeFilters.ratio);
+      if (getCityFilterValues(activeFilters.city).length === 1) params.append('city', activeFilters.city);
+      if (activeFilters.zoningClassification !== 'All') params.append('zoningClassification', activeFilters.zoningClassification);
+      if (activeFilters.maxOwnerShare) params.append('maxOwnerShare', activeFilters.maxOwnerShare);
+
+      const response = await fetch(`${API_BASE}/search?${params.toString()}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        let sourceData = Array.isArray(data) ? data : [];
+        let usedLocationFallback = false;
+
+        if (activeQuery && sourceData.length === 0) {
+          const fallbackParams = new URLSearchParams();
+          if (activeListingIntent && activeListingIntent !== 'development') fallbackParams.append('listingIntent', activeListingIntent);
+          if (getCityFilterValues(activeFilters.city).length === 1) fallbackParams.append('city', activeFilters.city);
+          const fallbackResponse = await fetch(`${API_BASE}/search?${fallbackParams.toString()}`);
+          const fallbackData = await fallbackResponse.json();
+          if (fallbackResponse.ok && Array.isArray(fallbackData)) {
+            sourceData = fallbackData.filter((property: Property) => propertyMatchesSearch(property, activeQuery));
+            usedLocationFallback = sourceData.length > 0;
+          }
+        }
+
+        // Keep closed deals visible and apply additional filters.
+        let filtered = sourceData;
+
+        if (isMarketplaceView) {
+          filtered = filtered.filter((property: Property) => {
+            const intent = (property.listingIntent || 'development').toLowerCase();
+            return intent === 'development' || intent === 'sell';
+          });
+        } else if (activeListingIntent) {
+          filtered = filtered.filter((property: Property) =>
+            (property.listingIntent || 'development').toLowerCase() === activeListingIntent.toLowerCase()
+          );
+        }
+
+        // Apply facing filter
+        if (!usedLocationFallback && activeFilters.facing !== 'All') {
+          filtered = filtered.filter((p: Property) => p.facing === activeFilters.facing);
+        }
+
+        // Apply city filter
+        if (activeFilters.city !== 'All') {
+          filtered = filtered.filter((p: Property) => propertyMatchesCity(p, activeFilters.city));
+        }
+
+        // Apply goodwill range filter
+        if (!usedLocationFallback && (activeFilters.minGoodwill || activeFilters.maxGoodwill)) {
+          filtered = filtered.filter((p: Property) => {
+            const budgetValue = isPlotDealView ? p.squareYardPrice : p.goodwill;
+            const goodwill = parseInt(budgetValue || '0');
+            const min = parseInt(activeFilters.minGoodwill || '0');
+            const max = parseInt(activeFilters.maxGoodwill || '999999999');
+            return goodwill >= min && goodwill <= max;
+          });
+        }
+
+        const uniqueProperties = Array.from(
+          new Map(
+            filtered.map((property: Property) => [
+              property._id || `${property.projectName}-${property.locality}-${property.city}-${property.totalArea}`,
+              property
+            ])
+          ).values()
+        );
+
+        if (requestId === fetchRequestRef.current) {
+          setProperties(uniqueProperties);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    } finally {
+      if (requestId === fetchRequestRef.current) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const buildPropertySearchParams = (
+    activeFilters: typeof filters,
+    activeQuery: string,
+    showDeveloperLayout = showDashboardLayout
+  ) => {
+    const params = new URLSearchParams();
+    if (showDeveloperLayout) params.set('view', isMarketplaceView ? 'marketplace' : 'developers');
+    if (!isMarketplaceView && listingIntent) params.set('listingIntent', listingIntent);
+    if (activeQuery) params.set('q', activeQuery);
+    if (activeFilters.developmentType !== 'All') params.set('developmentType', activeFilters.developmentType);
+    if (activeFilters.minArea) params.set('minArea', activeFilters.minArea);
+    if (activeFilters.maxArea) params.set('maxArea', activeFilters.maxArea);
+    if (listingIntent === 'development' && activeFilters.ratio !== 'All') params.set('ratio', activeFilters.ratio);
+    if (activeFilters.facing !== 'All') params.set('facing', activeFilters.facing);
+    if (activeFilters.minGoodwill) params.set('minGoodwill', activeFilters.minGoodwill);
+    if (activeFilters.maxGoodwill) params.set('maxGoodwill', activeFilters.maxGoodwill);
+    if (activeFilters.city !== 'All') params.set('city', activeFilters.city);
+    if (activeFilters.zoningClassification !== 'All') params.set('zoningClassification', activeFilters.zoningClassification);
+    if (activeFilters.maxOwnerShare) params.set('maxOwnerShare', activeFilters.maxOwnerShare);
+    return params;
+  };
+
+  const handleSearch = (queryOverride?: string) => {
+    const query = typeof queryOverride === 'string' ? queryOverride : searchQuery;
+    const params = buildPropertySearchParams(filters, query);
+    setSearchParams(params);
+  };
+
+  const handleFilterChange = (key: string, value: string, showDeveloperLayout = showDashboardLayout) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    if (key === 'city' && value !== 'All') {
+      setSelectedCity(value);
+      localStorage.setItem('selectedCity', value);
+    }
+    
+    // Auto-apply filters on change
+    setTimeout(() => {
+      const params = buildPropertySearchParams(newFilters, searchQuery, showDeveloperLayout);
+      setSearchParams(params);
+    }, 100);
+  };
+
+  const handleBudgetSliderChange = (key: 'minGoodwill' | 'maxGoodwill', value: string) => {
+    const numericValue = Number(value);
+    const pairedValue = key === 'minGoodwill'
+      ? Number(filters.maxGoodwill || PRICE_RANGE_MAX)
+      : Number(filters.minGoodwill || PRICE_RANGE_MIN);
+    const nextValue = key === 'minGoodwill'
+      ? Math.min(numericValue, pairedValue)
+      : Math.max(numericValue, pairedValue);
+    handleFilterChange(key, String(nextValue));
+  };
+
+  const clearFilters = () => {
+    const cityToKeep = showDashboardLayout ? selectedCity : 'All';
+    setSearchQuery('');
+    setPropertyNumberQuery('');
+    setFilters({
+      developmentType: 'All',
+      minArea: '',
+      maxArea: '',
+      ratio: 'All',
+      facing: 'All',
+      minGoodwill: '',
+      maxGoodwill: '',
+      city: cityToKeep,
+      zoningClassification: 'All',
+      maxOwnerShare: ''
+    });
+    setSearchParams(showDashboardLayout ? {
+      view: isMarketplaceView ? 'marketplace' : 'developers',
+      ...(!isMarketplaceView && listingIntent ? { listingIntent } : {}),
+      city: cityToKeep
+    } : {});
+  };
+
+  const formatPrice = (price: string) => {
+    if (!price) return 'Price on request';
+    const rangeParts = String(price).match(/\d[\d,]*/g);
+    if (rangeParts && rangeParts.length >= 2 && /-|to/i.test(price)) {
+      return `${formatPrice(rangeParts[0])} to ${formatPrice(rangeParts[1])}`;
+    }
+    const num = parseInt(String(price).replace(/,/g, ''));
+    if (isNaN(num)) return 'Price on request';
+    if (num >= 10000000) return `₹${(num / 10000000).toFixed(1)}Cr`;
+    if (num >= 100000) return `₹${(num / 100000).toFixed(1)}L`;
+    return `₹${num.toLocaleString()}`;
+  };
+
+  const currentPropertyType = searchParams.get('propertyType') || '';
+  const isBuyerMarketplaceAccess = listingIntent === 'sell' || currentPropertyType === 'commercial-plot';
+  const isBuyerRequirementAccess = listingIntent === 'buy';
+  const membershipUseCase = isBuyerRequirementAccess ? 'buyer-info' : isBuyerMarketplaceAccess ? 'buyer' : '';
+  const membershipUrl = membershipUseCase
+    ? `/owner-mediator-membership?useCase=${membershipUseCase}&redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`
+    : `/membership?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`;
+  const membershipModalCopy = isBuyerRequirementAccess
+    ? 'Owners and mediators need an active subscription to access buyer requirement details and buyer contact information.'
+    : isBuyerMarketplaceAccess
+      ? 'Buyers and land seekers need an active subscription to explore sell plots, commercial plots, complete details, and owner or mediator contact information.'
+      : 'To access other people\'s complete property details and owner contact, please upgrade your membership.';
+
+  const requireLoginForDetails = async (property: Property) => {
+    const token = localStorage.getItem('token');
+    setPendingPropertyId(property._id);
+
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    setDetailLoadingId(property._id);
+    setShowMembershipModal(false);
+
+    try {
+      const res = await fetch(`${API_BASE}/properties/${property._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        navigate(`/property/${property._id}`);
+        return;
+      }
+
+      if (data.accessRequired) {
+        setShowMembershipModal(true);
+        return;
+      }
+
+      navigate(`/property/${property._id}`);
+    } catch (error) {
+      navigate(`/property/${property._id}`);
+    } finally {
+      setDetailLoadingId('');
+    }
+  };
+
+  const correctedPropertyLocalities: Record<string, string> = {
+    '69f85a50d3f7d46a8337be61': 'Turkayamjal',
+    '69fdc585807f8cb4121d9848': 'Injapur'
+  };
+  const correctedPropertyCoordinates: Record<string, { lat: number; lng: number }> = {
+    '6a0dd72af12f43e1310e78ae': { lat: 18.864937, lng: 79.458788 }
+  };
+  const correctedLocalityCoordinates: Record<string, { lat: number; lng: number }> = {
+    turkyamjal: { lat: 17.2709, lng: 78.5831 },
+    turkayamjal: { lat: 17.2709, lng: 78.5831 },
+    miyapur: { lat: 17.4933, lng: 78.3915 },
+    injapur: { lat: 17.3037, lng: 78.6684 },
+    tukkuguda: { lat: 17.2086, lng: 78.4831 },
+    bongulur: { lat: 17.2675, lng: 78.6746 },
+    boduppal: { lat: 17.4139, lng: 78.5783 },
+    nelamangala: { lat: 13.1021, lng: 77.3937 },
+    chikkaballapura: { lat: 13.4355, lng: 77.7315 },
+    chikkaballapur: { lat: 13.4355, lng: 77.7315 },
+    nandihills: { lat: 13.3702, lng: 77.6835 },
+    rajanukunte: { lat: 13.1732, lng: 77.5659 },
+    yeshwanthpur: { lat: 13.0285, lng: 77.5409 },
+    jigani: { lat: 12.7843, lng: 77.6412 },
+    igani: { lat: 12.7843, lng: 77.6412 },
+    devanahalli: { lat: 13.2437, lng: 77.7137 },
+    hoskote: { lat: 13.0707, lng: 77.7981 },
+    sarjapur: { lat: 12.861, lng: 77.7855 },
+    anekal: { lat: 12.7105, lng: 77.6953 },
+  };
+  const indiaBounds = {
+    minLat: 6.0,
+    maxLat: 37.5,
+    minLng: 68.0,
+    maxLng: 98.5,
+  };
+  const telanganaBounds = {
+    minLat: 15.7,
+    maxLat: 19.95,
+    minLng: 77.0,
+    maxLng: 81.9,
+  };
+  const karnatakaBounds = {
+    minLat: 11.4,
+    maxLat: 18.6,
+    minLng: 74.0,
+    maxLng: 78.8,
+  };
+  const cityCoordinateRadiusKm: Record<string, number> = {
+    Hyderabad: 180,
+    Bengaluru: 520,
+    Chennai: 160,
+    Mumbai: 160,
+    Delhi: 180,
+    Kolkata: 160,
+    Pune: 140,
+    Ahmedabad: 150,
+    Jaipur: 150,
+    Kochi: 140,
+    Lucknow: 150,
+    Chandigarh: 130,
+  };
+
+  const isLocationLink = (value?: string) => Boolean(value && /^https?:\/\//i.test(value));
+  const getDisplayLocality = (property: Property) => {
+    if (correctedPropertyLocalities[property._id]) return correctedPropertyLocalities[property._id];
+    if (property.locality && !isLocationLink(property.locality)) return property.locality;
+    return property.landmark?.replace(/^near\s+(to\s+)?/i, '').trim() || property.city || 'Hyderabad';
+  };
+
+  const propertyTitle = (property: Property) =>
+    property.projectName && !isLocationLink(property.projectName)
+      ? property.projectName
+      : `${property.developmentType?.replace(/-/g, ' ') || 'Development'} property in ${getDisplayLocality(property)}`;
+  const normalizeSearchText = (value = '') =>
+    String(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  const locationSearchAliases: Record<string, string[]> = {
+    bongulur: ['bongulur', 'bongloor', 'bungulur'],
+    bongloor: ['bongulur', 'bongloor', 'bungulur'],
+    tukkuguda: ['tukkuguda', 'tukuguda'],
+    tukuguda: ['tukkuguda', 'tukuguda'],
+    injapur: ['injapur', 'inapur']
+  };
+  const propertyMatchesSearch = (property: Property, query = '') => {
+    const normalizedQuery = normalizeSearchText(query);
+    if (!normalizedQuery) return false;
+
+    const searchableText = normalizeSearchText([
+      propertyTitle(property),
+      getDisplayLocality(property),
+      property.locality,
+      property.societyName,
+      property.landmark,
+      property.city,
+      property.address,
+      property.pincode,
+      property.developmentType
+    ].filter(Boolean).join(' '));
+
+    return normalizedQuery
+      .split(/\s+/)
+      .filter(Boolean)
+      .every((token) => {
+        const aliases = locationSearchAliases[token] || [token];
+        return aliases.some((alias) => searchableText.includes(alias));
+      });
+  };
+  const getListingIntentLabel = (property: Property) => {
+    const intent = (property.listingIntent || listingIntent || 'development').toLowerCase();
+    if (intent === 'buy') return 'Buy';
+    if (intent === 'sell') return 'Sell';
+    return 'Development';
+  };
+  const getPropertyIntent = (property: Property) =>
+    (property.listingIntent || listingIntent || 'development').toLowerCase();
+  const fallbackImage = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
+  const buyerAvatarFallback = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240"%3E%3Crect width="320" height="240" fill="%23f8fafc"/%3E%3Ccircle cx="160" cy="84" r="42" fill="%23e0f2f1" stroke="%230f766e" stroke-width="6"/%3E%3Cpath d="M82 205c10-46 39-76 78-76s68 30 78 76" fill="%23e0f2f1" stroke="%230f766e" stroke-width="7" stroke-linecap="round"/%3E%3Cpath d="M130 88c10 12 50 12 60 0" fill="none" stroke="%230f766e" stroke-width="5" stroke-linecap="round"/%3E%3C/svg%3E';
+  const isDisplayableImage = (url = '') => url && !url.toLowerCase().includes('.pdf');
+  const getCardImageUrl = (property: Property) =>
+    property.imageUrl || (isDisplayableImage(property.plotDiagramUrl) ? property.plotDiagramUrl : '');
+  const getCardFallbackImage = (property: Property) =>
+    getPropertyIntent(property) === 'buy' ? buyerAvatarFallback : fallbackImage;
+  const getCardImageSrc = (property: Property) =>
+    getCardImageUrl(property) ? `${API_ORIGIN}${getCardImageUrl(property)}` : getCardFallbackImage(property);
+  const isBuyerAvatarFallback = (property: Property) =>
+    getPropertyIntent(property) === 'buy' && !getCardImageUrl(property);
+  const isGeneratedDiagramPreview = (property: Property) => !property.imageUrl && Boolean(getCardImageUrl(property));
+  const activeSearchTerm = searchParams.get('q') || searchQuery;
+  const visibleProperties = React.useMemo(() => {
+    const normalizedPropertyNumber = propertyNumberQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!normalizedPropertyNumber) return properties;
+
+    return properties.filter((property) =>
+      getPropertyNumber(property, listingIntent).toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedPropertyNumber)
+    );
+  }, [listingIntent, properties, propertyNumberQuery]);
+  const currentMapCity = searchParams.get('city') || selectedCity || DEFAULT_CITY;
+
+  const normalizeCoordinatePair = (latValue: unknown, lngValue: unknown) => {
+    const lat = Number(latValue);
+    const lng = Number(lngValue);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat, lng };
+  };
+
+  const safeDecodeMapText = (value?: string) => {
+    const rawValue = String(value || '').replace(/\+/g, ' ');
+    try {
+      return decodeURIComponent(rawValue);
+    } catch {
+      return rawValue;
+    }
+  };
+
+  const extractCoordinatesFromMapText = (value?: string) => {
+    const decodedValue = safeDecodeMapText(value);
+    const patterns = [
+      { regex: /@(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)/, lngLat: false },
+      { regex: /[?&](?:q|query|ll|center|destination|daddr)=(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)/, lngLat: false },
+      { regex: /!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/, lngLat: false },
+      { regex: /!2d(-?\d+\.?\d*)!3d(-?\d+\.?\d*)/, lngLat: true },
+      { regex: /\b(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\b/, lngLat: false },
+    ];
+
+    for (const pattern of patterns) {
+      const match = decodedValue.match(pattern.regex);
+      if (!match) continue;
+      const coords = pattern.lngLat
+        ? normalizeCoordinatePair(match[2], match[1])
+        : normalizeCoordinatePair(match[1], match[2]);
+      if (coords) return coords;
+    }
+    return null;
+  };
+
+  const extractSearchTextFromMapLink = (link?: string) => {
+    const trimmed = String(link || '').trim();
+    if (!trimmed || extractCoordinatesFromMapText(trimmed)) return '';
+
+    try {
+      const url = new URL(trimmed);
+      const queryKeys = ['q', 'query', 'destination', 'daddr'];
+      for (const key of queryKeys) {
+        const value = url.searchParams.get(key);
+        if (value && !extractCoordinatesFromMapText(value)) return value.replace(/\+/g, ' ');
+      }
+
+      const decodedPath = safeDecodeMapText(url.pathname);
+      const pathMatch = decodedPath.match(/\/maps\/(?:place|search|dir)\/([^/@?]+)/);
+      if (pathMatch?.[1]) return pathMatch[1].replace(/\//g, ' ').trim();
+    } catch {
+      return trimmed;
+    }
+
+    return '';
+  };
+
+  const normalizeLocalityKey = (value?: string) =>
+    String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const propertyNeedsTelanganaContext = (property: Property) =>
+    /telangana|hyderabad|secunderabad|miyapur|turkyamjal|turkayamjal|injapur|tukkuguda|bongulur/i.test(
+      [property.state, property.city, property.locality, property.address, property.landmark].filter(Boolean).join(' ')
+    );
+
+  const propertyNeedsKarnatakaContext = (property: Property) =>
+    /karnataka|bengaluru|bangalore|nelamangala|chikkaballapura|chikkaballapur|rajanukunte|nandi\s*hills?|jigani|igani|yeshwanthpur|devanahalli|hoskote|sarjapur|anekal/i.test(
+      [property.state, property.city, property.locality, property.address, property.landmark, currentMapCity].filter(Boolean).join(' ')
+    );
+
+  const coordinateInsideBounds = (coords: { lat: number; lng: number }, bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }) =>
+    coords.lat >= bounds.minLat
+      && coords.lat <= bounds.maxLat
+      && coords.lng >= bounds.minLng
+      && coords.lng <= bounds.maxLng;
+
+  const getCoordinateContextCity = (property: Property) => {
+    const locationText = [property.city, property.state, property.locality, property.address, property.landmark, currentMapCity]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return Object.keys(CITY_CENTERS).find((city) => locationText.includes(city.toLowerCase())) || currentMapCity || DEFAULT_CITY;
+  };
+
+  const distanceKm = (first: { lat: number; lng: number }, second: { lat: number; lng: number }) => {
+    const toRadians = (value: number) => value * Math.PI / 180;
+    const radius = 6371;
+    const latDelta = toRadians(second.lat - first.lat);
+    const lngDelta = toRadians(second.lng - first.lng);
+    const a = Math.sin(latDelta / 2) ** 2
+      + Math.cos(toRadians(first.lat)) * Math.cos(toRadians(second.lat)) * Math.sin(lngDelta / 2) ** 2;
+    return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const coordinatesFitPropertyContext = (property: Property, coords: { lat: number; lng: number }) => {
+    if (!coordinateInsideBounds(coords, indiaBounds)) return false;
+
+    if (propertyNeedsTelanganaContext(property)) {
+      return coordinateInsideBounds(coords, telanganaBounds);
+    }
+
+    if (propertyNeedsKarnatakaContext(property)) {
+      return coordinateInsideBounds(coords, karnatakaBounds);
+    }
+
+    const contextCity = getCoordinateContextCity(property);
+    const cityCenter = getCityCenter(contextCity);
+    const radiusKm = cityCoordinateRadiusKm[contextCity] || 180;
+    return distanceKm(coords, cityCenter) <= radiusKm;
+  };
+
+  const coerceCoordinatesForProperty = (property: Property, coords: { lat: number; lng: number } | null) => {
+    if (!coords || isDefaultMapPlaceholder(coords) || isCityCenterCoordinate(property, coords)) return null;
+    if (coordinatesFitPropertyContext(property, coords)) return coords;
+
+    const swapped = normalizeCoordinatePair(coords.lng, coords.lat);
+    if (swapped && !isDefaultMapPlaceholder(swapped) && !isCityCenterCoordinate(property, swapped) && coordinatesFitPropertyContext(property, swapped)) {
+      return swapped;
+    }
+
+    return null;
+  };
+
+  const isDefaultMapPlaceholder = (coords: { lat: number; lng: number }) =>
+    Math.abs(coords.lat - 22.9734) < 0.0001 && Math.abs(coords.lng - 78.6569) < 0.0001;
+
+  const hasSpecificPropertyLocation = (property: Property) =>
+    Boolean(property.locality || property.landmark || property.address || property.pincode || property.societyName);
+
+  const isCityCenterCoordinate = (property: Property, coords: { lat: number; lng: number }) => {
+    if (!hasSpecificPropertyLocation(property)) return false;
+    return Object.values(CITY_CENTERS).some((center) =>
+      Math.abs(coords.lat - center.lat) < 0.018 && Math.abs(coords.lng - center.lng) < 0.018
+    );
+  };
+
+  const parsePropertyCoordinates = (property: Property) => {
+    if (correctedPropertyCoordinates[property._id]) return correctedPropertyCoordinates[property._id];
+
+    const mapCoords = coerceCoordinatesForProperty(property, extractCoordinatesFromMapText(property.map));
+    if (mapCoords) return mapCoords;
+
+    const localityKey = normalizeLocalityKey([property.locality, property.landmark, property.city].filter(Boolean).join(' '));
+    const correctedLocality = Object.entries(correctedLocalityCoordinates)
+      .sort((a, b) => b[0].length - a[0].length)
+      .find(([key]) => localityKey.includes(key))?.[1];
+    if (correctedLocality) return correctedLocality;
+
+    if (property.coordinates) {
+      try {
+        const parsed = typeof property.coordinates === 'string'
+          ? JSON.parse(property.coordinates)
+          : property.coordinates;
+        const coords = coerceCoordinatesForProperty(property, normalizeCoordinatePair(parsed?.lat, parsed?.lng));
+        if (coords) return coords;
+      } catch {
+        const coords = coerceCoordinatesForProperty(property, extractCoordinatesFromMapText(property.coordinates));
+        if (coords) return coords;
+      }
+    }
+
+    return null;
+  };
+
+  const getPropertyMapCoordinates = (property: Property) =>
+    parsePropertyCoordinates(property) || coerceCoordinatesForProperty(property, geocodedPropertyCoordsRef.current[property._id] || null);
+
+  const resolvePropertyMapLinkCoordinates = async (property: Property) => {
+    const mapLink = String(property.map || '').trim();
+    if (!mapLink || extractCoordinatesFromMapText(mapLink)) return null;
+
+    try {
+      const response = await fetch(`${API_BASE}/resolve-map-link?url=${encodeURIComponent(mapLink)}`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return coerceCoordinatesForProperty(property, normalizeCoordinatePair(data?.coordinates?.lat, data?.coordinates?.lng));
+    } catch (error) {
+      console.error('Unable to resolve listing map link coordinates:', error);
+      return null;
+    }
+  };
+
+  const getPropertyMapAddressCandidates = (property: Property) => {
+    const locality = getDisplayLocality(property);
+    const needsTelangana = propertyNeedsTelanganaContext(property);
+    const state = property.state || (needsTelangana ? 'Telangana' : '');
+    const city = property.city || '';
+    const pincode = property.pincode || '';
+    const landmark = property.landmark?.replace(/^near\s+(to\s+)?/i, '').trim() || '';
+    const mapSearchText = extractSearchTextFromMapLink(property.map);
+    const candidates = [
+      property.address && `${property.address}, ${locality}, ${state || city}, India`,
+      mapSearchText && `${mapSearchText}, ${city || locality}, ${state}, India`,
+      locality && city && state && `${locality}, ${city}, ${state}, India`,
+      landmark && locality && city && state && `${landmark}, ${locality}, ${city}, ${state}, India`,
+      locality && pincode && city && state && `${locality}, ${city}, ${state}, ${pincode}, India`,
+      locality && city && `${locality}, ${city}, India`,
+      locality && state && `${locality}, ${state}, India`,
+      locality && `${locality}, India`,
+    ].filter(Boolean) as string[];
+
+    return Array.from(new Set(candidates.map((candidate) => candidate.replace(/\s+/g, ' ').trim())));
+  };
+
+  const geocodePropertyForMap = (
+    property: Property,
+    google: any,
+    onResolved?: (coords: { lat: number; lng: number }) => void
+  ) => {
+    const cachedCoords = geocodedPropertyCoordsRef.current[property._id];
+    const safeCachedCoords = coerceCoordinatesForProperty(property, cachedCoords || null);
+    if (safeCachedCoords) {
+      onResolved?.(safeCachedCoords);
+      return;
+    }
+    if (pendingGeocodePropertyIdsRef.current.has(property._id)) {
+      if (onResolved) {
+        pendingGeocodeCallbacksRef.current[property._id] = pendingGeocodeCallbacksRef.current[property._id] || [];
+        pendingGeocodeCallbacksRef.current[property._id].push(onResolved);
+      }
+      return;
+    }
+
+    pendingGeocodePropertyIdsRef.current.add(property._id);
+    if (onResolved) pendingGeocodeCallbacksRef.current[property._id] = [onResolved];
+    const geocoder = new google.maps.Geocoder();
+    const candidates = getPropertyMapAddressCandidates(property);
+    const resolveCandidateWithPlaces = async (query: string) => {
+      if (!google?.maps?.places?.PlacesService || !developerMapInstanceRef.current || !query.trim()) return null;
+      const service = new google.maps.places.PlacesService(developerMapInstanceRef.current);
+      const cityCenter = getCityCenter(currentMapCity);
+      const normalizePlaceCoords = (place: any) => {
+        const location = place?.geometry?.location;
+        const coords = location ? normalizeCoordinatePair(location.lat(), location.lng()) : null;
+        return coerceCoordinatesForProperty(property, coords);
+      };
+
+      const findPlaceCoords = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+        service.findPlaceFromQuery(
+          {
+            query,
+            fields: ['geometry', 'formatted_address', 'name'],
+            locationBias: new google.maps.LatLng(cityCenter.lat, cityCenter.lng),
+          },
+          (results: any[] | null, status: string) => {
+            if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.length) {
+              resolve(null);
+              return;
+            }
+            resolve(results.map(normalizePlaceCoords).find(Boolean) || null);
+          }
+        );
+      });
+      if (findPlaceCoords) return findPlaceCoords;
+
+      return new Promise<{ lat: number; lng: number } | null>((resolve) => {
+        service.textSearch(
+          {
+            query,
+            location: new google.maps.LatLng(cityCenter.lat, cityCenter.lng),
+            radius: 140000,
+          },
+          (results: any[] | null, status: string) => {
+            if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.length) {
+              resolve(null);
+              return;
+            }
+            resolve(results.map(normalizePlaceCoords).find(Boolean) || null);
+          }
+        );
+      });
+    };
+    const finish = (coords?: { lat: number; lng: number }) => {
+      pendingGeocodePropertyIdsRef.current.delete(property._id);
+      const callbacks = pendingGeocodeCallbacksRef.current[property._id] || [];
+      delete pendingGeocodeCallbacksRef.current[property._id];
+      if (coords) callbacks.forEach((callback) => callback(coords));
+    };
+    const tryCandidate = async (index: number) => {
+      if (index >= candidates.length) {
+        finish();
+        return;
+      }
+
+      geocoder.geocode(
+        { address: candidates[index], componentRestrictions: { country: 'IN' } },
+        async (results: any, status: string) => {
+          const location = results?.[0]?.geometry?.location;
+          if (status !== 'OK' || !location) {
+            const placesCoords = await resolveCandidateWithPlaces(candidates[index]);
+            if (placesCoords) {
+              geocodedPropertyCoordsRef.current[property._id] = placesCoords;
+              setGeocodeTick((tick) => tick + 1);
+              finish(placesCoords);
+              return;
+            }
+            tryCandidate(index + 1);
+            return;
+          }
+
+          const coords = coerceCoordinatesForProperty(property, normalizeCoordinatePair(
+            typeof location.lat === 'function' ? location.lat() : Number(location.lat),
+            typeof location.lng === 'function' ? location.lng() : Number(location.lng)
+          ));
+          if (!coords) {
+            const placesCoords = await resolveCandidateWithPlaces(candidates[index]);
+            if (placesCoords) {
+              geocodedPropertyCoordsRef.current[property._id] = placesCoords;
+              setGeocodeTick((tick) => tick + 1);
+              finish(placesCoords);
+              return;
+            }
+            tryCandidate(index + 1);
+            return;
+          }
+
+          geocodedPropertyCoordsRef.current[property._id] = coords;
+          setGeocodeTick((tick) => tick + 1);
+          finish(coords);
+        }
+      );
+    };
+
+    const startResolve = async () => {
+      const resolvedMapCoords = await resolvePropertyMapLinkCoordinates(property);
+      if (resolvedMapCoords) {
+        geocodedPropertyCoordsRef.current[property._id] = resolvedMapCoords;
+        setGeocodeTick((tick) => tick + 1);
+        finish(resolvedMapCoords);
+        return;
+      }
+      tryCandidate(0);
+    };
+
+    startResolve();
+  };
+
+  const focusPropertyOnMap = (property: Property) => {
+    setFocusedPropertyId(property._id);
+    const coords = getPropertyMapCoordinates(property);
+
+    if (coords && developerMapInstanceRef.current) {
+      developerMapInstanceRef.current.panTo(coords);
+      developerMapInstanceRef.current.setZoom(16);
+      return;
+    }
+
+    if (!window.google?.maps || !developerMapInstanceRef.current) return;
+    geocodePropertyForMap(property, window.google, (nextCoords) => {
+      developerMapInstanceRef.current?.panTo(nextCoords);
+      developerMapInstanceRef.current?.setZoom(16);
+    });
+  };
+
+  useEffect(() => {
+    if (!isDeveloperView) return;
+
+    const renderDeveloperMap = () => {
+      if (!developerMapRef.current || !window.google?.maps) return;
+      const google = window.google;
+      const cityCenter = getCityCenter(currentMapCity);
+
+      if (!developerMapInstanceRef.current) {
+        developerMapInstanceRef.current = new google.maps.Map(developerMapRef.current, {
+          center: { lat: cityCenter.lat, lng: cityCenter.lng },
+          zoom: cityCenter.zoom,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          styles: [
+            { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#dbe4ef' }] },
+            { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c7ddff' }] },
+          ],
+        });
+      }
+
+      developerMarkersRef.current.forEach((marker) => marker.setMap(null));
+      developerMarkersRef.current = [];
+
+      const bounds = new google.maps.LatLngBounds();
+      let markerCount = 0;
+      const coordinateUseCount: Record<string, number> = {};
+      const focusOnSelectedCity = () => {
+        developerMapInstanceRef.current.setCenter({ lat: cityCenter.lat, lng: cityCenter.lng });
+        developerMapInstanceRef.current.setZoom(cityCenter.zoom);
+      };
+
+      visibleProperties.forEach((property) => {
+        const coords = getPropertyMapCoordinates(property);
+        if (!coords) {
+          geocodePropertyForMap(property, google);
+          return;
+        }
+        const isSearchMatch = propertyMatchesSearch(property, activeSearchTerm);
+        const isFocused = focusedPropertyId === property._id;
+        const coordKey = `${coords.lat.toFixed(5)},${coords.lng.toFixed(5)}`;
+        const duplicateIndex = coordinateUseCount[coordKey] || 0;
+        coordinateUseCount[coordKey] = duplicateIndex + 1;
+        const markerCoords = duplicateIndex
+          ? (() => {
+              const angle = duplicateIndex * 1.618 * Math.PI;
+              const radius = Math.min(0.0025, 0.00035 + duplicateIndex * 0.00012);
+              return {
+                lat: coords.lat + Math.cos(angle) * radius,
+                lng: coords.lng + Math.sin(angle) * radius,
+              };
+            })()
+          : coords;
+
+        const marker = new google.maps.Marker({
+          position: markerCoords,
+          map: developerMapInstanceRef.current,
+          title: propertyTitle(property),
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: isFocused ? '#dc2626' : isSearchMatch ? '#f59e0b' : '#0d9488',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: isFocused ? 4 : 3,
+            scale: isFocused ? 14 : isSearchMatch ? 12 : 9,
+          },
+          zIndex: isFocused ? 1000 : isSearchMatch ? 500 : 1,
+        });
+
+        marker.addListener('click', () => {
+          setFocusedPropertyId(property._id);
+          requireLoginForDetails(property);
+        });
+        developerMarkersRef.current.push(marker);
+        bounds.extend(markerCoords);
+        markerCount += 1;
+      });
+
+      const focusedProperty = visibleProperties.find((property) => property._id === focusedPropertyId);
+      const focusedCoords = focusedProperty ? getPropertyMapCoordinates(focusedProperty) : null;
+      if (focusedCoords) {
+        developerMapInstanceRef.current.setCenter(focusedCoords);
+        developerMapInstanceRef.current.setZoom(16);
+      } else if (markerCount > 1) {
+        developerMapInstanceRef.current.fitBounds(bounds, 70);
+      } else if (markerCount === 1) {
+        developerMapInstanceRef.current.setCenter(bounds.getCenter());
+        developerMapInstanceRef.current.setZoom(14);
+      }
+      if (markerCount === 0 && activeSearchTerm) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode(
+          { address: `${activeSearchTerm}, ${currentMapCity}, India` },
+          (results: any, status: string) => {
+            if (status !== 'OK' || !results?.[0]?.geometry) {
+              focusOnSelectedCity();
+              return;
+            }
+            developerMapInstanceRef.current.setCenter(results[0].geometry.location);
+            developerMapInstanceRef.current.setZoom(12);
+          }
+        );
+      }
+      if (markerCount === 0 && !activeSearchTerm) focusOnSelectedCity();
+    };
+
+    if (!window.google?.maps) {
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', renderDeveloperMap, { once: true });
+        return;
+      }
+
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        setMapLoadError('Google Maps API key is required to show the real map.');
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&v=3.55`;
+      script.async = true;
+      script.onload = renderDeveloperMap;
+      script.onerror = () => setMapLoadError('Google Maps could not load. Please check the API key.');
+      document.head.appendChild(script);
+      return;
+    }
+
+    renderDeveloperMap();
+  }, [activeSearchTerm, currentMapCity, focusedPropertyId, geocodeTick, isDeveloperView, visibleProperties]);
+
+  const statCards = [
+    { label: 'Total Properties', value: properties.length || 0 },
+    { label: 'In Discussion', value: properties.filter((property) => property.dealStatus === 'booked').length || 0 },
+    { label: 'Deal Closed', value: properties.filter((property) => property.dealStatus === 'closed').length || 0 },
+    { label: 'Open For Deal', value: properties.filter((property) => property.dealStatus !== 'closed').length || 0 },
+  ];
+  const plotTypeFilters = [
+    { label: 'Open Plot', value: 'open-plot', icon: Grid },
+    { label: 'HMDA Layout', value: 'hmda-layout', icon: Layers },
+    { label: 'GP Layout', value: 'gp-layout', icon: MapPin },
+    { label: 'DTCP Layout', value: 'dtcp-layout', icon: Building },
+  ];
+  const developerTypeFilters = [
+    { label: 'Standalone', value: 'standalone', icon: Building },
+    { label: 'High-Rise', value: 'high-rise', icon: Building2 },
+    { label: 'Villa', value: 'villa', icon: Home },
+    { label: 'Plotted', value: 'plotted', icon: Grid },
+    ...plotTypeFilters,
+  ];
+  const activeTypeFilters = isPlotDealView ? plotTypeFilters : developerTypeFilters;
+  const marketplaceTypeFilters = [
+    ...developerTypeFilters,
+    ...plotTypeFilters.filter((filter) => !developerTypeFilters.some((item) => item.value === filter.value)),
+  ];
+  const visibleTypeFilters = isMarketplaceView ? marketplaceTypeFilters : activeTypeFilters;
+  const pageTitle = listingIntent === 'buy'
+    ? 'Buyer Contact & Requirement Info'
+    : listingIntent === 'sell'
+      ? 'Sell Plot Listings'
+      : isMarketplaceView ? 'Properties' : 'ForDeveloper Properties';
+  const developerIntentTabs = [
+    { label: 'ForDevelopers', value: 'development' },
+    { label: 'Buyers', value: 'buy' },
+    { label: 'Sell Plot', value: 'sell' },
+  ];
+  const switchDeveloperIntent = (intent: string) => {
+    const cityToKeep = currentMapCity || selectedCity || DEFAULT_CITY;
+    setSearchQuery('');
+    setPropertyNumberQuery('');
+    setFocusedPropertyId('');
+    setShowPropertyTypes(false);
+    setShowQuickSearch(false);
+    setFilters({
+      developmentType: 'All',
+      minArea: '',
+      maxArea: '',
+      ratio: 'All',
+      facing: 'All',
+      minGoodwill: '',
+      maxGoodwill: '',
+      city: cityToKeep,
+      zoningClassification: 'All',
+      maxOwnerShare: ''
+    });
+    setSearchParams({
+      view: isMarketplaceView ? 'marketplace' : 'developers',
+      listingIntent: intent,
+      city: cityToKeep
+    });
+  };
+  const timelineLabels: Record<string, string> = {
+    '1_to_3_months': '1 to 3 months',
+    '1_to_6_months': '1 to 6 months',
+    '1_to_12_months': '1 to 12 months',
+    immediate: 'Property Looking Immediately',
+    '3_months': '3 Months Time',
+    '1_year': '1 Year Time',
+    next_1_month: 'Next 1 Month',
+    next_3_months: 'Next 3 Months',
+    next_6_months: 'Next 6 Months',
+    within_1_year: 'Within 1 Year'
+  };
+  const rawPriceRangeMinValue = Math.min(
+    Math.max(Number(filters.minGoodwill || PRICE_RANGE_MIN), PRICE_RANGE_MIN),
+    PRICE_RANGE_MAX
+  );
+  const rawPriceRangeMaxValue = Math.min(
+    Math.max(Number(filters.maxGoodwill || PRICE_RANGE_MAX), PRICE_RANGE_MIN),
+    PRICE_RANGE_MAX
+  );
+  const priceRangeMinValue = Math.min(rawPriceRangeMinValue, rawPriceRangeMaxValue);
+  const priceRangeMaxValue = Math.max(rawPriceRangeMinValue, rawPriceRangeMaxValue);
+  const priceRangeMinPercent = ((priceRangeMinValue - PRICE_RANGE_MIN) / (PRICE_RANGE_MAX - PRICE_RANGE_MIN)) * 100;
+  const priceRangeMaxPercent = ((priceRangeMaxValue - PRICE_RANGE_MIN) / (PRICE_RANGE_MAX - PRICE_RANGE_MIN)) * 100;
+  if (showDashboardLayout) {
+    return (
+      <div className="min-h-screen bg-[#eef4fb] p-1.5 sm:p-3">
+        <div className={`mx-auto grid max-w-[1580px] gap-2.5 lg:gap-4 ${
+          isDeveloperView ? 'lg:grid-cols-[360px_1fr_500px]' : 'lg:grid-cols-[360px_minmax(0,1fr)]'
+        }`}>
+          <div className={`grid grid-cols-2 gap-1.5 sm:gap-4 ${
+            isDeveloperView ? 'lg:col-span-3' : 'lg:col-span-2'
+          } xl:grid-cols-4`}>
+            {statCards.map((stat, index) => (
+              <div key={stat.label} className="rounded-lg bg-white px-3 py-1.5 shadow-sm sm:rounded-xl sm:px-5 sm:py-3">
+                <p className="text-[11px] leading-4 text-slate-500 sm:text-xs">{stat.label}</p>
+                <div className="mt-0.5 flex items-end justify-between gap-3 sm:mt-1 sm:gap-4">
+                  <p className="text-lg font-semibold leading-6 text-slate-950 sm:text-2xl">{loading ? '-' : stat.value}</p>
+                  <div className="flex h-5 items-end gap-0.5 opacity-45 sm:h-7 sm:gap-1">
+                    {Array.from({ length: 8 }).map((_, barIndex) => (
+                      <span
+                        key={barIndex}
+                        className="w-0.5 rounded-full bg-slate-500"
+                        style={{ height: `${6 + ((barIndex + index) % 5) * 3}px` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <aside className="order-2 rounded-xl bg-white/60 p-2.5 lg:order-none">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-slate-950">Property Type</h2>
+              <button
+                type="button"
+                onClick={() => setShowPropertyTypes((prev) => !prev)}
+                className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm lg:hidden"
+                aria-expanded={showPropertyTypes}
+              >
+                {showPropertyTypes ? 'Hide' : 'Show'}
+                <ChevronDown className={`h-4 w-4 transition ${showPropertyTypes ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+            <div className={`${showPropertyTypes ? 'grid' : 'hidden'} mt-2.5 grid-cols-2 gap-2.5 lg:grid`}>
+              {visibleTypeFilters.map((item) => {
+                const Icon = item.icon;
+                const active = filters.developmentType === item.value || filters.zoningClassification === item.value;
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => handleFilterChange('developmentType', item.value)}
+                    className={`flex items-center gap-2 rounded-lg px-4 py-3.5 text-left text-sm shadow-sm transition ${
+                      active ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-teal-50'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-slate-950">Quick Property Search</h2>
+              <button
+                type="button"
+                onClick={() => setShowQuickSearch((prev) => !prev)}
+                className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm lg:hidden"
+                aria-expanded={showQuickSearch}
+              >
+                {showQuickSearch ? 'Hide' : 'Show'}
+                <ChevronDown className={`h-4 w-4 transition ${showQuickSearch ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+            <div className={`${showQuickSearch ? 'block' : 'hidden'} mt-2.5 space-y-4 rounded-xl bg-white p-3.5 shadow-sm lg:block`}>
+              {listingIntent === 'sell' && (
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-950">Price Range</h3>
+                    <button onClick={clearFilters} className="text-xs font-semibold text-teal-700">Reset</button>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-slate-800">
+                    Price Range: {formatPrice(String(priceRangeMinValue))} to {formatPrice(String(priceRangeMaxValue))}
+                  </p>
+                  <div className="mt-3">
+                    <div className="ld-range-field">
+                      <div className="ld-range-track" />
+                      <div
+                        className="ld-range-fill"
+                        style={{
+                          left: `${priceRangeMinPercent}%`,
+                          right: `${100 - priceRangeMaxPercent}%`
+                        }}
+                      />
+                      <input
+                        type="range"
+                        min={PRICE_RANGE_MIN}
+                        max={PRICE_RANGE_MAX}
+                        step={PRICE_RANGE_STEP}
+                        value={priceRangeMinValue}
+                        onChange={(e) => handleBudgetSliderChange('minGoodwill', e.target.value)}
+                        className="ld-range-input ld-range-input--min"
+                        aria-label="Minimum price"
+                      />
+                      <input
+                        type="range"
+                        min={PRICE_RANGE_MIN}
+                        max={PRICE_RANGE_MAX}
+                        step={PRICE_RANGE_STEP}
+                        value={priceRangeMaxValue}
+                        onChange={(e) => handleBudgetSliderChange('maxGoodwill', e.target.value)}
+                        className="ld-range-input ld-range-input--max"
+                        aria-label="Maximum price"
+                      />
+                    </div>
+                    <div className="mt-1 flex justify-between text-xs font-semibold text-slate-500">
+                      <span>10 Lakh</span>
+                      <span>100 Cr</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Area Range (Sq Yards)</label>
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                  <input type="number" value={filters.minArea} onChange={(e) => handleFilterChange('minArea', e.target.value)} placeholder="Min" className="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                  <span className="text-slate-500">-</span>
+                  <input type="number" value={filters.maxArea} onChange={(e) => handleFilterChange('maxArea', e.target.value)} placeholder="Max" className="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                </div>
+              </div>
+              {listingIntent !== 'sell' && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">{listingIntent === 'buy' ? 'Budget Range (Rs)' : 'Goodwill Range (₹)'}</label>
+                  <p className="mb-2 text-sm font-semibold text-slate-800">
+                    {formatPrice(String(priceRangeMinValue))} to {formatPrice(String(priceRangeMaxValue))}
+                  </p>
+                  <div className="ld-range-field">
+                    <div className="ld-range-track" />
+                    <div
+                      className="ld-range-fill"
+                      style={{
+                        left: `${priceRangeMinPercent}%`,
+                        right: `${100 - priceRangeMaxPercent}%`
+                      }}
+                    />
+                    <input
+                      type="range"
+                      min={PRICE_RANGE_MIN}
+                      max={PRICE_RANGE_MAX}
+                      step={PRICE_RANGE_STEP}
+                      value={priceRangeMinValue}
+                      onChange={(e) => handleBudgetSliderChange('minGoodwill', e.target.value)}
+                      className="ld-range-input ld-range-input--min"
+                      aria-label="Minimum goodwill"
+                    />
+                    <input
+                      type="range"
+                      min={PRICE_RANGE_MIN}
+                      max={PRICE_RANGE_MAX}
+                      step={PRICE_RANGE_STEP}
+                      value={priceRangeMaxValue}
+                      onChange={(e) => handleBudgetSliderChange('maxGoodwill', e.target.value)}
+                      className="ld-range-input ld-range-input--max"
+                      aria-label="Maximum goodwill"
+                    />
+                  </div>
+                  <div className="mt-1 flex justify-between text-xs font-semibold text-slate-500">
+                    <span>10 Lakh</span>
+                    <span>100 Cr</span>
+                  </div>
+                </div>
+              )}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Facing</label>
+                <select value={filters.facing} onChange={(e) => handleFilterChange('facing', e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                  {facings.map((facing) => <option key={facing} value={facing}>{facing}</option>)}
+                </select>
+              </div>
+              {listingIntent === 'development' && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Development Ratio (Owner : Builder)</label>
+                  <select value={filters.ratio} onChange={(e) => handleFilterChange('ratio', e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                    {ratios.map((ratio) => <option key={ratio} value={ratio}>{ratio === 'All' ? 'All Ratios' : ratio}</option>)}
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Zoning</label>
+                <select value={filters.zoningClassification} onChange={(e) => handleFilterChange('zoningClassification', e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                  {zoningOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Max Owner Share (%)</label>
+                <input type="number" value={filters.maxOwnerShare} onChange={(e) => handleFilterChange('maxOwnerShare', e.target.value)} placeholder="40" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+              </div>
+            </div>
+          </aside>
+
+          {isDeveloperView && (
+            <main className="order-1 relative min-h-[420px] overflow-hidden rounded-2xl bg-white shadow-sm sm:min-h-[560px] lg:order-none lg:min-h-[700px]">
+              <div className="absolute left-3 right-3 top-3 z-10 flex rounded-xl border border-white/70 bg-white/95 p-1 shadow-lg backdrop-blur lg:hidden">
+                {developerIntentTabs.map((tab) => {
+                  const active = listingIntent === tab.value;
+                  return (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      onClick={() => switchDeveloperIntent(tab.value)}
+                      className={`min-w-0 flex-1 rounded-lg px-2 py-2 text-[12px] font-semibold leading-tight transition ${
+                        active ? 'bg-teal-700 text-white shadow-sm' : 'text-slate-700 hover:bg-teal-50 hover:text-teal-700'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div ref={developerMapRef} className="absolute inset-0 h-full w-full bg-slate-100" />
+              {mapLoadError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-100/95 p-6 text-center">
+                  <div className="max-w-sm rounded-xl bg-white p-5 shadow-sm">
+                    <MapPin className="mx-auto h-8 w-8 text-teal-700" />
+                    <p className="mt-3 text-sm font-semibold text-slate-950">Real map unavailable</p>
+                    <p className="mt-2 text-sm text-slate-600">{mapLoadError}</p>
+                  </div>
+                </div>
+              )}
+            </main>
+          )}
+
+          <aside className={`order-3 flex h-auto min-h-[360px] flex-col overflow-hidden rounded-xl bg-white/40 p-2.5 sm:p-3 ${
+            isDeveloperView
+              ? 'max-h-[75vh] lg:h-[calc(100vh-24px)] lg:min-h-[620px] lg:max-h-none'
+              : 'max-h-[78vh] lg:h-[calc(100vh-140px)] lg:min-h-[620px] lg:max-h-[780px]'
+          }`}>
+            <div className="mb-3 flex shrink-0 flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base font-semibold text-slate-950">{pageTitle}</h2>
+                <button onClick={() => setShowMobileFilters(true)} className="rounded-full bg-white p-2 shadow-sm">
+                  <SlidersHorizontal className="h-5 w-5 text-slate-700" />
+                </button>
+              </div>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={propertyNumberQuery}
+                  onChange={(event) => setPropertyNumberQuery(event.target.value)}
+                  placeholder="Search property no. TEL-DP-101"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-9 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                />
+                {propertyNumberQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setPropertyNumberQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    aria-label="Clear property number search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
+              {loading && Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="h-44 animate-pulse rounded-xl bg-white shadow-sm" />
+              ))}
+              {!loading && properties.length > 0 && visibleProperties.length === 0 && (
+                <div className="rounded-xl border border-slate-200 bg-white p-5 text-center text-sm font-semibold text-slate-500 shadow-sm">
+                  No properties found for this property number.
+                </div>
+              )}
+              {!loading && visibleProperties.length > 0 && visibleProperties.map((property) => (
+                <article key={property._id} className={`grid grid-cols-[130px_minmax(0,1fr)] gap-2.5 overflow-hidden rounded-xl border bg-white p-2 shadow-sm sm:grid-cols-[165px_minmax(0,1fr)] ${
+                  focusedPropertyId === property._id
+                    ? 'border-red-300 ring-2 ring-red-100'
+                    : propertyMatchesSearch(property, activeSearchTerm) ? 'border-amber-300 ring-2 ring-amber-100' : 'border-slate-100'
+                }`}>
+                  {(() => {
+                    const propertyIntent = getPropertyIntent(property);
+                    const isPropertyPlotDeal = propertyIntent === 'buy' || propertyIntent === 'sell';
+                    return (
+                      <>
+                        <div className="relative h-[152px] overflow-hidden rounded-lg bg-slate-100 sm:h-[170px]">
+                          <img
+                            src={getCardImageSrc(property)}
+                            alt={propertyTitle(property)}
+                            className={`h-full w-full ${isGeneratedDiagramPreview(property) || isBuyerAvatarFallback(property) ? 'bg-white object-contain p-2' : 'object-cover'}`}
+                            onError={(e) => {
+                              e.currentTarget.src = getCardFallbackImage(property);
+                              e.currentTarget.className = `h-full w-full ${getPropertyIntent(property) === 'buy' ? 'bg-white object-contain p-2' : 'object-cover'}`;
+                            }}
+                          />
+                          <span className={`absolute left-1.5 top-1.5 rounded px-1.5 py-1 text-[10px] font-semibold text-white ${
+                            property.dealStatus === 'closed' ? 'bg-red-600' : 'bg-emerald-500'
+                          }`}>
+                            {property.dealStatus === 'closed' ? 'Closed' : 'Available'}
+                          </span>
+                        </div>
+                        <div className="flex min-w-0 flex-col">
+                          <h3 className="line-clamp-1 text-[15px] font-semibold capitalize leading-6 text-slate-950">
+                            {propertyIntent === 'buy' ? `Buyer requirement in ${getDisplayLocality(property)}` : propertyTitle(property)}
+                          </h3>
+                          <span className="mt-0.5 w-fit rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-blue-800">
+                            {getPropertyNumber(property, listingIntent)}
+                          </span>
+                          <div className="mt-0.5 flex items-start gap-1 text-[13px] leading-5 text-slate-500">
+                            <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                            <button
+                              type="button"
+                              onClick={() => focusPropertyOnMap(property)}
+                              className={`line-clamp-2 min-w-0 flex-1 rounded px-1 text-left transition hover:bg-teal-50 hover:text-teal-700 ${
+                                focusedPropertyId === property._id
+                                  ? 'bg-red-50 font-semibold text-red-700'
+                                  : propertyMatchesSearch(property, activeSearchTerm) ? 'bg-amber-50 font-semibold text-amber-700' : ''
+                              }`}
+                            >
+                              {propertyIntent === 'buy' ? 'Desired location: ' : ''}{getDisplayLocality(property)}, {property.city}
+                            </button>
+                            <span className="shrink-0 text-[11px] font-bold leading-5 text-red-600">
+                              {getListingIntentLabel(property)}
+                            </span>
+                          </div>
+                          {propertyIntent === 'buy' && property.purchaseTimeline && (
+                            <p className="mt-0.5 line-clamp-1 text-[13px] font-semibold text-teal-700">
+                              Looking property for: {timelineLabels[property.purchaseTimeline] || property.purchaseTimeline}
+                            </p>
+                          )}
+                          {property.landmark && (
+                            <p className="mt-0.5 line-clamp-1 text-[13px] text-slate-500">Near {property.landmark}</p>
+                          )}
+                          <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[12px]">
+                            <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                              <p className="text-slate-500">Area</p>
+                              <p className="line-clamp-2 font-bold leading-4 text-slate-950">{property.totalArea} {property.areaUnit}</p>
+                            </div>
+                            <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                              <p className="text-slate-500">Facing</p>
+                              <p className="line-clamp-1 font-bold leading-4 text-slate-950">{property.facing || 'N/A'}</p>
+                            </div>
+                          </div>
+                          {isPropertyPlotDeal ? (
+                            <div className="mt-1 rounded-md bg-slate-50 px-1.5 py-1 text-[12px]">
+                              <span className="text-slate-500">{propertyIntent === 'buy' ? 'Budget / Sq Yard' : 'Square Yard Price'}</span>
+                              <p className="line-clamp-1 font-bold leading-4 text-teal-700">{property.squareYardPrice ? formatPrice(property.squareYardPrice) : 'Price on request'}</p>
+                            </div>
+                          ) : (
+                            <div className="mt-1 grid grid-cols-2 gap-1.5 text-[12px]">
+                              <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                                <span className="text-slate-500">Goodwill</span>
+                                <p className="line-clamp-1 font-bold leading-4 text-green-600">{property.goodwill ? formatPrice(property.goodwill) : 'Not Required'}</p>
+                              </div>
+                              <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                                <span className="text-slate-500">Advance</span>
+                                <p className="line-clamp-1 font-bold leading-4 text-blue-600">{property.advance ? formatPrice(property.advance) : 'Not Required'}</p>
+                              </div>
+                            </div>
+                          )}
+                          {isMarketplaceView && property.description && (
+                            <p className="mt-1.5 line-clamp-2 rounded-md bg-slate-50 px-2 py-1.5 text-[12px] leading-5 text-slate-600">
+                              <span className="font-semibold text-slate-700">Description: </span>
+                              {property.description}
+                            </p>
+                          )}
+                          <button
+                            onClick={() => requireLoginForDetails(property)}
+                            disabled={detailLoadingId === property._id}
+                            className="mt-2 h-7 w-fit min-w-[112px] self-start rounded-md bg-slate-950 px-4 text-[12px] font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
+                          >
+                            {detailLoadingId === property._id ? 'Opening...' : 'View Details'}
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </article>
+              ))}
+            </div>
+          </aside>
+        </div>
+        {showLoginModal && (
+          <LoginModal
+            onClose={() => setShowLoginModal(false)}
+            onLoginSuccess={() => {
+              setShowLoginModal(false);
+              const pendingProperty = properties.find((property) => property._id === pendingPropertyId);
+              if (pendingProperty) requireLoginForDetails(pendingProperty);
+            }}
+          />
+        )}
+        {showMembershipModal && (
+          <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 pointer-events-none">
+            <div className="pointer-events-auto w-full max-w-lg rounded-lg border border-slate-200 bg-white p-7 text-center shadow-2xl">
+              <Lock className="mx-auto h-11 w-11 text-teal-700" />
+              <p className="ld-eyebrow mt-5">Membership Required</p>
+              <h1 className="mt-2 text-3xl font-black text-slate-950">Upgrade your membership</h1>
+              <p className="mt-4 leading-7 text-slate-600">{membershipModalCopy}</p>
+              <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+                <Link to={membershipUrl} className="ld-btn-primary">
+                  Membership
+                </Link>
+                <button type="button" onClick={() => setShowMembershipModal(false)} className="ld-btn-ghost">
+                  Continue Browsing
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <section className="bg-slate-950 px-4 py-12 text-white">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-sm font-bold uppercase tracking-wide text-amber-300">Marketplace</p>
+          <h1 className="mt-2 text-4xl font-black tracking-tight md:text-6xl">Verified development listings</h1>
+          <p className="mt-4 max-w-2xl text-slate-300">Search curated land opportunities by location, area, zoning, and commercial expectations.</p>
+        </div>
+      </section>
+      {/* Header with Search */}
+      <div className="sticky top-20 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Search by location, project name..."
+                className="ld-input pl-10"
+              />
+            </div>
+
+            {/* Search & Filter Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleSearch}
+                className="ld-btn-primary px-6 py-3"
+              >
+                <Search className="h-5 w-5" />
+                <span className="hidden sm:inline">Search</span>
+              </button>
+              <button
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+                className="md:hidden bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-200 flex items-center gap-2"
+              >
+                <SlidersHorizontal className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex gap-6">
+          {/* Filters Sidebar */}
+          <div className={`${showMobileFilters ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : 'hidden'} md:block md:relative md:w-80 flex-shrink-0`}>
+                          <div className="sticky top-40 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              {/* Mobile Close Button */}
+              <div className="md:hidden flex justify-between items-center mb-4 pb-4 border-b">
+                <h3 className="text-lg font-semibold">Filters</h3>
+                <button onClick={() => setShowMobileFilters(false)}>
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold hidden md:block">Filters</h3>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                >
+                  Clear All
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {/* City Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    City
+                  </label>
+                  <select
+                    value={filters.city}
+                    onChange={(e) => handleFilterChange('city', e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                  >
+                    {cities.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Development Type */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-950 mb-2">
+                    Property Type
+                  </label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => handleFilterChange('developmentType', 'All')}
+                      className={`rounded-lg px-4 py-3 text-left text-sm shadow-sm transition ${
+                        filters.developmentType === 'All' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 hover:bg-teal-50'
+                      }`}
+                    >
+                      All Types
+                    </button>
+                    {activeTypeFilters.map((item) => {
+                      const Icon = item.icon;
+                      const active = filters.developmentType === item.value;
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => handleFilterChange('developmentType', item.value, true)}
+                          className={`flex items-center gap-2 rounded-lg px-4 py-3 text-left text-sm shadow-sm transition ${
+                            active ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 hover:bg-teal-50'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-slate-50 p-3.5">
+                  <h4 className="mb-4 text-sm font-semibold text-slate-950">Quick Property Search</h4>
+                  {/* Area Range */}
+                  <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Area Range (Sq Yards)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={filters.minArea}
+                      onChange={(e) => handleFilterChange('minArea', e.target.value)}
+                      placeholder="Min"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                    />
+                    <span className="self-center text-gray-500">-</span>
+                    <input
+                      type="number"
+                      value={filters.maxArea}
+                      onChange={(e) => handleFilterChange('maxArea', e.target.value)}
+                      placeholder="Max"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                  </div>
+
+                {listingIntent !== 'sell' && (
+                  <>
+                    {/* Goodwill Range */}
+                    <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {listingIntent === 'buy' ? 'Budget Range (Rs)' : 'Goodwill Range (₹)'}
+                  </label>
+                  <p className="mb-2 text-sm font-semibold text-slate-800">
+                    {formatPrice(String(priceRangeMinValue))} to {formatPrice(String(priceRangeMaxValue))}
+                  </p>
+                  <div className="ld-range-field">
+                    <div className="ld-range-track" />
+                    <div
+                      className="ld-range-fill"
+                      style={{
+                        left: `${priceRangeMinPercent}%`,
+                        right: `${100 - priceRangeMaxPercent}%`
+                      }}
+                    />
+                    <input
+                      type="range"
+                      min={PRICE_RANGE_MIN}
+                      max={PRICE_RANGE_MAX}
+                      step={PRICE_RANGE_STEP}
+                      value={priceRangeMinValue}
+                      onChange={(e) => handleBudgetSliderChange('minGoodwill', e.target.value)}
+                      className="ld-range-input ld-range-input--min"
+                      aria-label="Minimum goodwill"
+                    />
+                    <input
+                      type="range"
+                      min={PRICE_RANGE_MIN}
+                      max={PRICE_RANGE_MAX}
+                      step={PRICE_RANGE_STEP}
+                      value={priceRangeMaxValue}
+                      onChange={(e) => handleBudgetSliderChange('maxGoodwill', e.target.value)}
+                      className="ld-range-input ld-range-input--max"
+                      aria-label="Maximum goodwill"
+                    />
+                  </div>
+                  <div className="mt-1 flex justify-between text-xs font-semibold text-slate-500">
+                    <span>10 Lakh</span>
+                    <span>100 Cr</span>
+                  </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Facing */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Facing
+                  </label>
+                  <select
+                    value={filters.facing}
+                    onChange={(e) => handleFilterChange('facing', e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                  >
+                    {facings.map(facing => (
+                      <option key={facing} value={facing}>{facing}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {listingIntent === 'development' && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Development Ratio (Owner : Builder)
+                    </label>
+                    <select
+                      value={filters.ratio}
+                      onChange={(e) => handleFilterChange('ratio', e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                    >
+                      {ratios.map(ratio => (
+                        <option key={ratio} value={ratio}>
+                          {ratio === 'All' ? 'All Ratios' : ratio}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Zoning</label>
+                  <select
+                    value={filters.zoningClassification}
+                    onChange={(e) => handleFilterChange('zoningClassification', e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                  >
+                    {zoningOptions.map(option => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Max Owner Share (%)</label>
+                  <input
+                    type="number"
+                    value={filters.maxOwnerShare}
+                    onChange={(e) => handleFilterChange('maxOwnerShare', e.target.value)}
+                    placeholder="40"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                {/* Apply Button (Mobile) */}
+                <button
+                  onClick={() => {
+                    handleSearch();
+                    setShowMobileFilters(false);
+                  }}
+                  className="md:hidden w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-medium"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+          </div>
+
+          {/* Properties List */}
+          <div className="flex-1">
+            {/* Results Header */}
+            <div className="mb-6 flex items-center justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  {loading ? 'Searching...' : `${properties.length} Properties Found`}
+                </h2>
+                {searchQuery && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    for "{searchQuery}"
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-teal-100 text-teal-600' : 'bg-gray-100 text-gray-600'}`}
+                >
+                  <Grid className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-teal-100 text-teal-600' : 'bg-gray-100 text-gray-600'}`}
+                >
+                  <List className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Loading State */}
+            {loading && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
+                    <div className="h-48 bg-gray-200"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-full"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* No Results */}
+            {!loading && properties.length === 0 && listingIntent !== 'buy' && (
+              <div className="rounded-lg border border-slate-200 bg-white p-12 text-center shadow-sm">
+                <MapPin className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Found</h3>
+                <p className="text-gray-600 mb-4">Try adjusting your filters or search criteria</p>
+                <button
+                  onClick={clearFilters}
+                  className="text-teal-600 hover:text-teal-700 font-medium"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+
+            {/* Properties Grid/List */}
+            {!loading && properties.length > 0 && (
+              <div className={viewMode === 'grid' 
+                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' 
+                : 'space-y-4'
+              }>
+                {properties.map((property) => (
+                  <div
+                    key={property._id}
+                    className={`overflow-hidden rounded-lg border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${
+                      viewMode === 'list' ? 'flex gap-4' : ''
+                    } ${viewMode === 'grid' ? 'flex h-full flex-col' : ''} ${
+                      propertyMatchesSearch(property, activeSearchTerm) ? 'border-amber-300 ring-2 ring-amber-100' : 'border-slate-200'
+                    }`}
+                  >
+                    {/* Property Image */}
+                    <div className={`relative ${viewMode === 'list' ? 'w-64 flex-shrink-0' : 'h-48'} bg-gray-200 overflow-hidden ${viewMode === 'grid' ? 'rounded-t-lg' : 'rounded-l-lg'}`}>
+                      <img
+                        src={getCardImageSrc(property)}
+                        alt={property.projectName}
+                        className={`h-full w-full ${isGeneratedDiagramPreview(property) || isBuyerAvatarFallback(property) ? 'bg-white object-contain p-2' : 'object-cover'}`}
+                        onError={(e) => {
+                          e.currentTarget.src = getCardFallbackImage(property);
+                          e.currentTarget.className = `h-full w-full ${getPropertyIntent(property) === 'buy' ? 'bg-white object-contain p-2' : 'object-cover'}`;
+                        }}
+                      />
+                      <span className="absolute top-2 right-2 bg-teal-600 text-white px-3 py-1 rounded-full text-xs">
+                        {property.developmentType}
+                      </span>
+                    </div>
+
+                    {/* Property Details */}
+                    <div className="flex flex-1 flex-col p-4">
+                      <h3 className="mb-2 line-clamp-1 text-lg font-semibold capitalize text-gray-900">
+                        {listingIntent === 'buy' ? `Buyer requirement in ${getDisplayLocality(property)}` : propertyTitle(property)}
+                      </h3>
+                      <div className="flex items-center text-sm text-gray-600 mb-3">
+                        <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                        <span className={`line-clamp-1 min-w-0 flex-1 ${
+                          propertyMatchesSearch(property, activeSearchTerm) ? 'rounded bg-amber-50 px-1 font-semibold text-amber-700' : ''
+                        }`}>{listingIntent === 'buy' ? 'Desired location: ' : ''}{getDisplayLocality(property)}, {property.city}</span>
+                        <span className="ml-2 shrink-0 text-xs font-bold text-red-600">
+                          {getListingIntentLabel(property)}
+                        </span>
+                      </div>
+                      {listingIntent === 'buy' && property.purchaseTimeline && (
+                        <p className="mb-3 text-sm font-semibold text-teal-700">
+                          Looking property for: {timelineLabels[property.purchaseTimeline] || property.purchaseTimeline}
+                        </p>
+                      )}
+
+                      {property.landmark && (
+                        <p className="text-xs text-gray-500 mb-3">Near {property.landmark}</p>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                        <div>
+                          <span className="text-gray-600">Area:</span>
+                          <span className="font-semibold ml-1">{property.totalArea} {property.areaUnit}</span>
+                        </div>
+                        {property.facing && (
+                          <div>
+                            <span className="text-gray-600">Facing:</span>
+                            <span className="font-semibold ml-1">{property.facing}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-auto border-t pt-3">
+                        <div className="mb-3 min-h-10">
+                          <div>
+                            {isPlotDealView ? (
+                              <div className="text-sm">
+                                <span className="text-gray-600">{listingIntent === 'buy' ? 'Budget / Sq Yard:' : 'Square Yard Price:'}</span>
+                                <span className="font-bold text-teal-700 ml-1">
+                                  {property.squareYardPrice ? formatPrice(property.squareYardPrice) : 'Price on request'}
+                                </span>
+                              </div>
+                            ) : (
+                              <>
+                                {property.goodwill && (
+                                  <div className="text-sm">
+                                    <span className="text-gray-600">Goodwill:</span>
+                                    <span className="font-bold text-green-600 ml-1">
+                                      {formatPrice(property.goodwill)}
+                                    </span>
+                                  </div>
+                                )}
+                                {property.advance && (
+                                  <div className="text-sm">
+                                    <span className="text-gray-600">Advance:</span>
+                                    <span className="font-bold text-blue-600 ml-1">
+                                      {formatPrice(property.advance)}
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => requireLoginForDetails(property)}
+                          disabled={detailLoadingId === property._id}
+                          className="block w-full rounded-lg bg-slate-950 py-3 text-center font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
+                        >
+                          {detailLoadingId === property._id ? 'Opening...' : 'View Details'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onLoginSuccess={() => {
+            setShowLoginModal(false);
+            const pendingProperty = properties.find((property) => property._id === pendingPropertyId);
+            if (pendingProperty) requireLoginForDetails(pendingProperty);
+          }}
+        />
+      )}
+      {showMembershipModal && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 pointer-events-none">
+          <div className="pointer-events-auto w-full max-w-lg rounded-lg border border-slate-200 bg-white p-7 text-center shadow-2xl">
+            <Lock className="mx-auto h-11 w-11 text-teal-700" />
+            <p className="ld-eyebrow mt-5">Membership Required</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-950">Upgrade your membership</h1>
+            <p className="mt-4 leading-7 text-slate-600">{membershipModalCopy}</p>
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link to={membershipUrl} className="ld-btn-primary">
+                Membership
+              </Link>
+              <button type="button" onClick={() => setShowMembershipModal(false)} className="ld-btn-ghost">
+                Continue Browsing
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PropertiesListingPage;

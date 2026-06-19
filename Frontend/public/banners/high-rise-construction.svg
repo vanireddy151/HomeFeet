@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#77b7ef"/>
+      <stop offset="0.62" stop-color="#cfe8fb"/>
+      <stop offset="1" stop-color="#eef4f8"/>
+    </linearGradient>
+    <linearGradient id="shade" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1900" height="900" fill="url(#sky)"/>
+  <rect y="705" width="1900" height="195" fill="#d8d1c3"/>
+  <rect x="115" y="618" width="1640" height="86" fill="#b8a99b"/>
+  <g opacity=".16" stroke="#fff" stroke-width="2">
+    <path d="M0 730H1900M0 780H1900M0 830H1900"/>
+  </g>
+  <g stroke="#b45309" stroke-width="12" stroke-linecap="round">
+    <path d="M540 690V100M770 690V80M1195 690V95M1475 690V145"/>
+  </g>
+  <g stroke="#f59e0b" stroke-width="9" stroke-linecap="round">
+    <path d="M418 120H840M622 88L910 188M1045 118H1540M1270 96L1640 215M1350 162H1810"/>
+    <path d="M512 122l-82 120M760 82l-64 130M1196 96l-84 132M1474 145l-92 126"/>
+  </g>
+  <g fill="url(#shade)" stroke="#475569" stroke-width="5">
+    <rect x="210" y="235" width="245" height="455"/>
+    <rect x="485" y="165" width="260" height="525"/>
+    <rect x="835" y="250" width="210" height="440"/>
+    <rect x="1100" y="190" width="255" height="500"/>
+    <rect x="1435" y="275" width="220" height="415"/>
+  </g>
+  <g fill="#e2e8f0">
+    <g transform="translate(235 270)">
+      <rect width="32" height="34"/><rect x="54" width="32" height="34"/><rect x="108" width="32" height="34"/><rect x="162" width="32" height="34"/>
+      <rect y="70" width="32" height="34"/><rect x="54" y="70" width="32" height="34"/><rect x="108" y="70" width="32" height="34"/><rect x="162" y="70" width="32" height="34"/>
+      <rect y="140" width="32" height="34"/><rect x="54" y="140" width="32" height="34"/><rect x="108" y="140" width="32" height="34"/><rect x="162" y="140" width="32" height="34"/>
+      <rect y="210" width="32" height="34"/><rect x="54" y="210" width="32" height="34"/><rect x="108" y="210" width="32" height="34"/><rect x="162" y="210" width="32" height="34"/>
+    </g>
+    <g transform="translate(520 205)">
+      <rect width="34" height="38"/><rect x="58" width="34" height="38"/><rect x="116" width="34" height="38"/><rect x="174" width="34" height="38"/>
+      <rect y="80" width="34" height="38"/><rect x="58" y="80" width="34" height="38"/><rect x="116" y="80" width="34" height="38"/><rect x="174" y="80" width="34" height="38"/>
+      <rect y="160" width="34" height="38"/><rect x="58" y="160" width="34" height="38"/><rect x="116" y="160" width="34" height="38"/><rect x="174" y="160" width="34" height="38"/>
+      <rect y="240" width="34" height="38"/><rect x="58" y="240" width="34" height="38"/><rect x="116" y="240" width="34" height="38"/><rect x="174" y="240" width="34" height="38"/>
+    </g>
+    <g transform="translate(1140 230)">
+      <rect width="34" height="38"/><rect x="60" width="34" height="38"/><rect x="120" width="34" height="38"/><rect x="180" width="34" height="38"/>
+      <rect y="82" width="34" height="38"/><rect x="60" y="82" width="34" height="38"/><rect x="120" y="82" width="34" height="38"/><rect x="180" y="82" width="34" height="38"/>
+      <rect y="164" width="34" height="38"/><rect x="60" y="164" width="34" height="38"/><rect x="120" y="164" width="34" height="38"/><rect x="180" y="164" width="34" height="38"/>
+      <rect y="246" width="34" height="38"/><rect x="60" y="246" width="34" height="38"/><rect x="120" y="246" width="34" height="38"/><rect x="180" y="246" width="34" height="38"/>
+    </g>
+  </g>
+  <g fill="#334155">
+    <rect x="260" y="640" width="154" height="52"/>
+    <rect x="515" y="610" width="200" height="82"/>
+    <rect x="1160" y="622" width="165" height="70"/>
+    <rect x="1492" y="636" width="120" height="56"/>
+  </g>
+  <path d="M0 900H1900V760c-265 60-545 86-842 48-270-34-530-26-760 30-110 26-210 44-298 50Z" fill="#64748b" opacity=".28"/>
+</svg>
