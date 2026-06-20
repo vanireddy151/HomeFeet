@@ -1,6 +1,22 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Building2, Image, MapPin, Ruler, ShieldCheck, Upload, Video } from 'lucide-react';
+import {
+  ArrowUpDown,
+  Building2,
+  Car,
+  Droplet,
+  Dumbbell,
+  Image,
+  MapPin,
+  Ruler,
+  Shield,
+  ShieldCheck,
+  Trees,
+  Upload,
+  Users,
+  Video,
+  Zap
+} from 'lucide-react';
 import { API_BASE, API_ORIGIN } from '../lib/api';
 import { isAdminPhone } from '../lib/admin';
 
@@ -1272,7 +1288,16 @@ const PostProperty = () => {
     setExistingMedia(prev => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== index) }));
   };
 
-  const AMENITY_OPTIONS = ['Parking', 'Lift', 'Power Backup', 'Security', 'Gym', 'Clubhouse', 'Water Supply', 'Park'];
+  const AMENITY_OPTIONS = [
+    { label: 'Parking', icon: Car },
+    { label: 'Lift', icon: ArrowUpDown },
+    { label: 'Power Backup', icon: Zap },
+    { label: 'Security', icon: Shield },
+    { label: 'Gym', icon: Dumbbell },
+    { label: 'Clubhouse', icon: Users },
+    { label: 'Water Supply', icon: Droplet },
+    { label: 'Park', icon: Trees }
+  ];
 
   const toggleAmenity = (amenity: string) => {
     setFormData(prev => ({
@@ -2733,7 +2758,7 @@ const PostProperty = () => {
       <div>
         <p className="mb-2 text-sm font-semibold text-slate-800">Amenities Details</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {AMENITY_OPTIONS.map((amenity) => (
+          {AMENITY_OPTIONS.map(({ label: amenity, icon: AmenityIcon }) => (
             <label
               key={amenity}
               className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
@@ -2748,6 +2773,7 @@ const PostProperty = () => {
                 onChange={() => toggleAmenity(amenity)}
                 className="h-4 w-4 accent-teal-700"
               />
+              <AmenityIcon className="h-4 w-4 text-teal-700" />
               {amenity}
             </label>
           ))}
