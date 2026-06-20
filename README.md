@@ -7,7 +7,7 @@ This is a full-stack web application that allows users to post, browse, and expr
 ## 📁 Project Structure
 
 ```
-FINDINGLAND/
+HomeFeet/
 ├── backend/             # Node.js + Express + MongoDB backend
 ├── Frontend/            # React + Tailwind + Vite frontend
 ├── .gitignore
