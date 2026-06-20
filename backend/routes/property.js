@@ -428,7 +428,8 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       facing, roadFacingDirection, roadSize, frontageWidth, pincode, zoningClassification,
       developerRatio, partlySale, partlySaleUnit, partlySaleValue, partlySalePrice,
       state, city, locality, societyName, landmark, map, goodwill, advance,
-      squareYardPrice, purchaseTimeline, description, address, selectedAmenities, coordinates
+      squareYardPrice, purchaseTimeline, description, address, selectedAmenities, coordinates,
+      bedrooms, bathrooms, floorNumber, totalFloors, furnishingStatus, possessionStatus
     } = req.body;
 
     // Get user details from token
@@ -490,6 +491,12 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       frontageWidth,
       pincode,
       zoningClassification,
+      bedrooms: bedrooms || '',
+      bathrooms: bathrooms || '',
+      floorNumber: floorNumber || '',
+      totalFloors: totalFloors || '',
+      furnishingStatus: furnishingStatus || '',
+      possessionStatus: possessionStatus || '',
       developerRatio: listingIntent === 'development' ? developerRatio : '',
       partlySale: listingIntent === 'development' ? (partlySale || '') : '',
       partlySaleUnit: listingIntent === 'development' ? (partlySaleUnit || 'Square Yard') : '',

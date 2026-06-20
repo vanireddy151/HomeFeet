@@ -28,6 +28,12 @@ interface Property {
   developerRatio?: string;
   source?: string;
   intakePeriod?: string;
+  bedrooms?: string;
+  bathrooms?: string;
+  floorNumber?: string;
+  totalFloors?: string;
+  furnishingStatus?: string;
+  possessionStatus?: string;
 }
 
 const stateCapitalOptions = [
@@ -2098,6 +2104,36 @@ const AdminPanel: React.FC = () => {
                     <div>
                       <p className="text-sm text-gray-600">Facing</p>
                       <p className="font-semibold">{selectedProperty.facing}</p>
+                    </div>
+                  )}
+                  {selectedProperty.bedrooms && (
+                    <div>
+                      <p className="text-sm text-gray-600">Bedrooms</p>
+                      <p className="font-semibold">{selectedProperty.bedrooms}</p>
+                    </div>
+                  )}
+                  {selectedProperty.bathrooms && (
+                    <div>
+                      <p className="text-sm text-gray-600">Bathrooms</p>
+                      <p className="font-semibold">{selectedProperty.bathrooms}</p>
+                    </div>
+                  )}
+                  {selectedProperty.floorNumber && (
+                    <div>
+                      <p className="text-sm text-gray-600">Floor</p>
+                      <p className="font-semibold">{selectedProperty.floorNumber}{selectedProperty.totalFloors ? ` of ${selectedProperty.totalFloors}` : ''}</p>
+                    </div>
+                  )}
+                  {selectedProperty.furnishingStatus && (
+                    <div>
+                      <p className="text-sm text-gray-600">Furnishing</p>
+                      <p className="font-semibold">{selectedProperty.furnishingStatus}</p>
+                    </div>
+                  )}
+                  {selectedProperty.possessionStatus && (
+                    <div>
+                      <p className="text-sm text-gray-600">Possession Status</p>
+                      <p className="font-semibold">{selectedProperty.possessionStatus}</p>
                     </div>
                   )}
                   {selectedProperty.developerRatio && (

@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   BadgeCheck,
+  Bath,
+  BedDouble,
   Building2,
   Check,
   Compass,
@@ -195,15 +197,22 @@ const PropertyDetails: React.FC = () => {
     : false;
   const developerRatioLabel = isKarnatakaListing ? 'JV Ratio (Owner:Builder)' : 'Development Ratio (Owner : Builder)';
 
+  const isApartmentListing = String(property?.developmentType || '').toLowerCase() === 'apartment';
+
   const metrics = property ? [
     { icon: Ruler, label: 'Total Area', value: property.totalArea ? `${property.totalArea} ${property.areaUnit || ''}` : '' },
     { icon: IndianRupee, label: 'Square Yard Price', value: formatMoney(property.squareYardPrice) },
-    { icon: Users, label: developerRatioLabel, value: property.developerRatio },
+    { icon: BedDouble, label: 'Bedrooms', value: property.bedrooms },
+    { icon: Bath, label: 'Bathrooms', value: property.bathrooms },
+    { icon: Users, label: developerRatioLabel, value: isApartmentListing ? '' : property.developerRatio },
     { icon: Compass, label: 'Facing', value: property.facing },
     { icon: IndianRupee, label: 'Goodwill', value: formatMoney(property.goodwill) },
   ].filter((item) => item.value) : [];
 
   const details = property ? [
+    { label: 'Floor', value: property.floorNumber ? `${property.floorNumber}${property.totalFloors ? ` of ${property.totalFloors}` : ''}` : '' },
+    { label: 'Furnishing', value: property.furnishingStatus },
+    { label: 'Possession Status', value: property.possessionStatus },
     { label: 'Road Size', value: property.roadSize ? `${property.roadSize} ft` : '' },
     { label: 'Frontage', value: property.frontageWidth ? `${property.frontageWidth} ft` : '' },
     { label: 'Road Facing Direction', value: property.roadFacingDirection },

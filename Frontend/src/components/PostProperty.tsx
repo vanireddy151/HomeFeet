@@ -164,6 +164,12 @@ const PostProperty = () => {
     frontageWidth: '',
     pincode: '',
     zoningClassification: '',
+    bedrooms: '',
+    bathrooms: '',
+    floorNumber: '',
+    totalFloors: '',
+    furnishingStatus: '',
+    possessionStatus: '',
     developerRatio: '',
     partlySale: '',
     partlySaleUnit: 'Square Yard',
@@ -264,6 +270,12 @@ const PostProperty = () => {
       frontageWidth: prefill.frontageWidth || prev.frontageWidth,
       pincode: prefill.pincode || prev.pincode,
       zoningClassification: prefill.zoningClassification || prev.zoningClassification,
+      bedrooms: prefill.bedrooms || prev.bedrooms,
+      bathrooms: prefill.bathrooms || prev.bathrooms,
+      floorNumber: prefill.floorNumber || prev.floorNumber,
+      totalFloors: prefill.totalFloors || prev.totalFloors,
+      furnishingStatus: prefill.furnishingStatus || prev.furnishingStatus,
+      possessionStatus: prefill.possessionStatus || prev.possessionStatus,
       developerRatio: prefill.developerRatio || prev.developerRatio,
       state: prefill.state || prev.state,
       city: prefill.city || prev.city,
@@ -466,6 +478,12 @@ const PostProperty = () => {
           frontageWidth: property.frontageWidth || '',
           pincode: property.pincode || '',
           zoningClassification: property.zoningClassification || '',
+          bedrooms: property.bedrooms || '',
+          bathrooms: property.bathrooms || '',
+          floorNumber: property.floorNumber || '',
+          totalFloors: property.totalFloors || '',
+          furnishingStatus: property.furnishingStatus || '',
+          possessionStatus: property.possessionStatus || '',
           developerRatio: property.developerRatio || '',
           partlySale: property.partlySale || '',
           partlySaleUnit: property.partlySaleUnit || 'Square Yard',
@@ -1727,8 +1745,14 @@ const PostProperty = () => {
       setIsSubmitting(false);
       return;
     }
-    if (!formData.roadFacingDirection) {
+    const isApartmentListing = formData.developmentType.trim().toLowerCase() === 'apartment';
+    if (!isApartmentListing && !formData.roadFacingDirection) {
       alert('Please select the road facing direction');
+      setIsSubmitting(false);
+      return;
+    }
+    if (isApartmentListing && !formData.bedrooms) {
+      alert('Please select the number of bedrooms (BHK)');
       setIsSubmitting(false);
       return;
     }
@@ -1793,6 +1817,12 @@ const PostProperty = () => {
     data.append('frontageWidth', formData.frontageWidth);
     data.append('pincode', formData.pincode);
     data.append('zoningClassification', formData.zoningClassification);
+    data.append('bedrooms', formData.bedrooms);
+    data.append('bathrooms', formData.bathrooms);
+    data.append('floorNumber', formData.floorNumber);
+    data.append('totalFloors', formData.totalFloors);
+    data.append('furnishingStatus', formData.furnishingStatus);
+    data.append('possessionStatus', formData.possessionStatus);
     data.append('developerRatio', formData.listingIntent === 'development' ? formData.developerRatio : '');
     data.append('partlySale', formData.listingIntent === 'development' ? formData.partlySale : '');
     data.append('partlySaleUnit', formData.listingIntent === 'development' ? formData.partlySaleUnit : '');
@@ -1897,7 +1927,12 @@ const PostProperty = () => {
   const ratios = ['50:50', '60:40', '70:30', '80:20'];
   const zoningOptions = ['Residential', 'Commercial', 'Mixed Use', 'Agricultural', 'Industrial'];
   const plotBoundaryTypes = ['standalone', 'open-plot', 'hmda-layout', 'gp-layout', 'dtcp-layout'];
+  const bedroomOptions = ['1 BHK', '2 BHK', '3 BHK', '4 BHK', '4+ BHK'];
+  const bathroomOptions = ['1', '2', '3', '4', '4+'];
+  const furnishingOptions = ['Unfurnished', 'Semi-Furnished', 'Fully-Furnished'];
+  const possessionOptions = ['Ready to Move', 'Under Construction'];
   const normalizedDevelopmentType = formData.developmentType.trim().toLowerCase();
+  const isApartment = normalizedDevelopmentType === 'apartment';
   const requiresPlotBoundaryDetails =
     !isLargeAcreListing() &&
     (normalizedDevelopmentType === 'standalone' ||
@@ -2148,6 +2183,7 @@ const PostProperty = () => {
             <option value="standalone">Standalone</option>
             <option value="high-rise">High-rise</option>
             <option value="plotted">Plotted</option>
+            <option value="apartment">Apartment</option>
             <option value="mixed">Mixed</option>
           </>
         ) : (
@@ -2157,6 +2193,7 @@ const PostProperty = () => {
             <option value="hmda-layout">HMDA Layout</option>
             <option value="gp-layout">GP Layout</option>
             <option value="dtcp-layout">DTCP Layout</option>
+            <option value="apartment">Apartment</option>
           </>
         )}
       </select>
@@ -2238,67 +2275,136 @@ const PostProperty = () => {
         </div>
       )}
 
-      <select 
-        name="facing" 
-        onChange={handleChange} 
-        value={formData.facing} 
+      <select
+        name="facing"
+        onChange={handleChange}
+        value={formData.facing}
         className="w-full border p-2 rounded"
       >
         <option value="">Facing</option>
         {facings.map(f => <option key={f} value={f}>{f}</option>)}
       </select>
 
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-4">
-        <select 
-          onChange={e => setFormData(prev => ({ ...prev, roadSize: e.target.value }))} 
-          className="w-full border p-2 rounded"
-        >
-          <option value="">Select Road Size (ft)</option>
-          {roadSizes.map(size => <option key={size} value={size}>{size}</option>)}
-        </select>
-        <input 
-          name="roadSize" 
-          value={formData.roadSize} 
-          onChange={handleChange} 
-          className="w-full border p-2 rounded" 
-          placeholder="Or enter road size (in feet)" 
-        />
-        <input
-          name="frontageWidth"
-          value={formData.frontageWidth}
-          onChange={handleChange}
-          className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-          placeholder={requiresPlotBoundaryDetails ? 'Frontage width (ft)*' : 'Frontage width (ft)'}
-          type="number"
-          min="0"
-          step="any"
-        />
-        <select
-          name="roadFacingDirection"
-          value={formData.roadFacingDirection}
-          onChange={handleChange}
-          className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-          required
-        >
-          <option value="">Road Facing Direction *</option>
-          {roadFacingDirections.map(direction => (
-            <option key={direction} value={direction}>{direction}</option>
-          ))}
-        </select>
-      </div>
+      {isApartment && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-teal-600">Apartment Details</h3>
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+            <select
+              name="bedrooms"
+              value={formData.bedrooms}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              required
+            >
+              <option value="">Bedrooms (BHK) *</option>
+              {bedroomOptions.map(option => <option key={option} value={option}>{option}</option>)}
+            </select>
+            <select
+              name="bathrooms"
+              value={formData.bathrooms}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            >
+              <option value="">Bathrooms</option>
+              {bathroomOptions.map(option => <option key={option} value={option}>{option}</option>)}
+            </select>
+            <input
+              name="floorNumber"
+              value={formData.floorNumber}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              placeholder="Floor No. (e.g. 4)"
+              type="number"
+              min="0"
+              step="1"
+            />
+            <input
+              name="totalFloors"
+              value={formData.totalFloors}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              placeholder="Total Floors (e.g. 12)"
+              type="number"
+              min="0"
+              step="1"
+            />
+            <select
+              name="furnishingStatus"
+              value={formData.furnishingStatus}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            >
+              <option value="">Furnishing Status</option>
+              {furnishingOptions.map(option => <option key={option} value={option}>{option}</option>)}
+            </select>
+            <select
+              name="possessionStatus"
+              value={formData.possessionStatus}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            >
+              <option value="">Possession Status</option>
+              {possessionOptions.map(option => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
 
-      <div className="mt-4 grid grid-cols-1 items-start gap-4">
-        <select
-          name="zoningClassification"
-          value={formData.zoningClassification}
-          onChange={handleChange}
-          className="rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-          required
-        >
-          <option value="">Zoning Classification *</option>
-          {zoningOptions.map(option => <option key={option} value={option}>{option}</option>)}
-        </select>
-      </div>
+      {!isApartment && (
+        <>
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-4">
+            <select
+              onChange={e => setFormData(prev => ({ ...prev, roadSize: e.target.value }))}
+              className="w-full border p-2 rounded"
+            >
+              <option value="">Select Road Size (ft)</option>
+              {roadSizes.map(size => <option key={size} value={size}>{size}</option>)}
+            </select>
+            <input
+              name="roadSize"
+              value={formData.roadSize}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+              placeholder="Or enter road size (in feet)"
+            />
+            <input
+              name="frontageWidth"
+              value={formData.frontageWidth}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              placeholder={requiresPlotBoundaryDetails ? 'Frontage width (ft)*' : 'Frontage width (ft)'}
+              type="number"
+              min="0"
+              step="any"
+            />
+            <select
+              name="roadFacingDirection"
+              value={formData.roadFacingDirection}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              required
+            >
+              <option value="">Road Facing Direction *</option>
+              {roadFacingDirections.map(direction => (
+                <option key={direction} value={direction}>{direction}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 items-start gap-4">
+            <select
+              name="zoningClassification"
+              value={formData.zoningClassification}
+              onChange={handleChange}
+              className="rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              required
+            >
+              <option value="">Zoning Classification *</option>
+              {zoningOptions.map(option => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </div>
+        </>
+      )}
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">

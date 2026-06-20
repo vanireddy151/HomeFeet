@@ -49,6 +49,12 @@ interface Property {
   facing: string;
   roadSize: string;
   developerRatio: string;
+  bedrooms?: string;
+  bathrooms?: string;
+  floorNumber?: string;
+  totalFloors?: string;
+  furnishingStatus?: string;
+  possessionStatus?: string;
   squareYardPrice?: string;
   purchaseTimeline?: string;
   description?: string;
@@ -1684,6 +1690,22 @@ const PropertiesListingPage: React.FC = () => {
                               <p className="line-clamp-1 font-bold leading-4 text-slate-950">{property.facing || 'N/A'}</p>
                             </div>
                           </div>
+                          {String(property.developmentType || '').toLowerCase() === 'apartment' && (property.bedrooms || property.bathrooms) && (
+                            <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[12px]">
+                              {property.bedrooms && (
+                                <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                                  <p className="text-slate-500">Bedrooms</p>
+                                  <p className="line-clamp-1 font-bold leading-4 text-slate-950">{property.bedrooms}</p>
+                                </div>
+                              )}
+                              {property.bathrooms && (
+                                <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                                  <p className="text-slate-500">Bathrooms</p>
+                                  <p className="line-clamp-1 font-bold leading-4 text-slate-950">{property.bathrooms}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                           {isPropertyPlotDeal ? (
                             <div className="mt-1 rounded-md bg-slate-50 px-1.5 py-1 text-[12px]">
                               <span className="text-slate-500">{propertyIntent === 'buy' ? 'Budget / Sq Yard' : 'Square Yard Price'}</span>

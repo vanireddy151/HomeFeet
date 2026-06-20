@@ -131,6 +131,32 @@ const propertySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  bedrooms: {
+    type: String,
+    default: ''
+  },
+  bathrooms: {
+    type: String,
+    default: ''
+  },
+  floorNumber: {
+    type: String,
+    default: ''
+  },
+  totalFloors: {
+    type: String,
+    default: ''
+  },
+  furnishingStatus: {
+    type: String,
+    enum: ['', 'Unfurnished', 'Semi-Furnished', 'Fully-Furnished'],
+    default: ''
+  },
+  possessionStatus: {
+    type: String,
+    enum: ['', 'Ready to Move', 'Under Construction'],
+    default: ''
+  },
   map: { 
     type: String, 
     default: '' 
