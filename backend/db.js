@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 mongoose.connect(
-  'mongodb+srv://HomeFeet_db:NemqFslBLlie4dj6@cluster0.ztld8k3.mongodb.net/homefeet?retryWrites=true&w=majority&appName=Cluster0',
+  'mongodb+srv://HomeFeet_db:J7N6VOFOspRrcBEL@cluster0.ztld8k3.mongodb.net/homefeet?retryWrites=true&w=majority&appName=Cluster0',
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
