@@ -1789,7 +1789,7 @@ const PostProperty = () => {
       setIsSubmitting(false);
       return;
     }
-    const isApartmentListing = formData.developmentType.trim().toLowerCase() === 'apartment';
+    const isApartmentListing = ['apartment', 'standalone', 'high-rise', 'group-house'].includes(formData.developmentType.trim().toLowerCase());
     if (!isApartmentListing && !formData.roadFacingDirection) {
       alert('Please select the road facing direction');
       setIsSubmitting(false);
@@ -1978,7 +1978,8 @@ const PostProperty = () => {
   const furnishingOptions = ['Unfurnished', 'Semi-Furnished', 'Fully-Furnished'];
   const possessionOptions = ['Ready to Move', 'Under Construction'];
   const normalizedDevelopmentType = formData.developmentType.trim().toLowerCase();
-  const isApartment = normalizedDevelopmentType === 'apartment';
+  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
+  const isApartment = apartmentLikeTypes.includes(normalizedDevelopmentType);
   const requiresPlotBoundaryDetails =
     !isLargeAcreListing() &&
     (normalizedDevelopmentType === 'standalone' ||
