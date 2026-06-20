@@ -185,11 +185,15 @@ const PostProperty = () => {
     goodwill: '',
     advance: '',
     squareYardPrice: '',
+    squareFeetPrice: '',
+    totalBudget: '',
     purchaseTimeline: '',
     description: '',
+    selectedAmenities: [] as string[],
     contactPhone: '',
     contactEmail: '',
     image: null as File | null,
+    images: [] as File[],
     plotDiagram: null as File | null,
     video: null as File | null,
   });
@@ -214,6 +218,7 @@ const PostProperty = () => {
   const [isLoadingProperty, setIsLoadingProperty] = useState(false);
   const [existingMedia, setExistingMedia] = useState({
     imageUrl: '',
+    imageUrls: [] as string[],
     plotDiagramUrl: '',
     videoUrl: ''
   });
@@ -291,6 +296,8 @@ const PostProperty = () => {
       partlySaleValue: prefill.partlySaleValue || prev.partlySaleValue,
       partlySalePrice: prefill.partlySalePrice || prev.partlySalePrice,
       squareYardPrice: prefill.squareYardPrice || prev.squareYardPrice,
+      squareFeetPrice: prefill.squareFeetPrice || prev.squareFeetPrice,
+      totalBudget: prefill.totalBudget || prev.totalBudget,
       description: prefill.description || prev.description,
       contactPhone: prefillContactPhone || prev.contactPhone,
       contactEmail: prefillContactEmail || prev.contactEmail,
@@ -499,17 +506,24 @@ const PostProperty = () => {
           goodwill: property.goodwill || '',
           advance: property.advance || '',
           squareYardPrice: property.squareYardPrice || '',
+          squareFeetPrice: property.squareFeetPrice || '',
+          totalBudget: property.totalBudget || '',
           purchaseTimeline: normalizePurchaseTimeline(property.purchaseTimeline),
           description: property.description || '',
+          selectedAmenities: Array.isArray(property.selectedAmenities) ? property.selectedAmenities : [],
           contactPhone: normalizeAssistedPhone(property.contactPhone || property.phone || ''),
           contactEmail: property.contactEmail || '',
           image: null,
+          images: [],
           plotDiagram: null,
           video: null
         }));
         setMapLinkInput(mapLink);
         setExistingMedia({
           imageUrl: property.imageUrl || '',
+          imageUrls: Array.isArray(property.images) && property.images.length
+            ? property.images
+            : (property.imageUrl ? [property.imageUrl] : []),
           plotDiagramUrl: property.plotDiagramUrl || '',
           videoUrl: property.videoUrl || ''
         });
@@ -1180,7 +1194,7 @@ const PostProperty = () => {
       setFormData(prev => ({
         ...prev,
         listingIntent: value,
-        developmentType: value !== 'development' && /acre/i.test(prev.areaUnit) && (!prev.developmentType || prev.developmentType === 'open-plot') ? 'land' : prev.developmentType,
+        developmentType: value !== 'development' && /acre/i.test(prev.areaUnit) && !prev.developmentType ? 'farm-house' : prev.developmentType,
         developerRatio: value === 'development' ? prev.developerRatio : '',
         partlySale: value === 'development' ? prev.partlySale : '',
         partlySaleUnit: value === 'development' ? prev.partlySaleUnit : 'Square Yard',
@@ -1188,8 +1202,7 @@ const PostProperty = () => {
         partlySalePrice: value === 'development' ? prev.partlySalePrice : '',
         goodwill: value === 'development' ? prev.goodwill : '',
         advance: value === 'development' ? prev.advance : '',
-        squareYardPrice: value === 'development' ? '' : prev.squareYardPrice,
-        purchaseTimeline: value === 'buy' ? normalizePurchaseTimeline(prev.purchaseTimeline) : ''
+        squareYardPrice: value === 'development' ? '' : prev.squareYardPrice
       }));
       return;
     }
@@ -1197,7 +1210,7 @@ const PostProperty = () => {
       setFormData(prev => ({
         ...prev,
         areaUnit: value,
-        developmentType: prev.listingIntent !== 'development' && /acre/i.test(value) && (!prev.developmentType || prev.developmentType === 'open-plot') ? 'land' : prev.developmentType
+        developmentType: prev.listingIntent !== 'development' && /acre/i.test(value) && !prev.developmentType ? 'farm-house' : prev.developmentType
       }));
       return;
     }
@@ -1237,6 +1250,37 @@ const PostProperty = () => {
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData(prev => ({ ...prev, image: file }));
+  };
+
+  const MAX_GALLERY_IMAGES = 5;
+
+  const handleGalleryImagesChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setFormData(prev => {
+      const combined = [...prev.images, ...files].slice(0, MAX_GALLERY_IMAGES);
+      return { ...prev, images: combined };
+    });
+    e.target.value = '';
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+  };
+
+  const removeExistingGalleryImage = (index: number) => {
+    setExistingMedia(prev => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== index) }));
+  };
+
+  const AMENITY_OPTIONS = ['Parking', 'Lift', 'Power Backup', 'Security', 'Gym', 'Clubhouse', 'Water Supply', 'Park'];
+
+  const toggleAmenity = (amenity: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedAmenities: prev.selectedAmenities.includes(amenity)
+        ? prev.selectedAmenities.filter(a => a !== amenity)
+        : [...prev.selectedAmenities, amenity]
+    }));
   };
 
   const handlePlotDiagramChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -1366,7 +1410,7 @@ const PostProperty = () => {
   const shouldAutoGeneratePlotDiagram = () =>
     !formData.plotDiagram &&
     !existingMedia.plotDiagramUrl &&
-    (hasCompletePlotMeasurements() || (isLargeAcreListing() && !formData.image && !existingMedia.imageUrl));
+    (hasCompletePlotMeasurements() || (isLargeAcreListing() && !formData.image && !formData.images.length && !existingMedia.imageUrl && !existingMedia.imageUrls.length));
 
   const generateLargeLandMap = async (shape: ParcelShape = 'random') => {
     const canvas = document.createElement('canvas');
@@ -1756,17 +1800,12 @@ const PostProperty = () => {
       setIsSubmitting(false);
       return;
     }
-    if (formData.listingIntent !== 'development' && (!formData.squareYardPrice || Number(formData.squareYardPrice) <= 0)) {
-      alert(isLargeAcreListing() ? 'Please enter per acre price' : 'Please enter square yard price');
+    if (formData.listingIntent !== 'development' && (!formData.squareFeetPrice || Number(formData.squareFeetPrice) <= 0)) {
+      alert('Please enter square feet price');
       setIsSubmitting(false);
       return;
     }
-    if (formData.listingIntent === 'buy' && !formData.purchaseTimeline) {
-      alert('Please select looking property time frame');
-      setIsSubmitting(false);
-      return;
-    }
-    const plotBoundaryTypes = ['standalone', 'open-plot', 'hmda-layout', 'gp-layout', 'dtcp-layout'];
+    const plotBoundaryTypes = ['standalone', 'high-rise', 'group-house'];
     const normalizedDevelopmentType = formData.developmentType.trim().toLowerCase();
     const requiresPlotBoundaryDetails =
       !isLargeAcreListing() &&
@@ -1838,9 +1877,10 @@ const PostProperty = () => {
     data.append('goodwill', formData.listingIntent === 'development' ? formData.goodwill : '');
     data.append('advance', formData.listingIntent === 'development' ? formData.advance : '');
     data.append('squareYardPrice', formData.listingIntent === 'development' ? '' : formData.squareYardPrice);
-    data.append('purchaseTimeline', formData.listingIntent === 'buy' ? formData.purchaseTimeline : '');
+    data.append('squareFeetPrice', formData.squareFeetPrice);
+    data.append('totalBudget', formData.totalBudget);
     data.append('description', formData.description);
-    data.append('selectedAmenities', JSON.stringify([]));
+    data.append('selectedAmenities', JSON.stringify(formData.selectedAmenities));
     if (isAdminEditMode) {
       data.append('contactPhone', normalizeAssistedPhone(formData.contactPhone));
       data.append('phone', normalizeAssistedPhone(formData.contactPhone));
@@ -1864,12 +1904,18 @@ const PostProperty = () => {
       : null;
     const finalPlotDiagram = formData.plotDiagram || generatedPlotDiagram;
 
-    // Use the uploaded/generated dimension image as the listing image when no
-    // separate property image is provided.
-    if (formData.image) {
-      data.append('image', formData.image);
-    } else if (finalPlotDiagram?.type?.startsWith('image/')) {
-      data.append('image', finalPlotDiagram);
+    formData.images.forEach((file) => {
+      data.append('images', file);
+    });
+
+    // Fall back to the auto-generated dimension image as the listing image when no
+    // gallery photo is provided.
+    if (!formData.images.length && !existingMedia.imageUrls.length) {
+      if (formData.image) {
+        data.append('image', formData.image);
+      } else if (finalPlotDiagram?.type?.startsWith('image/')) {
+        data.append('image', finalPlotDiagram);
+      }
     }
     if (finalPlotDiagram) {
       data.append('plotDiagram', finalPlotDiagram);
@@ -1926,7 +1972,7 @@ const PostProperty = () => {
   const roadFacingDirections = ['North', 'South', 'East', 'West'];
   const ratios = ['50:50', '60:40', '70:30', '80:20'];
   const zoningOptions = ['Residential', 'Commercial', 'Mixed Use', 'Agricultural', 'Industrial'];
-  const plotBoundaryTypes = ['standalone', 'open-plot', 'hmda-layout', 'gp-layout', 'dtcp-layout'];
+  const plotBoundaryTypes = ['standalone', 'high-rise', 'group-house'];
   const bedroomOptions = ['1 BHK', '2 BHK', '3 BHK', '4 BHK', '4+ BHK'];
   const bathroomOptions = ['1', '2', '3', '4', '4+'];
   const furnishingOptions = ['Unfurnished', 'Semi-Furnished', 'Fully-Furnished'];
@@ -2183,17 +2229,18 @@ const PostProperty = () => {
             <option value="standalone">Standalone</option>
             <option value="high-rise">High-rise</option>
             <option value="plotted">Plotted</option>
-            <option value="apartment">Apartment</option>
+            {formData.developmentType === 'apartment' && <option value="apartment">Apartment</option>}
             <option value="mixed">Mixed</option>
           </>
         ) : (
           <>
-            <option value="open-plot">Open Plot</option>
-            <option value="land">Land</option>
-            <option value="hmda-layout">HMDA Layout</option>
-            <option value="gp-layout">GP Layout</option>
-            <option value="dtcp-layout">DTCP Layout</option>
-            <option value="apartment">Apartment</option>
+            <option value="standalone">Standalone</option>
+            <option value="high-rise">High-rise</option>
+            <option value="group-house">Group House</option>
+            <option value="residential-house">Residential House</option>
+            <option value="villa">Villa</option>
+            <option value="farm-house">Farm House</option>
+            {formData.developmentType === 'apartment' && <option value="apartment">Apartment</option>}
           </>
         )}
       </select>
@@ -2668,42 +2715,58 @@ const PostProperty = () => {
       {formData.listingIntent !== 'development' && (
         <div className="grid gap-2 md:grid-cols-2">
           <input
-            name="squareYardPrice"
+            name="squareFeetPrice"
             onChange={handleChange}
-            value={formData.squareYardPrice}
-            placeholder={formData.listingIntent === 'buy' ? 'Budget per Sq Yard (Rs) *' : isLargeAcreListing() ? 'Per Acre Price (Rs) *' : 'Square Yard Price (Rs) *'}
+            value={formData.squareFeetPrice}
+            placeholder={formData.listingIntent === 'buy' ? 'Budget per Sq Ft (Rs) *' : 'Square Feet Price (Rs) *'}
             className="w-full border p-2 rounded"
             type="number"
             min="0"
             step="any"
             required
           />
-          {formData.listingIntent === 'buy' && (
-            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
-              <span className="text-sm font-medium text-slate-700">Looking Property</span>
-              <select
-                name="purchaseTimeline"
-                value={formData.purchaseTimeline}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-                required
-              >
-                <option value="">Time Frame</option>
-                <option value="1_to_3_months">1 to 3 months</option>
-                <option value="1_to_6_months">1 to 6 months</option>
-                <option value="1_to_12_months">1 to 12 months</option>
-              </select>
-            </div>
-          )}
+          <input
+            name="totalBudget"
+            onChange={handleChange}
+            value={formData.totalBudget}
+            placeholder={formData.listingIntent === 'buy' ? 'Total Budget (Rs)' : 'Total Budget / Expected Price (Rs)'}
+            className="w-full border p-2 rounded"
+            type="number"
+            min="0"
+            step="any"
+          />
         </div>
       )}
-      <textarea 
-        name="description" 
-        onChange={handleChange} 
-        value={formData.description} 
-        placeholder="Property Description (Optional)" 
-        className="w-full border p-2 rounded h-24" 
+      <textarea
+        name="description"
+        onChange={handleChange}
+        value={formData.description}
+        placeholder="Property Description (Optional)"
+        className="w-full border p-2 rounded h-24"
       />
+      <div>
+        <p className="mb-2 text-sm font-semibold text-slate-800">Amenities Details</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {AMENITY_OPTIONS.map((amenity) => (
+            <label
+              key={amenity}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                formData.selectedAmenities.includes(amenity)
+                  ? 'border-teal-600 bg-teal-50 text-teal-800'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-teal-300'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={formData.selectedAmenities.includes(amenity)}
+                onChange={() => toggleAmenity(amenity)}
+                className="h-4 w-4 accent-teal-700"
+              />
+              {amenity}
+            </label>
+          ))}
+        </div>
+      </div>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
@@ -2711,124 +2774,59 @@ const PostProperty = () => {
           <Upload className="h-6 w-6 text-teal-700" />
           <h2 className="text-xl font-bold text-slate-900">Media Uploads</h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <label className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
-            <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Property Image</span>
-            {isEditMode && existingMedia.imageUrl && !formData.image && (
-              <img
-                src={`${API_ORIGIN}${existingMedia.imageUrl}`}
-                alt="Current property"
-                className="mb-3 h-32 w-full rounded-lg object-cover"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              />
-            )}
-            <input type="file" onChange={handleImageChange} className="w-full rounded bg-white p-2" accept="image/*" />
-            {formData.image && (
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-teal-700">New image selected: {formData.image.name}</p>
-                <button
-                  type="button"
-                  onClick={() => cropImageFile('image')}
-                  className="rounded bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-100"
-                >
-                  Crop Image
-                </button>
-              </div>
-            )}
-          </label>
+        <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
-            <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Property Dimension Image</span>
+            <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Photo Gallery</span>
             <p className="mb-3 text-xs text-slate-500">
-              Optional 2D plot diagram or dimension image. Accepted formats: JPG, PNG, PDF (Max 5MB).
+              Upload 4 to 5 clear photos of your property (exterior, interior, surroundings). Max {MAX_GALLERY_IMAGES} photos.
             </p>
-            {shouldAutoGeneratePlotDiagram() && (
-              <p className="mb-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-semibold leading-5 text-teal-800">
-                {isLargeAcreListing() && !hasCompletePlotMeasurements()
-                  ? 'No property image selected. An automatic land map image will be generated and saved with this listing.'
-                  : 'No dimension image selected. An automatic plot layout image will be generated from the entered side lengths and saved with this listing.'}
-              </p>
-            )}
-            {isAdminEditMode && (
-              <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Admin regenerate diagram</p>
-                <p className="mt-1 text-xs leading-5 text-amber-900">
-                  Use this when the uploaded dimension image is missing, unclear, or wrong.
-                </p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowParcelShapePicker(prev => !prev)}
-                    className="rounded-lg border border-teal-600 bg-white px-3 py-2 text-xs font-bold text-teal-700 hover:bg-teal-50"
-                  >
-                    Regenerate 2D Diagram
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => regenerateAdminDiagram('3d')}
-                    className="rounded-lg bg-teal-700 px-3 py-2 text-xs font-bold text-white hover:bg-teal-800"
-                  >
-                    Regenerate 3D Diagram
-                  </button>
-                </div>
-                {showParcelShapePicker && (
-                  <div className="mt-3 rounded-lg border border-teal-100 bg-white p-2">
-                    <p className="mb-2 text-xs font-semibold text-slate-700">Choose clean parcel shape</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { key: 'square', label: 'Square' },
-                        { key: 'rectangle', label: 'Rectangle' },
-                        { key: 'skewed', label: 'Skewed Rectangle' },
-                        { key: 'natural', label: 'Natural Parcel' }
-                      ].map(option => (
-                        <button
-                          key={option.key}
-                          type="button"
-                          onClick={() => regenerateAdminDiagram('2d', option.key as ParcelShape)}
-                          className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:border-teal-500 hover:bg-teal-50 hover:text-teal-800"
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
+            {existingMedia.imageUrls.length > 0 && (
+              <div className="mb-3 grid grid-cols-3 gap-2">
+                {existingMedia.imageUrls.map((url, index) => (
+                  <div key={url} className="relative">
+                    <img
+                      src={`${API_ORIGIN}${url}`}
+                      alt={`Current property ${index + 1}`}
+                      className="h-20 w-full rounded-lg object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingGalleryImage(index)}
+                      className="absolute right-1 top-1 rounded-full bg-slate-950/70 px-1.5 py-0.5 text-xs font-bold text-white"
+                    >
+                      ×
+                    </button>
                   </div>
-                )}
+                ))}
               </div>
             )}
-            {isEditMode && existingMedia.plotDiagramUrl && !formData.plotDiagram && (
-              <div className="mb-3 rounded-lg bg-white p-3">
-                <p className="mb-2 text-sm font-semibold text-slate-700">Current dimension image</p>
-                {existingMedia.plotDiagramUrl.toLowerCase().includes('.pdf') ? (
-                  <a
-                    href={`${API_ORIGIN}${existingMedia.plotDiagramUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-semibold text-teal-700 hover:text-teal-900"
-                  >
-                    Open saved PDF diagram
-                  </a>
-                ) : (
-                  <img
-                    src={`${API_ORIGIN}${existingMedia.plotDiagramUrl}`}
-                    alt="Current property dimension"
-                    className="max-h-32 w-full rounded-lg object-contain"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                )}
-              </div>
-            )}
-            <input type="file" onChange={handlePlotDiagramChange} className="w-full rounded bg-white p-2" accept="image/*,.pdf" />
-            {formData.plotDiagram && (
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-teal-700">Dimension image selected: {formData.plotDiagram.name}</p>
-                {formData.plotDiagram.type.startsWith('image/') && (
-                  <button
-                    type="button"
-                    onClick={() => cropImageFile('plotDiagram')}
-                    className="rounded bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-100"
-                  >
-                    Crop Diagram
-                  </button>
-                )}
+            <input
+              type="file"
+              onChange={handleGalleryImagesChange}
+              className="w-full rounded bg-white p-2"
+              accept="image/*"
+              multiple
+              disabled={formData.images.length >= MAX_GALLERY_IMAGES}
+            />
+            {formData.images.length > 0 && (
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {formData.images.map((file, index) => (
+                  <div key={`${file.name}-${index}`} className="relative">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`Selected ${index + 1}`}
+                      className="h-20 w-full rounded-lg object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(index)}
+                      className="absolute right-1 top-1 rounded-full bg-slate-950/70 px-1.5 py-0.5 text-xs font-bold text-white"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

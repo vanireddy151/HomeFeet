@@ -103,6 +103,14 @@ const propertySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  squareFeetPrice: {
+    type: String,
+    default: ''
+  },
+  totalBudget: {
+    type: String,
+    default: ''
+  },
   purchaseTimeline: {
     type: String,
     default: ''
@@ -173,9 +181,13 @@ const propertySchema = new mongoose.Schema({
     type: [String], 
     default: [] 
   },
-  imageUrl: { 
-    type: String, 
-    default: '' 
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  images: {  // Photo gallery (multiple property images)
+    type: [String],
+    default: []
   },
   plotDiagramUrl: {  // NEW: For 2D plot diagram
     type: String,

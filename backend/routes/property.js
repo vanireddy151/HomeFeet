@@ -254,6 +254,7 @@ const upload = multer({
 });
 const propertyUpload = upload.fields([
   { name: 'image', maxCount: 1 },
+  { name: 'images', maxCount: 5 },
   { name: 'plotDiagram', maxCount: 1 },
   { name: 'video', maxCount: 1 }
 ]);
@@ -428,7 +429,7 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       facing, roadFacingDirection, roadSize, frontageWidth, pincode, zoningClassification,
       developerRatio, partlySale, partlySaleUnit, partlySaleValue, partlySalePrice,
       state, city, locality, societyName, landmark, map, goodwill, advance,
-      squareYardPrice, purchaseTimeline, description, address, selectedAmenities, coordinates,
+      squareYardPrice, squareFeetPrice, totalBudget, purchaseTimeline, description, address, selectedAmenities, coordinates,
       bedrooms, bathrooms, floorNumber, totalFloors, furnishingStatus, possessionStatus
     } = req.body;
 
@@ -472,8 +473,11 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       landmark
     };
     const imageUrl = await saveFileToGridFS(files.image?.[0], uploadNamingData);
+    const galleryImageUrls = (
+      await Promise.all((files.images || []).slice(0, 5).map((file) => saveFileToGridFS(file, uploadNamingData)))
+    ).filter(Boolean);
     const plotDiagramUrl = await saveFileToGridFS(files.plotDiagram?.[0], uploadNamingData);
-    const listingImageUrl = imageUrl || (isDisplayableImageUpload(files.plotDiagram?.[0]) ? plotDiagramUrl : '');
+    const listingImageUrl = galleryImageUrls[0] || imageUrl || (isDisplayableImageUpload(files.plotDiagram?.[0]) ? plotDiagramUrl : '');
     const videoUrl = await saveFileToGridFS(files.video?.[0], uploadNamingData);
 
     const newProperty = new Property({
@@ -512,11 +516,14 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       goodwill: listingIntent === 'development' ? (goodwill || '') : '',
       advance: listingIntent === 'development' ? (advance || '') : '',
       squareYardPrice: listingIntent === 'development' ? '' : (squareYardPrice || ''),
+      squareFeetPrice: squareFeetPrice || '',
+      totalBudget: totalBudget || '',
       purchaseTimeline: listingIntent === 'buy' ? (purchaseTimeline || '') : '',
       description: description || '',
       address,
       selectedAmenities: selectedAmenities ? JSON.parse(selectedAmenities) : [],
       imageUrl: listingImageUrl,
+      images: galleryImageUrls,
       plotDiagramUrl,
       videoUrl,
       contactEmail: listingOwner.email || '',
@@ -787,6 +794,15 @@ router.put('/properties/:id', handlePropertyUpload, async (req, res) => {
 
     if (files.image?.[0]) {
       updates.imageUrl = await saveFileToGridFS(files.image[0], uploadNamingData);
+    }
+    if (files.images?.length) {
+      const galleryImageUrls = (
+        await Promise.all(files.images.slice(0, 5).map((file) => saveFileToGridFS(file, uploadNamingData)))
+      ).filter(Boolean);
+      updates.images = galleryImageUrls;
+      if (galleryImageUrls[0]) {
+        updates.imageUrl = galleryImageUrls[0];
+      }
     }
     if (files.plotDiagram?.[0]) {
       updates.plotDiagramUrl = await saveFileToGridFS(files.plotDiagram[0], uploadNamingData);

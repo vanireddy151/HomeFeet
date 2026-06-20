@@ -77,6 +77,7 @@ const PropertyDetails: React.FC = () => {
   const [accessRequired, setAccessRequired] = useState('');
   const [accessListingIntent, setAccessListingIntent] = useState('');
   const [accessPropertyType, setAccessPropertyType] = useState('');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const token = localStorage.getItem('token');
   const accountType = localStorage.getItem('accountType') || 'owner';
@@ -145,6 +146,7 @@ const PropertyDetails: React.FC = () => {
         const data = await res.json();
         if (res.ok) {
           setProperty(data.project);
+          setActiveImageIndex(0);
           setAccessRequired('');
           const ownerPhone = data.project?.contactPhone || data.project?.phone;
           const ownerEmail = data.project?.contactEmail;
@@ -188,10 +190,13 @@ const PropertyDetails: React.FC = () => {
         (property.phone === currentUserPhone || property.contactPhone === currentUserPhone)
       )
     : false;
+  const galleryImages = property
+    ? (Array.isArray(property.images) && property.images.length ? property.images : (property.imageUrl ? [property.imageUrl] : []))
+    : [];
   const heroImageUrl = property
-    ? property.imageUrl || (isDisplayableImage(property.plotDiagramUrl) ? property.plotDiagramUrl : '')
+    ? galleryImages[activeImageIndex] || property.imageUrl || (isDisplayableImage(property.plotDiagramUrl) ? property.plotDiagramUrl : '')
     : '';
-  const isGeneratedDiagramHero = property ? !property.imageUrl && Boolean(heroImageUrl) : false;
+  const isGeneratedDiagramHero = property ? !galleryImages.length && !property.imageUrl && Boolean(heroImageUrl) : false;
   const isKarnatakaListing = property
     ? /\b(?:karnataka|bengaluru|bangalore)\b/i.test(`${property.state || ''} ${property.city || ''} ${property.location || ''}`)
     : false;
@@ -389,6 +394,26 @@ const PropertyDetails: React.FC = () => {
                   <ShieldCheck className="h-4 w-4" /> Admin Reviewed
                 </span>
               </div>
+              {galleryImages.length > 1 && (
+                <div className="absolute bottom-3 left-3 right-3 flex gap-2 overflow-x-auto">
+                  {galleryImages.map((url, index) => (
+                    <button
+                      key={url}
+                      type="button"
+                      onClick={() => setActiveImageIndex(index)}
+                      className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 ${
+                        index === activeImageIndex ? 'border-teal-500' : 'border-white/70'
+                      }`}
+                    >
+                      <img
+                        src={`${API_ORIGIN}${url}`}
+                        alt={`${title} photo ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="p-6 md:p-8">
