@@ -178,7 +178,7 @@ const formatMoney = (value = '') => {
 };
 
 const absoluteUrl = (origin, path = '') => {
-  if (!path) return `${origin}/Landsdevelop_logo.png`;
+  if (!path) return `${origin}/HomeFeet_logo.png`;
   if (/^https?:\/\//i.test(path)) return path;
   return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
 };

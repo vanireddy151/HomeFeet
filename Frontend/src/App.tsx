@@ -91,7 +91,7 @@ type SeoConfig = {
 
 const SITE_URL = 'https://www.homefeet.in';
 const SITE_NAME = 'HomeFeet';
-const DEFAULT_IMAGE = '/Landsdevelop_Logo_Name.png';
+const DEFAULT_IMAGE = '/HomeFeet_Logo_Name.png';
 const DEFAULT_KEYWORDS =
   'land development marketplace, verified properties, Hyderabad plots, Bengaluru land, Mumbai builders, owner listings, mediator listings, commercial plots, sell plot, buyer requirements';
 
@@ -277,7 +277,7 @@ function SEOManager() {
           '@type': 'Organization',
           name: SITE_NAME,
           url: SITE_URL,
-          logo: `${SITE_URL}/Landsdevelop_logo.png`,
+          logo: `${SITE_URL}/HomeFeet_logo.png`,
           contactPoint: [
             {
               '@type': 'ContactPoint',

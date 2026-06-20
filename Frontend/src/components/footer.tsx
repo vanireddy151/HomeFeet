@@ -45,7 +45,7 @@ export default function Footer() {
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
             <div className="flex items-center gap-3">
-              <img src="/Landsdevelop_logo.png" alt="HomeFeet" className="h-12 w-12 rounded-lg bg-white p-1" />
+              <img src="/HomeFeet_logo.png" alt="HomeFeet" className="h-12 w-12 rounded-lg bg-white p-1" />
               <div>
                 <p className="text-2xl font-black"><BrandName /></p>
                 <p className="text-sm text-teal-200">Verified land development marketplace</p>
