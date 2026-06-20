@@ -1805,21 +1805,6 @@ const PostProperty = () => {
       setIsSubmitting(false);
       return;
     }
-    const plotBoundaryTypes = ['standalone', 'high-rise', 'group-house'];
-    const normalizedDevelopmentType = formData.developmentType.trim().toLowerCase();
-    const requiresPlotBoundaryDetails =
-      !isLargeAcreListing() &&
-      (normalizedDevelopmentType === 'standalone' ||
-      (formData.listingIntent === 'sell' && plotBoundaryTypes.includes(normalizedDevelopmentType)));
-
-    if (requiresPlotBoundaryDetails && !formData.plotDiagram && !existingMedia.plotDiagramUrl) {
-      if (!hasCompletePlotMeasurements()) {
-        alert('Please enter all plot side lengths and frontage width, or upload a 2D plot diagram');
-        setIsSubmitting(false);
-        return;
-      }
-    }
-
     if (canUseAssistedUpload) {
       const ownerPhone = normalizeAssistedPhone(assistedOwner.phone);
       if (assistedOwnerLookup.status === 'blocked') {
@@ -2420,7 +2405,7 @@ const PostProperty = () => {
               value={formData.frontageWidth}
               onChange={handleChange}
               className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-              placeholder={requiresPlotBoundaryDetails ? 'Frontage width (ft)*' : 'Frontage width (ft)'}
+              placeholder="Frontage width (ft)"
               type="number"
               min="0"
               step="any"
