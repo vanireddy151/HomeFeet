@@ -8,3 +8,10 @@ mongoose.connect(
   }
 ).then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
+
+async function disconnectDB() {
+  await mongoose.disconnect();
+  console.log("🔌 MongoDB disconnected");
+}
+
+module.exports = { disconnectDB };
