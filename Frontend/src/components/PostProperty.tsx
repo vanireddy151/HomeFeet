@@ -150,7 +150,7 @@ const PostProperty = () => {
   const isAdminEditMode = isEditMode && searchParams.get('admin') === 'true' && isAdminUser;
   const canUseAssistedUpload = isAdminUser && !isEditMode;
   const [formData, setFormData] = useState({
-    listingIntent: 'development',
+    listingIntent: 'sell',
     developmentType: '',
     totalArea: '',
     areaUnit: 'Sq Yards',
@@ -2141,11 +2141,11 @@ const PostProperty = () => {
         </div>
         <div className="mb-5">
           <p className="mb-2 text-sm font-semibold text-slate-800">Post Property For *</p>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {[
-              { value: 'development', label: 'Development' },
               { value: 'buy', label: 'Buy' },
-              { value: 'sell', label: 'Sell' }
+              { value: 'sell', label: 'Sell' },
+              ...(formData.listingIntent === 'development' ? [{ value: 'development', label: 'Development' }] : [])
             ].map((option) => (
               <label
                 key={option.value}
