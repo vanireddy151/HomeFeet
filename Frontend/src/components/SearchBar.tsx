@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Briefcase, Building2, Home, MapPin, Mic, Search, ShieldCheck, Tag } from 'lucide-react';
+import { ArrowRight, Briefcase, Building2, Home, MapPin, Mic, Search, Tag } from 'lucide-react';
 
 interface SearchBarProps {
   compact?: boolean;
@@ -95,16 +95,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
         </div>
 
         <div className="bg-white p-4">
-          <div className="mb-3 flex items-center gap-3 border-b border-slate-100 pb-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-950">Search verified development listings</p>
-              <p className="text-xs text-slate-500">Location, pincode, project, landmark or society</p>
-            </div>
-          </div>
-
           <div className="grid gap-3 md:grid-cols-[auto_1fr_auto]">
             <div className="relative">
               <button
