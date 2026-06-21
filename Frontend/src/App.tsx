@@ -1088,9 +1088,9 @@ function HomePage() {
                 ['Verified', 'Builders'],
                 ['Private', 'Contact Flow']
               ].map(([value, label]) => (
-                <div key={label} className="rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur">
-                  <p className="text-lg font-bold">{value}</p>
-                  <p className="text-sm text-slate-300">{label}</p>
+                <div key={label} className="rounded-lg border border-white/20 bg-white/10 p-4 shadow-lg shadow-black/10 backdrop-blur-md backdrop-saturate-150">
+                  <p className="text-lg font-bold text-white">{value}</p>
+                  <p className="text-sm text-slate-200">{label}</p>
                 </div>
               ))}
             </div>
