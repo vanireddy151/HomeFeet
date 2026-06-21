@@ -961,7 +961,7 @@ function HomePage() {
               <Link to={`/properties?view=developers&listingIntent=sell&city=${encodeURIComponent(selectedCity)}`} className="ld-btn-primary bg-white text-slate-950 hover:bg-teal-50">
                 Explore Properties <ArrowRight className="h-5 w-5" />
               </Link>
-              <button onClick={handlePostProperty} className="ld-btn-ghost border-white/30 bg-white/10 text-white hover:border-white hover:text-white">
+              <button onClick={handlePostProperty} className="ld-btn-ghost border-white/30 bg-white/10 text-white backdrop-blur hover:border-white hover:bg-white/20 hover:text-white">
                 Post Property
               </button>
               {[
