@@ -957,15 +957,13 @@ function HomePage() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200 md:text-xl">
               Discover verified owner listings, compare development potential, request contact with confidence, and move serious conversations into one professional workflow.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link to={`/properties?view=developers&listingIntent=development&city=${encodeURIComponent(selectedCity)}`} className="ld-btn-primary bg-white text-slate-950 hover:bg-teal-50">
                 Explore Properties <ArrowRight className="h-5 w-5" />
               </Link>
               <button onClick={handlePostProperty} className="ld-btn-ghost border-white/30 bg-white/10 text-white hover:border-white hover:text-white">
                 Post Property
               </button>
-            </div>
-            <div className="mt-10 grid max-w-xl grid-cols-3 gap-4">
               {[
                 ['Admin-reviewed', 'Listings'],
                 ['Verified', 'Builders'],
