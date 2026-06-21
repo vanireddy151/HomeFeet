@@ -1567,7 +1567,9 @@ const PropertiesListingPage: React.FC = () => {
           )}
 
           {isDeveloperView && (
-            <aside className="order-3 hidden max-h-[700px] flex-col overflow-y-auto rounded-xl bg-white/60 p-2.5 lg:flex">
+            <aside className={`order-3 hidden flex-col rounded-xl bg-white/60 p-2.5 lg:flex [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+              recentProperties.length > 5 ? 'max-h-[700px] overflow-y-auto' : ''
+            }`}>
               <h2 className="mb-2.5 shrink-0 text-sm font-semibold text-slate-950">Recent Properties</h2>
               <div className="space-y-2.5">
                 {recentProperties.length === 0 && (
