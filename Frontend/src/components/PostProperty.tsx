@@ -1991,6 +1991,7 @@ const PostProperty = () => {
 
   const roadSizes = ['20', '40', '60', '80', '100'];
   const facings = ['North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'];
+  const flatFacingOptions = ['North', 'South', 'East', 'West'];
   const roadFacingDirections = ['North', 'South', 'East', 'West'];
   const ratios = ['50:50', '60:40', '70:30', '80:20'];
   const zoningOptions = ['Residential', 'Commercial', 'Mixed Use', 'Agricultural', 'Industrial'];
@@ -2438,7 +2439,7 @@ const PostProperty = () => {
               className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
             >
               <option value="">Facing</option>
-              {facings.map(f => <option key={f} value={f}>{f}</option>)}
+              {flatFacingOptions.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
             <select
               name="bedrooms"
