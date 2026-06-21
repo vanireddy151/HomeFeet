@@ -816,8 +816,13 @@ const PropertiesListingPage: React.FC = () => {
     getPropertyIntent(property) === 'buy' && !getCardImageUrl(property);
   const isGeneratedDiagramPreview = (property: Property) => !property.imageUrl && Boolean(getCardImageUrl(property));
   const activeSearchTerm = searchParams.get('q') || searchQuery;
-  const getPropertySortPrice = (property: Property) =>
-    Number(property.totalBudget || property.squareYardPrice || property.goodwill || 0) || 0;
+  const getPropertySortPrice = (property: Property) => {
+    if (property.totalBudget) return Number(property.totalBudget) || 0;
+    if (property.squareFeetPrice && property.flatSize) {
+      return (Number(property.squareFeetPrice) || 0) * (Number(property.flatSize) || 0);
+    }
+    return Number(property.squareYardPrice || property.goodwill || 0) || 0;
+  };
 
   const recentProperties = React.useMemo(() => (
     [...properties]
@@ -1350,6 +1355,7 @@ const PropertiesListingPage: React.FC = () => {
   const developmentOnlyTypeFilters = [
     { label: 'Standalone', value: 'standalone', icon: Building },
     { label: 'High-Rise', value: 'high-rise', icon: Building2 },
+    { label: 'Group House', value: 'group-house', icon: Users },
     { label: 'Villa', value: 'villa', icon: Layers },
     { label: 'Plotted', value: 'plotted', icon: Grid },
   ];

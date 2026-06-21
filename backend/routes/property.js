@@ -1185,7 +1185,26 @@ router.get('/search', async (req, res) => {
             }
           },
           totalBudgetNum: {
-            $convert: { input: '$totalBudget', to: 'double', onError: null, onNull: null }
+            $let: {
+              vars: {
+                budget: { $convert: { input: '$totalBudget', to: 'double', onError: null, onNull: null } },
+                sqftPrice: { $convert: { input: '$squareFeetPrice', to: 'double', onError: null, onNull: null } },
+                flatSizeNum: { $convert: { input: '$flatSize', to: 'double', onError: null, onNull: null } }
+              },
+              in: {
+                $cond: [
+                  { $ne: ['$$budget', null] },
+                  '$$budget',
+                  {
+                    $cond: [
+                      { $and: [{ $ne: ['$$sqftPrice', null] }, { $ne: ['$$flatSizeNum', null] }] },
+                      { $multiply: ['$$sqftPrice', '$$flatSizeNum'] },
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
           }
         }
       }
