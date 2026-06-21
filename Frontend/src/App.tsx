@@ -1138,7 +1138,7 @@ function HomePage() {
               {housingTopPicks.map((pick) => (
                 <div
                   key={pick.projectName}
-                  className="grid w-[min(90vw,820px)] shrink-0 grid-cols-[280px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-violet-100 via-rose-100 to-amber-50 shadow-sm"
+                  className="grid w-[min(90vw,820px)] shrink-0 grid-cols-[280px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 shadow-sm"
                 >
                   <div className="flex flex-col justify-between p-5">
                     <div>

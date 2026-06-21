@@ -1378,10 +1378,22 @@ const PropertiesListingPage: React.FC = () => {
   const visibleTypeFilters = isCommercialPropertyView
     ? commercialTypeFilters
     : isMarketplaceView ? marketplaceTypeFilters : activeTypeFilters;
+  const developmentTypeListingLabels: Record<string, string> = {
+    standalone: 'Standalone Flats Listings',
+    'high-rise': 'High-Rise Flats Listings',
+    'group-house': 'Group House Flats Listings',
+    villa: 'Villa Flats Listings',
+    plotted: 'Plotted Listings',
+    'office-space': 'Office Space Listings',
+    retail: 'Retail Space Listings',
+    hospitality: 'Hospitality Listings',
+    industrial: 'Industrial Listings',
+  };
   const pageTitle = listingIntent === 'buy'
     ? 'Buyer Contact & Requirement Info'
     : listingIntent === 'sell'
-      ? (currentPropertyType === 'commercial-plot' ? 'Commercial Space Listings' : 'Sale Flats Listings')
+      ? (developmentTypeListingLabels[filters.developmentType.toLowerCase()]
+        || (currentPropertyType === 'commercial-plot' ? 'Commercial Space Listings' : 'Sale Flats Listings'))
       : 'Properties';
   const developerIntentTabs = [
     { label: 'Buyer', value: 'buy', propertyType: '' },

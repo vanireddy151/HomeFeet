@@ -265,6 +265,8 @@ const PostProperty = () => {
     video: null as File | null,
   });
   const [showParcelShapePicker, setShowParcelShapePicker] = useState(false);
+  const formSteps = ['Property Details', 'Media Uploads', 'Location Details'];
+  const [currentStep, setCurrentStep] = useState(0);
   const [assistedOwner, setAssistedOwner] = useState({
     accountType: 'owner',
     phone: '',
@@ -2136,6 +2138,31 @@ const PostProperty = () => {
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:gap-4">
+        {formSteps.map((step, index) => (
+          <React.Fragment key={step}>
+            <button
+              type="button"
+              onClick={() => index <= currentStep && setCurrentStep(index)}
+              disabled={index > currentStep}
+              className={`flex items-center gap-2 text-sm font-semibold ${
+                index === currentStep ? 'text-teal-700' : index < currentStep ? 'text-slate-700' : 'cursor-not-allowed text-slate-400'
+              }`}
+            >
+              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                index === currentStep ? 'bg-teal-700 text-white' : index < currentStep ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'
+              }`}>
+                {index + 1}
+              </span>
+              {step}
+            </button>
+            {index < formSteps.length - 1 && <span className="h-px flex-1 bg-slate-200" />}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {currentStep === 0 && (
+      <>
       {canUseAssistedUpload && (
         <section className="space-y-4 rounded-lg border border-teal-200 bg-teal-50/60 p-5 shadow-sm sm:p-6">
           <div>
@@ -2777,7 +2804,10 @@ const PostProperty = () => {
         </div>
       </div>
       </section>
+      </>
+      )}
 
+      {currentStep === 1 && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3">
           <Upload className="h-6 w-6 text-teal-700" />
@@ -2849,7 +2879,9 @@ const PostProperty = () => {
           </label>
         </div>
       </section>
+      )}
 
+      {currentStep === 2 && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center gap-3">
         <MapPin className="h-6 w-6 text-teal-700" />
@@ -3028,6 +3060,7 @@ const PostProperty = () => {
         ></div>
       </div>
       </section>
+      )}
 
       {cropModal && (
         <div
@@ -3150,17 +3183,38 @@ const PostProperty = () => {
         </div>
       )}
 
-      <button 
-        type="submit" 
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-8 py-4 font-semibold text-white shadow-lg hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-gray-400"
-        disabled={isSubmitting}
-      >
-        <ShieldCheck className="h-5 w-5" />
-        {isSubmitting
-          ? (isEditMode ? (isAdminEditMode ? 'Updating Property...' : 'Updating for Review...') : 'Submitting for Approval...')
-          : (isEditMode ? (isAdminEditMode ? 'Update Property Details' : 'Update Property for Review') : 'Submit Property for Approval')}
-      </button>
-      
+      <div className="flex gap-3">
+        {currentStep > 0 && (
+          <button
+            type="button"
+            onClick={() => setCurrentStep((step) => step - 1)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-8 py-4 font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Back
+          </button>
+        )}
+        {currentStep < formSteps.length - 1 ? (
+          <button
+            type="button"
+            onClick={() => setCurrentStep((step) => step + 1)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-8 py-4 font-semibold text-white shadow-lg hover:bg-teal-800"
+          >
+            Save &amp; Continue
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-8 py-4 font-semibold text-white shadow-lg hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            disabled={isSubmitting}
+          >
+            <ShieldCheck className="h-5 w-5" />
+            {isSubmitting
+              ? (isEditMode ? (isAdminEditMode ? 'Updating Property...' : 'Updating for Review...') : 'Submitting for Approval...')
+              : (isEditMode ? (isAdminEditMode ? 'Update Property Details' : 'Update Property for Review') : 'Submit Property for Approval')}
+          </button>
+        )}
+      </div>
+
       <p className="text-sm text-gray-600 text-center">
         {isAdminEditMode
           ? 'Admin edits keep the original owner contact and current approval status.'
