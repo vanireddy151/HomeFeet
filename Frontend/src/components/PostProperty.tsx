@@ -1,6 +1,7 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
+  ArrowLeft,
   ArrowUpDown,
   Building2,
   Car,
@@ -2138,29 +2139,68 @@ const PostProperty = () => {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:gap-4">
-        {formSteps.map((step, index) => (
-          <React.Fragment key={step}>
-            <button
-              type="button"
-              onClick={() => index <= currentStep && setCurrentStep(index)}
-              disabled={index > currentStep}
-              className={`flex items-center gap-2 text-sm font-semibold ${
-                index === currentStep ? 'text-teal-700' : index < currentStep ? 'text-slate-700' : 'cursor-not-allowed text-slate-400'
-              }`}
-            >
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                index === currentStep ? 'bg-teal-700 text-white' : index < currentStep ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'
-              }`}>
-                {index + 1}
-              </span>
-              {step}
-            </button>
-            {index < formSteps.length - 1 && <span className="h-px flex-1 bg-slate-200" />}
-          </React.Fragment>
-        ))}
-      </div>
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <aside className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
+          <button
+            type="button"
+            onClick={() => navigate('/properties')}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-teal-700"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Properties
+          </button>
 
+          <div className="mt-4 flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-50">
+              <Building2 className="h-5 w-5 text-teal-700" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-950">List Your Property</p>
+              <p className="text-xs leading-5 text-slate-500">Complete the form to get your property listed</p>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="h-1.5 w-full rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-slate-900 transition-all"
+                style={{ width: `${Math.round((currentStep / (formSteps.length - 1)) * 100)}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-xs font-semibold text-slate-500">
+              {Math.round((currentStep / (formSteps.length - 1)) * 100)}%
+            </p>
+          </div>
+
+          <div className="mt-5">
+            {formSteps.map((step, index) => (
+              <div key={step} className="relative flex gap-3 pb-8 last:pb-0">
+                {index < formSteps.length - 1 && (
+                  <span className="absolute left-[15px] top-8 h-full w-px bg-slate-200" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => index <= currentStep && setCurrentStep(index)}
+                  disabled={index > currentStep}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                    index === currentStep
+                      ? 'bg-slate-950 text-white'
+                      : index < currentStep
+                        ? 'bg-teal-100 text-teal-700'
+                        : 'cursor-not-allowed bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  {index + 1}
+                </button>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Step {index + 1}</p>
+                  <p className={`text-sm font-bold ${index === currentStep ? 'text-slate-950' : 'text-slate-600'}`}>{step}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       {currentStep === 0 && (
       <>
       {canUseAssistedUpload && (
@@ -3197,9 +3237,9 @@ const PostProperty = () => {
           <button
             type="button"
             onClick={() => setCurrentStep((step) => step + 1)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-8 py-4 font-semibold text-white shadow-lg hover:bg-teal-800"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-400 px-8 py-4 font-semibold text-slate-950 shadow-lg hover:bg-amber-300"
           >
-            Save &amp; Continue
+            Next
           </button>
         ) : (
           <button
@@ -3222,6 +3262,8 @@ const PostProperty = () => {
           ? 'Edited properties are sent back to admin review before publishing'
           : 'Your property will be reviewed by admin before being published'}
       </p>
+        </div>
+      </div>
     </form>
   );
 };
