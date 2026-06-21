@@ -126,7 +126,7 @@ const PropertiesListingPage: React.FC = () => {
   const isDeveloperView = routeView === 'developers';
   const isMarketplaceView = routeView === 'marketplace' || !routeView;
   const showDashboardLayout = isDeveloperView || isMarketplaceView;
-  const listingIntent = searchParams.get('listingIntent') || 'development';
+  const listingIntent = searchParams.get('listingIntent') || 'sell';
   const getUrlDevelopmentType = (params: URLSearchParams, intent = listingIntent) =>
     params.get('developmentType') || (intent === 'sell' ? params.get('propertyType') : '') || 'All';
   const isPlotDealView = listingIntent === 'buy' || listingIntent === 'sell';
@@ -1293,14 +1293,14 @@ const PropertiesListingPage: React.FC = () => {
   const pageTitle = listingIntent === 'buy'
     ? 'Buyer Contact & Requirement Info'
     : listingIntent === 'sell'
-      ? 'Sell Plot Listings'
-      : isMarketplaceView ? 'Properties' : 'ForDeveloper Properties';
+      ? (currentPropertyType === 'commercial-plot' ? 'Commercial Space Listings' : 'Sale Flats Listings')
+      : 'Properties';
   const developerIntentTabs = [
-    { label: 'ForDevelopers', value: 'development' },
-    { label: 'Buyers', value: 'buy' },
-    { label: 'Sell Plot', value: 'sell' },
+    { label: 'Buyer', value: 'buy', propertyType: '' },
+    { label: 'Sale Flats', value: 'sell', propertyType: '' },
+    { label: 'Commercial Space', value: 'sell', propertyType: 'commercial-plot' },
   ];
-  const switchDeveloperIntent = (intent: string) => {
+  const switchDeveloperIntent = (intent: string, propertyType = '') => {
     const cityToKeep = currentMapCity || selectedCity || DEFAULT_CITY;
     setSearchQuery('');
     setPropertyNumberQuery('');
@@ -1319,11 +1319,13 @@ const PropertiesListingPage: React.FC = () => {
       zoningClassification: 'All',
       maxOwnerShare: ''
     });
-    setSearchParams({
+    const nextParams: Record<string, string> = {
       view: isMarketplaceView ? 'marketplace' : 'developers',
       listingIntent: intent,
       city: cityToKeep
-    });
+    };
+    if (propertyType) nextParams.propertyType = propertyType;
+    setSearchParams(nextParams);
   };
   const timelineLabels: Record<string, string> = {
     '1_to_3_months': '1 to 3 months',
@@ -1551,12 +1553,12 @@ const PropertiesListingPage: React.FC = () => {
             <main className="order-1 relative min-h-[420px] overflow-hidden rounded-2xl bg-white shadow-sm sm:min-h-[560px] lg:order-none lg:min-h-[700px]">
               <div className="absolute left-3 right-3 top-3 z-10 flex rounded-xl border border-white/70 bg-white/95 p-1 shadow-lg backdrop-blur lg:hidden">
                 {developerIntentTabs.map((tab) => {
-                  const active = listingIntent === tab.value;
+                  const active = listingIntent === tab.value && currentPropertyType === tab.propertyType;
                   return (
                     <button
-                      key={tab.value}
+                      key={`${tab.value}-${tab.propertyType}`}
                       type="button"
-                      onClick={() => switchDeveloperIntent(tab.value)}
+                      onClick={() => switchDeveloperIntent(tab.value, tab.propertyType)}
                       className={`min-w-0 flex-1 rounded-lg px-2 py-2 text-[12px] font-semibold leading-tight transition ${
                         active ? 'bg-teal-700 text-white shadow-sm' : 'text-slate-700 hover:bg-teal-50 hover:text-teal-700'
                       }`}
