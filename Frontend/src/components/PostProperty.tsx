@@ -3238,14 +3238,14 @@ const PostProperty = () => {
           <button
             type="button"
             onClick={() => setCurrentStep((step) => step + 1)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-8 py-4 font-semibold text-white shadow-lg hover:bg-teal-800"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0AA6A6] px-8 py-4 font-semibold text-white shadow-lg hover:bg-[#088f8f]"
           >
             Next
           </button>
         ) : (
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-8 py-4 font-semibold text-white shadow-lg hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0AA6A6] px-8 py-4 font-semibold text-white shadow-lg hover:bg-[#088f8f] disabled:cursor-not-allowed disabled:bg-gray-400"
             disabled={isSubmitting}
           >
             <ShieldCheck className="h-5 w-5" />
