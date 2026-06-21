@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const crypto = require('crypto');
 const multer = require('multer');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { keyId, keySecret, razorpayApi, isRazorpayConfigured } = require('../config/razorpay.config');
 
 const User = require('../models/User');
