@@ -19,9 +19,13 @@ const propertySchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  areaUnit: { 
-    type: String, 
-    default: 'Sq Yards' 
+  areaUnit: {
+    type: String,
+    default: 'Sq Yards'
+  },
+  flatSize: {
+    type: String,
+    default: ''
   },
   // Plot dimensions for all four sides (in feet)
   northSideLength: { 

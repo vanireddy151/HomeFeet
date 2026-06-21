@@ -217,6 +217,7 @@ const PropertyDetails: React.FC = () => {
   ].filter((item) => item.value) : [];
 
   const details = property ? [
+    { label: 'Flat Size', value: property.flatSize ? `${property.flatSize} Sq Ft` : '' },
     { label: 'Floor', value: property.floorNumber ? `${property.floorNumber}${property.totalFloors ? ` of ${property.totalFloors}` : ''}` : '' },
     { label: 'Furnishing', value: property.furnishingStatus },
     { label: 'Possession Status', value: property.possessionStatus },

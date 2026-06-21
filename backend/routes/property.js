@@ -425,7 +425,7 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
   try {
     const {
       listingIntent = 'development',
-      developmentType, totalArea, areaUnit,
+      developmentType, totalArea, areaUnit, flatSize,
       northSideLength, southSideLength, eastSideLength, westSideLength,
       facing, roadFacingDirection, roadSize, frontageWidth, pincode, zoningClassification,
       developerRatio, partlySale, partlySaleUnit, partlySaleValue, partlySalePrice,
@@ -486,6 +486,7 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       developmentType,
       totalArea: normalizedArea.totalArea,
       areaUnit: normalizedArea.areaUnit,
+      flatSize: flatSize || '',
       northSideLength,
       southSideLength,
       eastSideLength,

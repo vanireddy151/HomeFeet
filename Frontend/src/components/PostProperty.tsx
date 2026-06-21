@@ -171,6 +171,7 @@ const PostProperty = () => {
     developmentType: '',
     totalArea: '',
     areaUnit: 'Sq Yards',
+    flatSize: '',
     northSideLength: '',
     southSideLength: '',
     eastSideLength: '',
@@ -282,6 +283,7 @@ const PostProperty = () => {
       developmentType: prefill.developmentType || prev.developmentType,
       totalArea: prefill.totalArea || prev.totalArea,
       areaUnit: prefill.areaUnit || prev.areaUnit,
+      flatSize: prefill.flatSize || prev.flatSize,
       northSideLength: prefill.northSideLength || prev.northSideLength,
       southSideLength: prefill.southSideLength || prev.southSideLength,
       eastSideLength: prefill.eastSideLength || prev.eastSideLength,
@@ -493,6 +495,7 @@ const PostProperty = () => {
           developmentType: property.developmentType || '',
           totalArea: property.totalArea || '',
           areaUnit: property.areaUnit || 'Sq Yards',
+          flatSize: property.flatSize || '',
           northSideLength: property.northSideLength || '',
           southSideLength: property.southSideLength || '',
           eastSideLength: property.eastSideLength || '',
@@ -1868,6 +1871,7 @@ const PostProperty = () => {
     data.append('developmentType', formData.developmentType);
     data.append('totalArea', formData.totalArea);
     data.append('areaUnit', formData.areaUnit);
+    data.append('flatSize', formData.flatSize);
     data.append('northSideLength', formData.northSideLength);
     data.append('southSideLength', formData.southSideLength);
     data.append('eastSideLength', formData.eastSideLength);
@@ -2414,7 +2418,7 @@ const PostProperty = () => {
                 name="totalArea"
                 value={formData.totalArea}
                 onChange={handleChange}
-                placeholder="Flat Size *"
+                placeholder="Plot Size *"
                 className="w-full min-w-0 rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
                 type="number"
                 min="0"
@@ -2432,6 +2436,16 @@ const PostProperty = () => {
                 <option value="Acres">Acres</option>
               </select>
             </div>
+            <input
+              name="flatSize"
+              value={formData.flatSize}
+              onChange={handleChange}
+              placeholder="Flat Size (Sq Ft)"
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              type="number"
+              min="0"
+              step="any"
+            />
             <select
               name="facing"
               onChange={handleChange}
