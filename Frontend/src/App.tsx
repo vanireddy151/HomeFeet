@@ -3,7 +3,6 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
   BadgeCheck,
-  Building2,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -14,12 +13,11 @@ import {
   Landmark,
   MapPinned,
   Newspaper,
+  Rocket,
   Search,
   Share2,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
-  Users,
   X,
   FileText
 } from 'lucide-react';
@@ -331,6 +329,14 @@ const hotSellingProjects = [
 
 const cleanDevelopmentType = (value?: string) =>
   value ? value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Project';
+
+// TODO: dummy newly launched projects until real listings carry a launch date/status; will be replaced once builder properties are added.
+const newlyLaunchedProjects = [
+  { name: 'Prestige Sun Crest', location: 'Electronic City Phase 1, Bangalore', priceRange: 'Rs. 67.60 L Onwards', configuration: '1, 2, 3', sizeRange: '650 - 2005', builder: 'Prestige Group', image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80' },
+  { name: 'Logipark Pristine O2 World', location: 'Wagholi, Pune', priceRange: 'Rs. 76.30 L Onwards', configuration: '1, 2, 3', sizeRange: '590 - 1220', builder: 'Logipark Warehousing', image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80' },
+  { name: 'Brigade Insignia', location: 'Yelahanka, Bangalore', priceRange: 'Rs. 3.80 Cr Onwards', configuration: '3, 4', sizeRange: '1415 - 2180', builder: 'Brigade Group', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80' },
+  { name: 'Max Estate 360', location: 'Sector 36A, Gurgaon', priceRange: 'Rs. 5.22 Cr Onwards', configuration: '3, 4', sizeRange: '2611 - 3531', builder: 'Max Estates', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80' },
+];
 
 const homeBannerSlides = [
   {
@@ -792,6 +798,7 @@ function HomePage() {
   const [exclusiveImageIndex, setExclusiveImageIndex] = useState(0);
   const [selectedHotSellingZone, setSelectedHotSellingZone] = useState('All');
   const hotSellingScrollRef = useRef<HTMLDivElement>(null);
+  const newlyLaunchedScrollRef = useRef<HTMLDivElement>(null);
   const [marketplaceStats, setMarketplaceStats] = useState<MarketplaceStats>({
     builders: 0,
     owners: 0,
@@ -1364,39 +1371,60 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="overflow-hidden bg-white py-28">
-        <div className="ld-container relative grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div className="absolute right-[-12vw] top-[-3rem] hidden h-[calc(100%+6rem)] w-[58vw] bg-cyan-50/70 lg:block" />
-          <div className="relative">
-            <p className="ld-eyebrow before:h-px before:w-9 before:bg-slate-400 before:content-['']">
-              About us
-            </p>
-            <h2 className="mt-6 max-w-lg text-4xl font-black leading-tight tracking-tight text-slate-950 md:text-5xl">
-              Apartment and commercial space deals need a more <span className="text-[#0AA6A6]">transparent</span> market.
-            </h2>
-            <p className="mt-6 max-w-xl text-base leading-7 text-slate-700">
-              HomeFeet keeps property posting, builder access, and admin review in one verified workflow so serious buyer conversations move faster.
-            </p>
-            <Link to="/about" className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-[#0077CC]">
-              Read More <ArrowRight className="h-4 w-4" />
+      <section className="bg-white py-16">
+        <div className="ld-container">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Newly Launched Projects</h2>
+            <Link
+              to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+              className="inline-flex items-center gap-1 text-sm font-bold text-[#0077CC] hover:text-teal-700"
+            >
+              View all <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
 
-          <div className="relative grid gap-5 sm:grid-cols-2">
-            {[
-              { icon: Building2, value: 'Owner Desk', text: 'Post apartments and commercial space with photos, video, amenities, and pincode.' },
-              { icon: Users, value: 'Builder Desk', text: 'Shortlist opportunities and request contact only after verification.' },
-              { icon: TrendingUp, value: 'Admin Operations', text: 'Approve listings, verify builders, review inquiries, and monitor quality.', wide: true },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.value} className={`rounded-lg border border-slate-200 bg-white p-7 shadow-lg shadow-slate-200/70 ${item.wide ? 'sm:col-span-2' : ''}`}>
-                  <Icon className="mb-5 h-9 w-9 text-[#0AA6A6]" />
-                  <h3 className="text-2xl font-black text-slate-950">{item.value}</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">{item.text}</p>
+          <div className="relative">
+            <div
+              ref={newlyLaunchedScrollRef}
+              className="flex gap-6 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {newlyLaunchedProjects.map((project) => (
+                <div key={project.name} className="w-72 shrink-0 rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="relative">
+                    <img src={project.image} alt={project.name} className="h-44 w-full rounded-t-lg object-cover" />
+                    <div className="absolute right-3 top-3 flex gap-2">
+                      <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80">
+                        <Heart className="h-4 w-4" />
+                      </button>
+                      <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80">
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-slate-950/85 px-3 py-1 text-xs font-bold text-amber-300">
+                      <Rocket className="h-3.5 w-3.5" /> New Launch
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <p className="font-black text-slate-950">{project.name}</p>
+                    <p className="mt-1 text-sm text-slate-500">{project.location}</p>
+                    <p className="mt-2 font-black text-amber-600">{project.priceRange}</p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      {project.configuration} BHK <span className="mx-1 text-slate-300">|</span> {project.sizeRange} sq ft
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">By {project.builder}</p>
+                  </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => newlyLaunchedScrollRef.current?.scrollBy({ left: 320, behavior: 'smooth' })}
+              aria-label="Scroll for more newly launched projects"
+              className="absolute right-0 top-[35%] hidden h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 hover:bg-slate-50 lg:flex"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </section>
