@@ -12,6 +12,8 @@ import {
   MapPin,
   Search,
   SlidersHorizontal,
+  Trees,
+  Users,
   X
 } from 'lucide-react';
 import { API_BASE, API_ORIGIN } from '../lib/api';
@@ -1272,17 +1274,22 @@ const PropertiesListingPage: React.FC = () => {
     { label: 'Open For Deal', value: properties.filter((property) => property.dealStatus !== 'closed').length || 0 },
   ];
   const plotTypeFilters = [
-    { label: 'Open Plot', value: 'open-plot', icon: Grid },
-    { label: 'HMDA Layout', value: 'hmda-layout', icon: Layers },
-    { label: 'GP Layout', value: 'gp-layout', icon: MapPin },
-    { label: 'DTCP Layout', value: 'dtcp-layout', icon: Building },
+    { label: 'Standalone', value: 'standalone', icon: Building },
+    { label: 'High-rise', value: 'high-rise', icon: Building2 },
+    { label: 'Group House', value: 'group-house', icon: Users },
+    { label: 'Residential House', value: 'residential-house', icon: Home },
+    { label: 'Villa', value: 'villa', icon: Layers },
+    { label: 'Farm House', value: 'farm-house', icon: Trees },
   ];
-  const developerTypeFilters = [
+  const developmentOnlyTypeFilters = [
     { label: 'Standalone', value: 'standalone', icon: Building },
     { label: 'High-Rise', value: 'high-rise', icon: Building2 },
-    { label: 'Villa', value: 'villa', icon: Home },
+    { label: 'Villa', value: 'villa', icon: Layers },
     { label: 'Plotted', value: 'plotted', icon: Grid },
-    ...plotTypeFilters,
+  ];
+  const developerTypeFilters = [
+    ...developmentOnlyTypeFilters,
+    ...plotTypeFilters.filter((filter) => !developmentOnlyTypeFilters.some((item) => item.value === filter.value)),
   ];
   const activeTypeFilters = isPlotDealView ? plotTypeFilters : developerTypeFilters;
   const marketplaceTypeFilters = [
