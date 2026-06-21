@@ -201,6 +201,8 @@ const PropertyDetails: React.FC = () => {
   const isApartmentListing = String(property?.developmentType || '').toLowerCase() === 'apartment';
 
   const details = property ? [
+    { label: 'Project Name', value: property.projectName },
+    { label: 'Company Name', value: property.companyName },
     { label: 'Total Area', value: property.totalArea ? `${property.totalArea} ${property.areaUnit || ''}` : '' },
     { label: 'Square Yard Price', value: formatMoney(property.squareYardPrice) },
     { label: 'Bedrooms', value: property.bedrooms },

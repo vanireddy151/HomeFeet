@@ -1,9 +1,13 @@
 const mongoose = require('mongoose');
 
 const propertySchema = new mongoose.Schema({
-  projectName: { 
-    type: String, 
+  projectName: {
+    type: String,
     default: ''  // Made optional
+  },
+  companyName: {
+    type: String,
+    default: ''
   },
   listingIntent: {
     type: String,

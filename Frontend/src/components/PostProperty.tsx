@@ -176,6 +176,8 @@ const PostProperty = () => {
     totalArea: '',
     areaUnit: 'Sq Yards',
     flatSize: '',
+    projectName: '',
+    companyName: '',
     northSideLength: '',
     southSideLength: '',
     eastSideLength: '',
@@ -289,6 +291,8 @@ const PostProperty = () => {
       totalArea: prefill.totalArea || prev.totalArea,
       areaUnit: prefill.areaUnit || prev.areaUnit,
       flatSize: prefill.flatSize || prev.flatSize,
+      projectName: prefill.projectName || prev.projectName,
+      companyName: prefill.companyName || prev.companyName,
       northSideLength: prefill.northSideLength || prev.northSideLength,
       southSideLength: prefill.southSideLength || prev.southSideLength,
       eastSideLength: prefill.eastSideLength || prev.eastSideLength,
@@ -502,6 +506,8 @@ const PostProperty = () => {
           totalArea: property.totalArea || '',
           areaUnit: property.areaUnit || 'Sq Yards',
           flatSize: property.flatSize || '',
+          projectName: property.projectName || '',
+          companyName: property.companyName || '',
           northSideLength: property.northSideLength || '',
           southSideLength: property.southSideLength || '',
           eastSideLength: property.eastSideLength || '',
@@ -1883,6 +1889,8 @@ const PostProperty = () => {
     data.append('totalArea', formData.totalArea);
     data.append('areaUnit', formData.areaUnit);
     data.append('flatSize', formData.flatSize);
+    data.append('projectName', formData.projectName);
+    data.append('companyName', formData.companyName);
     data.append('northSideLength', formData.northSideLength);
     data.append('southSideLength', formData.southSideLength);
     data.append('eastSideLength', formData.eastSideLength);
@@ -2419,6 +2427,22 @@ const PostProperty = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-teal-600">Apartment Details</h3>
           <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+            <input
+              name="projectName"
+              value={formData.projectName}
+              onChange={handleChange}
+              placeholder="Project Name"
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              type="text"
+            />
+            <input
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleChange}
+              placeholder="Company Name"
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              type="text"
+            />
             <input
               name="flatSize"
               value={formData.flatSize}
