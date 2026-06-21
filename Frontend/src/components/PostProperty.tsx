@@ -1288,6 +1288,16 @@ const PostProperty = () => {
     setExistingMedia(prev => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== index) }));
   };
 
+  const [galleryPreviewUrls, setGalleryPreviewUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    const urls = formData.images.map((file) => URL.createObjectURL(file));
+    setGalleryPreviewUrls(urls);
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [formData.images]);
+
   const AMENITY_OPTIONS = [
     { label: 'Parking', icon: Car },
     { label: 'Lift', icon: ArrowUpDown },
@@ -2826,7 +2836,7 @@ const PostProperty = () => {
                 {formData.images.map((file, index) => (
                   <div key={`${file.name}-${index}`} className="relative">
                     <img
-                      src={URL.createObjectURL(file)}
+                      src={galleryPreviewUrls[index]}
                       alt={`Selected ${index + 1}`}
                       className="h-20 w-full rounded-lg object-cover"
                     />
