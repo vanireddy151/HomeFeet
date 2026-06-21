@@ -167,6 +167,7 @@ const PostProperty = () => {
   const canUseAssistedUpload = isAdminUser && !isEditMode;
   const [formData, setFormData] = useState({
     listingIntent: 'sell',
+    propertyCategory: 'residential' as 'residential' | 'commercial',
     developmentType: '',
     totalArea: '',
     areaUnit: 'Sq Yards',
@@ -488,6 +489,7 @@ const PostProperty = () => {
         setFormData(prev => ({
           ...prev,
           listingIntent: property.listingIntent || 'development',
+          propertyCategory: ['office-space', 'retail', 'hospitality', 'industrial'].includes(property.developmentType) ? 'commercial' : 'residential',
           developmentType: property.developmentType || '',
           totalArea: property.totalArea || '',
           areaUnit: property.areaUnit || 'Sq Yards',
@@ -2237,11 +2239,46 @@ const PostProperty = () => {
           </div>
         </div>
       
-      <select 
-        name="developmentType" 
-        value={formData.developmentType} 
-        onChange={handleChange} 
-        className="w-full border p-2 rounded" 
+      {formData.listingIntent !== 'development' && (
+        <div className="mb-2">
+          <p className="mb-2 text-sm font-semibold text-slate-800">Property Category</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { value: 'residential', label: 'Residential' },
+              { value: 'commercial', label: 'Commercial' }
+            ].map((option) => (
+              <label
+                key={option.value}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm font-semibold transition ${
+                  formData.propertyCategory === option.value
+                    ? 'border-teal-600 bg-teal-50 text-teal-800'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-teal-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="propertyCategory"
+                  value={option.value}
+                  checked={formData.propertyCategory === option.value}
+                  onChange={() => setFormData(prev => ({
+                    ...prev,
+                    propertyCategory: option.value as 'residential' | 'commercial',
+                    developmentType: ''
+                  }))}
+                  className="h-4 w-4 accent-teal-700"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <select
+        name="developmentType"
+        value={formData.developmentType}
+        onChange={handleChange}
+        className="w-full border p-2 rounded"
         required
       >
         <option value="">{formData.listingIntent === 'development' ? 'Select Development Type *' : 'Select Property Type *'}</option>
@@ -2253,6 +2290,13 @@ const PostProperty = () => {
             <option value="plotted">Plotted</option>
             {formData.developmentType === 'apartment' && <option value="apartment">Apartment</option>}
             <option value="mixed">Mixed</option>
+          </>
+        ) : formData.propertyCategory === 'commercial' ? (
+          <>
+            <option value="office-space">Office Space</option>
+            <option value="retail">Retail</option>
+            <option value="hospitality">Hospitality</option>
+            <option value="industrial">Industrial</option>
           </>
         ) : (
           <>

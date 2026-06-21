@@ -37,10 +37,12 @@ const formatMoney = (value?: string) => {
 const cleanType = (value?: string) =>
   value ? value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Development';
 
+const commercialDevelopmentTypes = ['commercial-plot', 'office-space', 'retail', 'hospitality', 'industrial'];
+
 const propertyNumberPrefix = (property: any) => {
   const intent = String(property?.listingIntent || 'development').toLowerCase();
   const type = String(property?.developmentType || '').toLowerCase();
-  if (type === 'commercial-plot') return 'CP';
+  if (commercialDevelopmentTypes.includes(type)) return 'CP';
   if (intent === 'buy') return 'BY';
   if (intent === 'sell') return 'SP';
   return 'DP';

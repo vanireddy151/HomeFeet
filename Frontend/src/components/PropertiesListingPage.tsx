@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  Briefcase,
   Building,
   Building2,
   ChevronDown,
+  Factory,
   Grid,
   Home,
+  Hotel,
   Layers,
   List,
   Lock,
   MapPin,
   Search,
+  ShoppingBag,
   SlidersHorizontal,
   Trees,
   Users,
@@ -97,10 +101,11 @@ const CITY_CENTERS: Record<string, { lat: number; lng: number; zoom: number }> =
 };
 const getStoredSelectedCity = () => localStorage.getItem('selectedCity') || DEFAULT_CITY;
 const getCityCenter = (city?: string) => CITY_CENTERS[city || DEFAULT_CITY] || CITY_CENTERS[DEFAULT_CITY];
+const commercialDevelopmentTypes = ['commercial-plot', 'office-space', 'retail', 'hospitality', 'industrial'];
 const getPropertyNumberPrefix = (property: Pick<Property, 'listingIntent' | 'developmentType'>, fallbackIntent = 'development') => {
   const intent = String(property.listingIntent || fallbackIntent || 'development').toLowerCase();
   const type = String(property.developmentType || '').toLowerCase();
-  if (type === 'commercial-plot') return 'CP';
+  if (commercialDevelopmentTypes.includes(type)) return 'CP';
   if (intent === 'buy') return 'BY';
   if (intent === 'sell') return 'SP';
   return 'DP';
@@ -1291,12 +1296,21 @@ const PropertiesListingPage: React.FC = () => {
     ...developmentOnlyTypeFilters,
     ...plotTypeFilters.filter((filter) => !developmentOnlyTypeFilters.some((item) => item.value === filter.value)),
   ];
-  const activeTypeFilters = isPlotDealView ? plotTypeFilters : developerTypeFilters;
+  const commercialTypeFilters = [
+    { label: 'Office Space', value: 'office-space', icon: Briefcase },
+    { label: 'Retail', value: 'retail', icon: ShoppingBag },
+    { label: 'Hospitality', value: 'hospitality', icon: Hotel },
+    { label: 'Industrial', value: 'industrial', icon: Factory },
+  ];
+  const isCommercialPropertyView = currentPropertyType === 'commercial-plot';
+  const activeTypeFilters = isCommercialPropertyView ? commercialTypeFilters : isPlotDealView ? plotTypeFilters : developerTypeFilters;
   const marketplaceTypeFilters = [
     ...developerTypeFilters,
     ...plotTypeFilters.filter((filter) => !developerTypeFilters.some((item) => item.value === filter.value)),
   ];
-  const visibleTypeFilters = isMarketplaceView ? marketplaceTypeFilters : activeTypeFilters;
+  const visibleTypeFilters = isCommercialPropertyView
+    ? commercialTypeFilters
+    : isMarketplaceView ? marketplaceTypeFilters : activeTypeFilters;
   const pageTitle = listingIntent === 'buy'
     ? 'Buyer Contact & Requirement Info'
     : listingIntent === 'sell'

@@ -74,11 +74,13 @@ const mediaSrc = (url = '') => url.startsWith('http') ? url : `${API_ORIGIN}${ur
 const getPropertyImageUrl = (property: Pick<Property, 'imageUrl' | 'plotDiagramUrl'>) =>
   property.imageUrl || (isDisplayableImage(property.plotDiagramUrl) ? property.plotDiagramUrl || '' : '');
 
+const commercialDevelopmentTypes = ['commercial-plot', 'office-space', 'retail', 'hospitality', 'industrial'];
+
 const getPropertyCategory = (property: Pick<Property, 'listingIntent' | 'developmentType'>) => {
   const intent = (property.listingIntent || 'development').toLowerCase();
   const type = (property.developmentType || '').toLowerCase();
   if (intent === 'buy') return 'Buyers';
-  if (intent === 'sell' && type === 'commercial-plot') return 'Commercial Plot';
+  if (intent === 'sell' && commercialDevelopmentTypes.includes(type)) return 'Commercial Plot';
   if (intent === 'sell') return 'Sell Plot';
   return 'ForDevelopers';
 };
@@ -289,8 +291,8 @@ const AdminPanel: React.FC = () => {
         const type = (p.developmentType || '').toLowerCase();
         if (filters.headerType === 'development') return intent === 'development';
         if (filters.headerType === 'buy') return intent === 'buy';
-        if (filters.headerType === 'sell') return intent === 'sell' && type !== 'commercial-plot';
-        if (filters.headerType === 'commercial') return intent === 'sell' && type === 'commercial-plot';
+        if (filters.headerType === 'sell') return intent === 'sell' && !commercialDevelopmentTypes.includes(type);
+        if (filters.headerType === 'commercial') return intent === 'sell' && commercialDevelopmentTypes.includes(type);
         if (filters.headerType === 'map-view') return Boolean(p.city || p.locality || p.landmark);
         return true;
       });

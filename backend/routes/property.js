@@ -1098,7 +1098,7 @@ router.get('/search', async (req, res) => {
         'hmda-layout': ['hmda-layout', 'hmda'],
         'gp-layout': ['gp-layout', 'gp'],
         'dtcp-layout': ['dtcp-layout', 'dtcp'],
-        'commercial-plot': ['commercial-plot', 'commercial plot']
+        'commercial-plot': ['commercial-plot', 'commercial plot', 'office-space', 'retail', 'hospitality', 'industrial']
       };
       const aliases = developmentTypeAliases[typeValue] || [String(developmentType)];
       match.developmentType = {
