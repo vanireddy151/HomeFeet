@@ -110,7 +110,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
           })}
         </div>
 
-        <div className="bg-white p-4">
+        <div className="bg-white/85 p-4">
           <div className="flex items-stretch rounded-lg border border-slate-300 focus-within:border-teal-600 focus-within:ring-4 focus-within:ring-teal-100">
             <div ref={cityContainerRef} className="relative min-w-0 flex-1 border-r border-slate-300">
               <div className="flex h-full w-full items-center gap-1 rounded-l-lg bg-white px-2 sm:gap-2 sm:px-4">
@@ -180,7 +180,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
             </button>
           </div>
 
-          <div className="-mx-4 -mb-4 mt-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-b-lg bg-slate-50 px-4 py-3 ld-scrollbar-hide">
+          <div className="-mx-4 -mb-4 mt-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-b-lg bg-slate-100/85 px-4 py-3 ld-scrollbar-hide">
             <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Trending Searches:</span>
             {popularLocations.map((location) => (
               <button
