@@ -32,11 +32,13 @@ const cleanType = (value?: string) =>
   value ? value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Development';
 
 const commercialDevelopmentTypes = ['commercial-plot', 'office-space', 'retail', 'hospitality', 'industrial'];
+const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
 
 const propertyNumberPrefix = (property: any) => {
   const intent = String(property?.listingIntent || 'development').toLowerCase();
   const type = String(property?.developmentType || '').toLowerCase();
   if (commercialDevelopmentTypes.includes(type)) return 'CP';
+  if (intent === 'sell' && apartmentLikeTypes.includes(type)) return 'SF';
   if (intent === 'buy') return 'BY';
   if (intent === 'sell') return 'SP';
   return 'DP';

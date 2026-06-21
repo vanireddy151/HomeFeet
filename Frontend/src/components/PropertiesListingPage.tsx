@@ -53,6 +53,8 @@ interface Property {
   plotDiagramUrl?: string;
   dealStatus: string;
   facing: string;
+  flatSize?: string;
+  flatFacing?: string;
   roadSize: string;
   developerRatio: string;
   bedrooms?: string;
@@ -104,10 +106,12 @@ const CITY_CENTERS: Record<string, { lat: number; lng: number; zoom: number }> =
 const getStoredSelectedCity = () => localStorage.getItem('selectedCity') || DEFAULT_CITY;
 const getCityCenter = (city?: string) => CITY_CENTERS[city || DEFAULT_CITY] || CITY_CENTERS[DEFAULT_CITY];
 const commercialDevelopmentTypes = ['commercial-plot', 'office-space', 'retail', 'hospitality', 'industrial'];
+const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
 const getPropertyNumberPrefix = (property: Pick<Property, 'listingIntent' | 'developmentType'>, fallbackIntent = 'development') => {
   const intent = String(property.listingIntent || fallbackIntent || 'development').toLowerCase();
   const type = String(property.developmentType || '').toLowerCase();
   if (commercialDevelopmentTypes.includes(type)) return 'CP';
+  if (intent === 'sell' && apartmentLikeTypes.includes(type)) return 'SF';
   if (intent === 'buy') return 'BY';
   if (intent === 'sell') return 'SP';
   return 'DP';
@@ -1437,7 +1441,7 @@ const PropertiesListingPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#eef4fb] p-1.5 sm:p-3">
         <div className={`mx-auto grid max-w-[1580px] gap-2.5 lg:gap-4 ${
-          isDeveloperView ? 'lg:grid-cols-[420px_1fr_280px]' : 'lg:grid-cols-[minmax(0,1fr)]'
+          isDeveloperView ? 'lg:grid-cols-[520px_1fr_280px]' : 'lg:grid-cols-[minmax(0,1fr)]'
         }`}>
           <div className={`grid grid-cols-2 gap-1.5 sm:gap-4 ${
             isDeveloperView ? 'lg:col-span-3' : ''
@@ -1647,7 +1651,7 @@ const PropertiesListingPage: React.FC = () => {
                 </div>
               )}
               {!loading && visibleProperties.length > 0 && visibleProperties.map((property) => (
-                <article key={property._id} className={`grid grid-cols-[130px_minmax(0,1fr)] gap-2.5 overflow-hidden rounded-xl border bg-white p-2 shadow-sm sm:grid-cols-[165px_minmax(0,1fr)] ${
+                <article key={property._id} className={`grid grid-cols-[130px_minmax(0,1fr)] gap-2.5 overflow-hidden rounded-xl border bg-white p-2 shadow-sm sm:grid-cols-[190px_minmax(0,1fr)] ${
                   focusedPropertyId === property._id
                     ? 'border-red-300 ring-2 ring-red-100'
                     : propertyMatchesSearch(property, activeSearchTerm) ? 'border-amber-300 ring-2 ring-amber-100' : 'border-slate-100'
@@ -1655,6 +1659,7 @@ const PropertiesListingPage: React.FC = () => {
                   {(() => {
                     const propertyIntent = getPropertyIntent(property);
                     const isPropertyPlotDeal = propertyIntent === 'buy' || propertyIntent === 'sell';
+                    const isPropertyApartment = apartmentLikeTypes.includes(String(property.developmentType || '').toLowerCase());
                     return (
                       <>
                         <div className="relative h-[152px] overflow-hidden rounded-lg bg-slate-100 sm:h-[170px]">
@@ -1716,14 +1721,29 @@ const PropertiesListingPage: React.FC = () => {
                             </div>
                           )}
                           <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[12px]">
-                            <div className="rounded-md bg-slate-50 px-1.5 py-1">
-                              <p className="text-slate-500">Area</p>
-                              <p className="line-clamp-2 font-bold leading-4 text-slate-950">{property.totalArea} {property.areaUnit}</p>
-                            </div>
-                            <div className="rounded-md bg-slate-50 px-1.5 py-1">
-                              <p className="text-slate-500">Facing</p>
-                              <p className="line-clamp-1 font-bold leading-4 text-slate-950">{property.facing || 'N/A'}</p>
-                            </div>
+                            {isPropertyApartment ? (
+                              <>
+                                <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                                  <p className="text-slate-500">Flat Size</p>
+                                  <p className="line-clamp-2 font-bold leading-4 text-slate-950">{property.flatSize ? `${property.flatSize} Sq Ft` : 'N/A'}</p>
+                                </div>
+                                <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                                  <p className="text-slate-500">Flat Facing</p>
+                                  <p className="line-clamp-1 font-bold leading-4 text-slate-950">{property.flatFacing || 'N/A'}</p>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                                  <p className="text-slate-500">Area</p>
+                                  <p className="line-clamp-2 font-bold leading-4 text-slate-950">{property.totalArea} {property.areaUnit}</p>
+                                </div>
+                                <div className="rounded-md bg-slate-50 px-1.5 py-1">
+                                  <p className="text-slate-500">Facing</p>
+                                  <p className="line-clamp-1 font-bold leading-4 text-slate-950">{property.facing || 'N/A'}</p>
+                                </div>
+                              </>
+                            )}
                           </div>
                           {String(property.developmentType || '').toLowerCase() === 'apartment' && (property.bedrooms || property.bathrooms) && (
                             <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[12px]">
@@ -1743,8 +1763,16 @@ const PropertiesListingPage: React.FC = () => {
                           )}
                           {isPropertyPlotDeal ? (
                             <div className="mt-1 rounded-md bg-slate-50 px-1.5 py-1 text-[12px]">
-                              <span className="text-slate-500">{propertyIntent === 'buy' ? 'Budget / Sq Yard' : 'Square Yard Price'}</span>
-                              <p className="line-clamp-1 font-bold leading-4 text-teal-700">{property.squareYardPrice ? formatPrice(property.squareYardPrice) : 'Price on request'}</p>
+                              <span className="text-slate-500">
+                                {isPropertyApartment
+                                  ? 'Square Feet Price'
+                                  : propertyIntent === 'buy' ? 'Budget / Sq Yard' : 'Square Yard Price'}
+                              </span>
+                              <p className="line-clamp-1 font-bold leading-4 text-teal-700">
+                                {isPropertyApartment
+                                  ? (property.squareFeetPrice ? formatPrice(property.squareFeetPrice) : 'Price on request')
+                                  : (property.squareYardPrice ? formatPrice(property.squareYardPrice) : 'Price on request')}
+                              </p>
                             </div>
                           ) : (
                             <div className="mt-1 grid grid-cols-2 gap-1.5 text-[12px]">
@@ -2197,15 +2225,32 @@ const PropertiesListingPage: React.FC = () => {
                       )}
 
                       <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                        <div>
-                          <span className="text-gray-600">Area:</span>
-                          <span className="font-semibold ml-1">{property.totalArea} {property.areaUnit}</span>
-                        </div>
-                        {property.facing && (
-                          <div>
-                            <span className="text-gray-600">Facing:</span>
-                            <span className="font-semibold ml-1">{property.facing}</span>
-                          </div>
+                        {apartmentLikeTypes.includes(String(property.developmentType || '').toLowerCase()) ? (
+                          <>
+                            <div>
+                              <span className="text-gray-600">Flat Size:</span>
+                              <span className="font-semibold ml-1">{property.flatSize ? `${property.flatSize} Sq Ft` : 'N/A'}</span>
+                            </div>
+                            {property.flatFacing && (
+                              <div>
+                                <span className="text-gray-600">Flat Facing:</span>
+                                <span className="font-semibold ml-1">{property.flatFacing}</span>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <span className="text-gray-600">Area:</span>
+                              <span className="font-semibold ml-1">{property.totalArea} {property.areaUnit}</span>
+                            </div>
+                            {property.facing && (
+                              <div>
+                                <span className="text-gray-600">Facing:</span>
+                                <span className="font-semibold ml-1">{property.facing}</span>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
 
@@ -2214,9 +2259,15 @@ const PropertiesListingPage: React.FC = () => {
                           <div>
                             {isPlotDealView ? (
                               <div className="text-sm">
-                                <span className="text-gray-600">{listingIntent === 'buy' ? 'Budget / Sq Yard:' : 'Square Yard Price:'}</span>
+                                <span className="text-gray-600">
+                                  {apartmentLikeTypes.includes(String(property.developmentType || '').toLowerCase())
+                                    ? 'Square Feet Price:'
+                                    : listingIntent === 'buy' ? 'Budget / Sq Yard:' : 'Square Yard Price:'}
+                                </span>
                                 <span className="font-bold text-teal-700 ml-1">
-                                  {property.squareYardPrice ? formatPrice(property.squareYardPrice) : 'Price on request'}
+                                  {apartmentLikeTypes.includes(String(property.developmentType || '').toLowerCase())
+                                    ? (property.squareFeetPrice ? formatPrice(property.squareFeetPrice) : 'Price on request')
+                                    : (property.squareYardPrice ? formatPrice(property.squareYardPrice) : 'Price on request')}
                                 </span>
                               </div>
                             ) : (
