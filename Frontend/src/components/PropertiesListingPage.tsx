@@ -1525,7 +1525,7 @@ const PropertiesListingPage: React.FC = () => {
           </div>
 
           {isDeveloperView && (
-            <main className="order-1 relative min-h-[420px] overflow-hidden rounded-2xl bg-white shadow-sm sm:min-h-[560px] lg:order-none lg:min-h-[700px]">
+            <main className="order-3 relative min-h-[420px] overflow-hidden rounded-2xl bg-white shadow-sm sm:min-h-[560px] lg:min-h-[700px]">
               <div className="absolute left-3 right-3 top-3 z-10 flex rounded-xl border border-white/70 bg-white/95 p-1 shadow-lg backdrop-blur lg:hidden">
                 {developerIntentTabs.map((tab) => {
                   const active = listingIntent === tab.value && currentPropertyType === tab.propertyType;
@@ -1556,7 +1556,7 @@ const PropertiesListingPage: React.FC = () => {
             </main>
           )}
 
-          <aside className={`order-3 flex h-auto min-h-[360px] flex-col overflow-hidden rounded-xl bg-white/40 p-2.5 sm:p-3 ${
+          <aside className={`order-1 flex h-auto min-h-[360px] flex-col overflow-hidden rounded-xl bg-white/40 p-2.5 sm:p-3 lg:order-none ${
             isDeveloperView
               ? 'max-h-[75vh] lg:h-[calc(100vh-24px)] lg:min-h-[620px] lg:max-h-none'
               : 'max-h-[78vh] lg:h-[calc(100vh-140px)] lg:min-h-[620px] lg:max-h-[780px]'
