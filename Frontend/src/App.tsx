@@ -945,7 +945,7 @@ function HomePage() {
           />
         ))}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/65 to-slate-900/15" />
-        <div className="ld-container relative z-10 grid min-h-[calc(100vh-5rem)] items-center gap-10 py-14 lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="ld-container relative z-10 flex min-h-[calc(100vh-5rem)] flex-col justify-center gap-8 py-14">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold backdrop-blur">
               <Sparkles className="h-4 w-4 text-amber-300" />
@@ -957,6 +957,9 @@ function HomePage() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200 md:text-xl">
               Discover verified owner listings, compare development potential, request contact with confidence, and move serious conversations into one professional workflow.
             </p>
+            <div className="mt-8 max-w-4xl">
+              <SearchBar compact popularLocations={popularLocations.map((location) => location.name)} />
+            </div>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link to={`/properties?view=developers&listingIntent=development&city=${encodeURIComponent(selectedCity)}`} className="ld-btn-primary bg-white text-slate-950 hover:bg-teal-50">
                 Explore Properties <ArrowRight className="h-5 w-5" />
@@ -988,9 +991,6 @@ function HomePage() {
                 />
               ))}
             </div>
-          </div>
-          <div className="rounded-lg border border-white/15 bg-white/95 p-4 shadow-2xl backdrop-blur">
-            <SearchBar compact popularLocations={popularLocations.map((location) => location.name)} />
           </div>
         </div>
       </section>
