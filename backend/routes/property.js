@@ -1057,7 +1057,7 @@ router.post('/contact-inquiries', async (req, res) => {
 // GET /api/search - Search APPROVED properties only
 router.get('/search', async (req, res) => {
   try {
-    const { q = '', listingIntent, developmentType, minArea, maxArea, ratio, city, pincode, zoningClassification, minFrontage, maxFrontage, maxOwnerShare } = req.query;
+    const { q = '', listingIntent, developmentType, minArea, maxArea, ratio, city, pincode, zoningClassification, minFrontage, maxFrontage, maxOwnerShare, bedrooms, possessionStatus, minBudget, maxBudget } = req.query;
     const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const locationFields = ['city', 'locality', 'societyName', 'projectName', 'address', 'landmark', 'pincode'];
     const ignoredLocationWords = new Set([
@@ -1156,6 +1156,12 @@ router.get('/search', async (req, res) => {
     if (zoningClassification && zoningClassification !== 'All') {
       match.zoningClassification = new RegExp(`^${zoningClassification}$`, 'i');
     }
+    if (bedrooms && bedrooms !== 'All') {
+      match.bedrooms = new RegExp(`^${escapeRegex(String(bedrooms))}$`, 'i');
+    }
+    if (possessionStatus && possessionStatus !== 'All') {
+      match.possessionStatus = new RegExp(`^${escapeRegex(String(possessionStatus))}$`, 'i');
+    }
 
     const pipeline = [
       { $match: match },
@@ -1172,6 +1178,9 @@ router.get('/search', async (req, res) => {
               onError: null,
               onNull: null
             }
+          },
+          totalBudgetNum: {
+            $convert: { input: '$totalBudget', to: 'double', onError: null, onNull: null }
           }
         }
       }
@@ -1183,6 +1192,8 @@ router.get('/search', async (req, res) => {
     if (minFrontage) and.push({ $gte: ['$frontageNum', Number(minFrontage)] });
     if (maxFrontage) and.push({ $lte: ['$frontageNum', Number(maxFrontage)] });
     if (maxOwnerShare) and.push({ $lte: ['$ownerShareNum', Number(maxOwnerShare)] });
+    if (minBudget) and.push({ $gte: ['$totalBudgetNum', Number(minBudget)] });
+    if (maxBudget) and.push({ $lte: ['$totalBudgetNum', Number(maxBudget)] });
     if (and.length) pipeline.push({ $match: { $expr: { $and: and } } });
 
     const results = await Property.aggregate(pipeline);

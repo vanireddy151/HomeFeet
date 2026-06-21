@@ -62,6 +62,8 @@ interface Property {
   furnishingStatus?: string;
   possessionStatus?: string;
   squareYardPrice?: string;
+  squareFeetPrice?: string;
+  totalBudget?: string;
   purchaseTimeline?: string;
   description?: string;
   createdAt: string;
@@ -165,8 +167,13 @@ const PropertiesListingPage: React.FC = () => {
     maxGoodwill: searchParams.get('maxGoodwill') || '',
     city: searchParams.get('city') || (showDashboardLayout ? getStoredSelectedCity() : 'All'),
     zoningClassification: searchParams.get('zoningClassification') || 'All',
-    maxOwnerShare: searchParams.get('maxOwnerShare') || ''
+    maxOwnerShare: searchParams.get('maxOwnerShare') || '',
+    bedrooms: searchParams.get('bedrooms') || 'All',
+    possessionStatus: searchParams.get('possessionStatus') || 'All',
+    minBudget: searchParams.get('minBudget') || '',
+    maxBudget: searchParams.get('maxBudget') || ''
   });
+  const [sortBy, setSortBy] = useState('relevance');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
@@ -178,6 +185,22 @@ const PropertiesListingPage: React.FC = () => {
   const ratios = ['All', '50:50', '60:40', '70:30', '80:20'];
   const facings = ['All', 'North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'];
   const cities = ['All', ...METRO_CITIES];
+  const bhkOptions = ['All', '1 BHK', '2 BHK', '3 BHK', '4 BHK', '4+ BHK'];
+  const possessionOptions = ['All', 'Ready to Move', 'Under Construction'];
+  const budgetPresets = [
+    { label: 'Budget', min: '', max: '' },
+    { label: 'Up to ₹25 Lac', min: '', max: '2500000' },
+    { label: '₹25 - 50 Lac', min: '2500000', max: '5000000' },
+    { label: '₹50 Lac - 1 Cr', min: '5000000', max: '10000000' },
+    { label: '₹1 - 2 Cr', min: '10000000', max: '20000000' },
+    { label: '₹2 Cr+', min: '20000000', max: '' }
+  ];
+  const sortOptions = [
+    { label: 'Relevance', value: 'relevance' },
+    { label: 'Price: Low to High', value: 'price-asc' },
+    { label: 'Price: High to Low', value: 'price-desc' },
+    { label: 'Newest First', value: 'newest' }
+  ];
   const zoningOptions = ['All', 'Residential', 'Commercial', 'Mixed Use', 'Agricultural', 'Industrial'];
   const getCityFilterValues = (city: string) => {
     if (city === 'All') return [];
@@ -414,7 +437,11 @@ const PropertiesListingPage: React.FC = () => {
         maxGoodwill: searchParams.get('maxGoodwill') || '',
         city: searchParams.get('city') || (showDashboardLayout ? selectedCity : 'All'),
         zoningClassification: searchParams.get('zoningClassification') || 'All',
-        maxOwnerShare: searchParams.get('maxOwnerShare') || ''
+        maxOwnerShare: searchParams.get('maxOwnerShare') || '',
+        bedrooms: searchParams.get('bedrooms') || 'All',
+        possessionStatus: searchParams.get('possessionStatus') || 'All',
+        minBudget: searchParams.get('minBudget') || '',
+        maxBudget: searchParams.get('maxBudget') || ''
       };
       const activeQuery = searchParams.get('q') || '';
       const params = new URLSearchParams();
@@ -426,6 +453,10 @@ const PropertiesListingPage: React.FC = () => {
       if (listingIntent === 'development' && activeFilters.ratio !== 'All') params.append('ratio', activeFilters.ratio);
       if (getCityFilterValues(activeFilters.city).length === 1) params.append('city', activeFilters.city);
       if (activeFilters.zoningClassification !== 'All') params.append('zoningClassification', activeFilters.zoningClassification);
+      if (activeFilters.bedrooms !== 'All') params.append('bedrooms', activeFilters.bedrooms);
+      if (activeFilters.possessionStatus !== 'All') params.append('possessionStatus', activeFilters.possessionStatus);
+      if (activeFilters.minBudget) params.append('minBudget', activeFilters.minBudget);
+      if (activeFilters.maxBudget) params.append('maxBudget', activeFilters.maxBudget);
       if (activeFilters.maxOwnerShare) params.append('maxOwnerShare', activeFilters.maxOwnerShare);
 
       const response = await fetch(`${API_BASE}/search?${params.toString()}`);
@@ -523,6 +554,10 @@ const PropertiesListingPage: React.FC = () => {
     if (activeFilters.city !== 'All') params.set('city', activeFilters.city);
     if (activeFilters.zoningClassification !== 'All') params.set('zoningClassification', activeFilters.zoningClassification);
     if (activeFilters.maxOwnerShare) params.set('maxOwnerShare', activeFilters.maxOwnerShare);
+    if (activeFilters.bedrooms !== 'All') params.set('bedrooms', activeFilters.bedrooms);
+    if (activeFilters.possessionStatus !== 'All') params.set('possessionStatus', activeFilters.possessionStatus);
+    if (activeFilters.minBudget) params.set('minBudget', activeFilters.minBudget);
+    if (activeFilters.maxBudget) params.set('maxBudget', activeFilters.maxBudget);
     return params;
   };
 
@@ -562,6 +597,7 @@ const PropertiesListingPage: React.FC = () => {
     const cityToKeep = showDashboardLayout ? selectedCity : 'All';
     setSearchQuery('');
     setPropertyNumberQuery('');
+    setSortBy('relevance');
     setFilters({
       developmentType: 'All',
       minArea: '',
@@ -572,7 +608,11 @@ const PropertiesListingPage: React.FC = () => {
       maxGoodwill: '',
       city: cityToKeep,
       zoningClassification: 'All',
-      maxOwnerShare: ''
+      maxOwnerShare: '',
+      bedrooms: 'All',
+      possessionStatus: 'All',
+      minBudget: '',
+      maxBudget: ''
     });
     setSearchParams(showDashboardLayout ? {
       view: isMarketplaceView ? 'marketplace' : 'developers',
@@ -772,14 +812,25 @@ const PropertiesListingPage: React.FC = () => {
     getPropertyIntent(property) === 'buy' && !getCardImageUrl(property);
   const isGeneratedDiagramPreview = (property: Property) => !property.imageUrl && Boolean(getCardImageUrl(property));
   const activeSearchTerm = searchParams.get('q') || searchQuery;
+  const getPropertySortPrice = (property: Property) =>
+    Number(property.totalBudget || property.squareYardPrice || property.goodwill || 0) || 0;
+
   const visibleProperties = React.useMemo(() => {
     const normalizedPropertyNumber = propertyNumberQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (!normalizedPropertyNumber) return properties;
+    const matched = normalizedPropertyNumber
+      ? properties.filter((property) =>
+          getPropertyNumber(property, listingIntent).toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedPropertyNumber)
+        )
+      : properties;
 
-    return properties.filter((property) =>
-      getPropertyNumber(property, listingIntent).toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedPropertyNumber)
-    );
-  }, [listingIntent, properties, propertyNumberQuery]);
+    if (sortBy === 'relevance') return matched;
+
+    const sorted = [...matched];
+    if (sortBy === 'price-asc') sorted.sort((a, b) => getPropertySortPrice(a) - getPropertySortPrice(b));
+    else if (sortBy === 'price-desc') sorted.sort((a, b) => getPropertySortPrice(b) - getPropertySortPrice(a));
+    else if (sortBy === 'newest') sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return sorted;
+  }, [listingIntent, properties, propertyNumberQuery, sortBy]);
   const currentMapCity = searchParams.get('city') || selectedCity || DEFAULT_CITY;
 
   const normalizeCoordinatePair = (latValue: unknown, lngValue: unknown) => {
@@ -1338,7 +1389,11 @@ const PropertiesListingPage: React.FC = () => {
       maxGoodwill: '',
       city: cityToKeep,
       zoningClassification: 'All',
-      maxOwnerShare: ''
+      maxOwnerShare: '',
+      bedrooms: 'All',
+      possessionStatus: 'All',
+      minBudget: '',
+      maxBudget: ''
     });
     const nextParams: Record<string, string> = {
       view: isMarketplaceView ? 'marketplace' : 'developers',
@@ -1398,6 +1453,75 @@ const PropertiesListingPage: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className={`flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-3 shadow-sm ${
+            isDeveloperView ? 'lg:col-span-3' : 'lg:col-span-2'
+          }`}>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={filters.developmentType}
+                onChange={(e) => handleFilterChange('developmentType', e.target.value)}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-teal-600"
+              >
+                <option value="All">Property Type</option>
+                {visibleTypeFilters.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </select>
+              <select
+                value={filters.bedrooms}
+                onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-teal-600"
+              >
+                {bhkOptions.map((option) => (
+                  <option key={option} value={option}>{option === 'All' ? 'BHK Type' : option}</option>
+                ))}
+              </select>
+              <select
+                value={budgetPresets.findIndex((preset) => preset.min === filters.minBudget && preset.max === filters.maxBudget)}
+                onChange={(e) => {
+                  const preset = budgetPresets[Number(e.target.value)];
+                  const newFilters = { ...filters, minBudget: preset.min, maxBudget: preset.max };
+                  setFilters(newFilters);
+                  setSearchParams(buildPropertySearchParams(newFilters, searchQuery));
+                }}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-teal-600"
+              >
+                {budgetPresets.map((preset, index) => (
+                  <option key={preset.label} value={index}>{preset.label}</option>
+                ))}
+              </select>
+              <select
+                value={filters.possessionStatus}
+                onChange={(e) => handleFilterChange('possessionStatus', e.target.value)}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-teal-600"
+              >
+                {possessionOptions.map((option) => (
+                  <option key={option} value={option}>{option === 'All' ? 'Construction Status' : option}</option>
+                ))}
+              </select>
+              <button type="button" onClick={clearFilters} className="text-sm font-semibold text-teal-700 underline-offset-2 hover:underline">
+                Reset filters
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="font-semibold text-slate-600">
+                {loading ? 'Loading...' : `Showing ${visibleProperties.length} of ${properties.length} properties`}
+              </span>
+              <label className="flex items-center gap-1.5 font-semibold text-slate-600">
+                Sort by:
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-semibold text-slate-700"
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
 
           <aside className="order-2 rounded-xl bg-white/60 p-2.5 lg:order-none">
@@ -1702,6 +1826,16 @@ const PropertiesListingPage: React.FC = () => {
                           )}
                           {property.landmark && (
                             <p className="mt-0.5 line-clamp-1 text-[13px] text-slate-500">Near {property.landmark}</p>
+                          )}
+                          {(property.bedrooms || property.possessionStatus) && (
+                            <div className="mt-1 flex flex-wrap items-center gap-1">
+                              {property.bedrooms && (
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">{property.bedrooms}</span>
+                              )}
+                              {property.possessionStatus && (
+                                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{property.possessionStatus}</span>
+                              )}
+                            </div>
                           )}
                           <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[12px]">
                             <div className="rounded-md bg-slate-50 px-1.5 py-1">
