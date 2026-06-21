@@ -1437,11 +1437,11 @@ const PropertiesListingPage: React.FC = () => {
             isDeveloperView ? 'lg:col-span-2' : ''
           } xl:grid-cols-4`}>
             {statCards.map((stat, index) => (
-              <div key={stat.label} className="rounded-lg bg-white px-3 py-1.5 shadow-sm sm:rounded-xl sm:px-5 sm:py-3">
+              <div key={stat.label} className="rounded-lg bg-white px-3 py-1 shadow-sm sm:rounded-xl sm:px-4 sm:py-1.5">
                 <p className="text-[11px] leading-4 text-slate-500 sm:text-xs">{stat.label}</p>
-                <div className="mt-0.5 flex items-end justify-between gap-3 sm:mt-1 sm:gap-4">
-                  <p className="text-lg font-semibold leading-6 text-slate-950 sm:text-2xl">{loading ? '-' : stat.value}</p>
-                  <div className="flex h-5 items-end gap-0.5 opacity-45 sm:h-7 sm:gap-1">
+                <div className="mt-0.5 flex items-end justify-between gap-3">
+                  <p className="text-base font-semibold leading-5 text-slate-950 sm:text-xl">{loading ? '-' : stat.value}</p>
+                  <div className="flex h-4 items-end gap-0.5 opacity-45 sm:h-5 sm:gap-1">
                     {Array.from({ length: 8 }).map((_, barIndex) => (
                       <span
                         key={barIndex}
