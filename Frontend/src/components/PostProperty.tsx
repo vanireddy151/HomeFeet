@@ -2001,6 +2001,7 @@ const PostProperty = () => {
   const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
   const isApartment = apartmentLikeTypes.includes(normalizedDevelopmentType);
   const requiresPlotBoundaryDetails =
+    !isApartment &&
     !isLargeAcreListing() &&
     (normalizedDevelopmentType === 'standalone' ||
     (formData.listingIntent === 'sell' && plotBoundaryTypes.includes(normalizedDevelopmentType)));
