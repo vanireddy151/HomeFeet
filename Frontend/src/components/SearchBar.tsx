@@ -68,8 +68,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
 
   return (
     <div className={compact ? 'w-full' : 'mx-auto max-w-5xl'}>
-      <div className="overflow-hidden rounded-lg shadow-xl shadow-slate-950/10">
-        <div className="flex flex-wrap bg-slate-950">
+      <div className="overflow-hidden rounded-lg shadow-xl shadow-slate-950/10 backdrop-blur-md">
+        <div className="flex flex-wrap bg-slate-950/80">
           {SEARCH_TABS.map((tab, index) => {
             const Icon = tab.icon;
             const active = index === activeTab && tab.label !== 'Post Property';
@@ -79,7 +79,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
                 type="button"
                 onClick={() => handleTabClick(index)}
                 className={`relative flex items-center gap-2 px-4 py-3 text-sm font-semibold transition ${
-                  active ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                  active ? 'bg-slate-800/90 text-white' : 'text-slate-300 hover:bg-slate-900/80 hover:text-white'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -94,7 +94,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
           })}
         </div>
 
-        <div className="bg-white p-4">
+        <div className="bg-white/85 p-4">
           <div className="grid gap-3 md:grid-cols-[auto_1fr_auto]">
             <div className="relative">
               <button
