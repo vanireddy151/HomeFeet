@@ -5,14 +5,17 @@ import {
   BadgeCheck,
   Building2,
   Check,
+  ChevronLeft,
   ChevronRight,
   Crown,
   Filter,
+  Heart,
   LockKeyhole,
   Landmark,
   MapPinned,
   Newspaper,
   Search,
+  Share2,
   ShieldCheck,
   Sparkles,
   TrendingUp,
@@ -306,6 +309,11 @@ function SEOManager() {
   return null;
 }
 
+const fallbackExclusiveProjectImage = 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80';
+
+const cleanDevelopmentType = (value?: string) =>
+  value ? value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Project';
+
 const homeBannerSlides = [
   {
     title: 'Construction site illustration',
@@ -422,6 +430,51 @@ const BuilderLogoCard = ({ builder, index }: { builder: BuilderLogo; index: numb
         {builder.name}
       </span>
     </a>
+  );
+};
+
+type TopDeveloperHighlight = BuilderLogo & {
+  tagline?: string;
+  totalProjects?: number;
+  experience?: number;
+  readyToMove?: number;
+  underConstruction?: number;
+  newLaunch?: number;
+};
+
+// TODO: dummy stats until builder project inventory is tracked per-developer; will be replaced by real counts once builders start posting properties.
+const topDeveloperHighlights: TopDeveloperHighlight[] = [
+  { name: 'Aparna Constructions', domain: 'aparnaconstructions.com', tagline: 'Lead the future', totalProjects: 66, experience: 23, readyToMove: 47, underConstruction: 19 },
+  { name: 'Ramky Estates', domain: 'ramkyestates.com', tagline: 'Towards sustainable growth', totalProjects: 31, experience: 20, readyToMove: 20, underConstruction: 8, newLaunch: 3 },
+  { name: 'My Home Constructions', domain: 'myhomeconstructions.com', totalProjects: 29, readyToMove: 23, underConstruction: 5, newLaunch: 2 },
+];
+
+const TopDeveloperLogoBox = ({ builder }: { builder: BuilderLogo }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [logoIndex, setLogoIndex] = useState(0);
+  const logoSources = builderLogoUrls(builder);
+  const logoSrc = logoSources[logoIndex];
+  const hasMoreLogoSources = logoIndex < logoSources.length - 1;
+
+  return (
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className={`flex h-full w-full items-center justify-center text-sm font-black text-slate-400 ${isLoaded ? 'hidden' : ''}`}>
+        {builder.name.charAt(0)}
+      </div>
+      {logoSrc && (
+        <img
+          src={logoSrc}
+          alt={`${builder.name} logo`}
+          className={`h-full w-full object-contain p-1.5 ${isLoaded ? '' : 'hidden'}`}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => {
+            setIsLoaded(false);
+            if (hasMoreLogoSources) setLogoIndex((current) => current + 1);
+          }}
+        />
+      )}
+    </div>
   );
 };
 
@@ -716,6 +769,9 @@ function HomePage() {
   const [selectedCity, setSelectedCity] = useState(() => localStorage.getItem('selectedCity') || 'Hyderabad');
   const [storedBuilderLogos, setStoredBuilderLogos] = useState<BuilderLogo[]>([]);
   const [popularLocations, setPopularLocations] = useState<PopularLocation[]>(fallbackPopularLocations);
+  const [exclusiveProjects, setExclusiveProjects] = useState<any[]>([]);
+  const [exclusiveIndex, setExclusiveIndex] = useState(0);
+  const [exclusiveImageIndex, setExclusiveImageIndex] = useState(0);
   const [marketplaceStats, setMarketplaceStats] = useState<MarketplaceStats>({
     builders: 0,
     owners: 0,
@@ -921,12 +977,63 @@ function HomePage() {
   }, [selectedCity]);
 
   useEffect(() => {
+    let cancelled = false;
+    const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
+
+    const loadExclusiveProjects = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/search?listingIntent=sell&city=${encodeURIComponent(selectedCity)}`);
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data)) throw new Error('Unable to load exclusive projects');
+
+        const ranked = data
+          .filter((property: any) => apartmentLikeTypes.includes(String(property.developmentType || '').toLowerCase()))
+          .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+          .slice(0, 6);
+
+        if (!cancelled) {
+          setExclusiveProjects(ranked);
+          setExclusiveIndex(0);
+          setExclusiveImageIndex(0);
+        }
+      } catch (error) {
+        if (!cancelled) setExclusiveProjects([]);
+      }
+    };
+
+    loadExclusiveProjects();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCity]);
+
+  useEffect(() => {
     const bannerTimer = window.setTimeout(() => {
       setActiveBanner((current) => (current + 1) % homeBannerSlides.length);
     }, 5000);
 
     return () => window.clearTimeout(bannerTimer);
   }, [activeBanner]);
+
+  const activeExclusiveProject = exclusiveProjects[exclusiveIndex];
+  const exclusiveGalleryImages = activeExclusiveProject
+    ? (Array.isArray(activeExclusiveProject.images) && activeExclusiveProject.images.length
+        ? activeExclusiveProject.images
+        : (activeExclusiveProject.imageUrl ? [activeExclusiveProject.imageUrl] : []))
+    : [];
+
+  const getExclusiveProjectPrice = (property: any) => {
+    if (property.totalBudget) return `Rs. ${Number(property.totalBudget).toLocaleString('en-IN')} Onwards`;
+    if (property.squareFeetPrice) return `Rs. ${Number(property.squareFeetPrice).toLocaleString('en-IN')} / Sq Ft`;
+    if (property.squareYardPrice) return `Rs. ${Number(property.squareYardPrice).toLocaleString('en-IN')} / Sq Yd`;
+    return 'Price on request';
+  };
+
+  const goToExclusiveProject = (direction: 1 | -1) => {
+    if (!exclusiveProjects.length) return;
+    setExclusiveIndex((current) => (current + direction + exclusiveProjects.length) % exclusiveProjects.length);
+    setExclusiveImageIndex(0);
+  };
 
   return (
     <div className="overflow-hidden bg-slate-50">
@@ -1069,31 +1176,200 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white py-16">
+      <section className="bg-slate-50 py-16">
         <div className="ld-container">
-          <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-5xl">Top Developers in {selectedCity}</h2>
-          <p className="mt-3 max-w-2xl text-slate-600">
-            These builders have verified apartment and commercial space listings on HomeFeet. Explore their current opportunities.
-          </p>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {curatedBuilders.slice(0, 4).map((builder, index) => (
-              <div key={`${builder.name}-${index}`} className="flex flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <BuilderLogoCard builder={builder} index={index} />
-                <p className="mt-3 text-center text-xs font-semibold text-slate-500">{builder.city || selectedCity}</p>
-                <Link
-                  to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
-                  className="mt-4 inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
-                >
-                  View Listings <ArrowRight className="h-4 w-4" />
-                </Link>
+          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70 md:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Top Developers in {selectedCity}</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+              These top developers in {selectedCity} have proven track records and a history of satisfied customers. Whether it's gated villas, high-rise apartments, or township living, they build with integrity and care. Choose a name that enhances the value of your property.
+            </p>
+
+            <div className="relative mt-8">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {topDeveloperHighlights.map((builder) => (
+                  <div key={builder.name} className="flex flex-col rounded-lg border border-slate-200 p-5">
+                    <div className="flex items-start gap-3">
+                      <TopDeveloperLogoBox builder={builder} />
+                      <div>
+                        <p className="font-black text-slate-950">{builder.name}</p>
+                        <p className="text-xs text-slate-500">{builder.city || selectedCity}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+                      {typeof builder.totalProjects === 'number' && (
+                        <div>
+                          <p className="font-black text-slate-950">{builder.totalProjects}</p>
+                          <p className="text-xs text-slate-500">Total Projects</p>
+                        </div>
+                      )}
+                      {typeof builder.experience === 'number' && (
+                        <div>
+                          <p className="font-black text-slate-950">{builder.experience}</p>
+                          <p className="text-xs text-slate-500">Experience</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      {typeof builder.readyToMove === 'number' && (
+                        <Link
+                          to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+                          className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
+                        >
+                          Ready to Move ({builder.readyToMove}) <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      )}
+                      {typeof builder.underConstruction === 'number' && (
+                        <Link
+                          to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+                          className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
+                        >
+                          Under Construction ({builder.underConstruction}) <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      )}
+                      {typeof builder.newLaunch === 'number' && (
+                        <Link
+                          to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+                          className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
+                        >
+                          New Launch ({builder.newLaunch}) <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+
+              <button
+                type="button"
+                onClick={() => navigate(`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`)}
+                aria-label="View all developers"
+                className="absolute right-0 top-1/2 hidden h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-slate-800 text-white shadow-lg hover:bg-slate-950 lg:flex"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+
+            <Link to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`} className="mt-7 inline-flex items-center gap-1 text-sm font-bold text-slate-950 hover:text-teal-700">
+              View All Developers in {selectedCity} <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <Link to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`} className="mt-8 inline-flex items-center gap-1 text-sm font-bold text-slate-950 hover:text-teal-700">
-            View All Developers in {selectedCity} <ArrowRight className="h-4 w-4" />
-          </Link>
         </div>
       </section>
+
+      {activeExclusiveProject && (
+        <section className="bg-slate-50 py-16">
+          <div className="ld-container">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Exclusive Projects</h2>
+              <Link
+                to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+                className="inline-flex items-center gap-1 text-sm font-bold text-[#0077CC] hover:text-teal-700"
+              >
+                View all <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/70 md:p-6">
+              <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+                <div className="flex flex-col">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-950">
+                        {activeExclusiveProject.projectName || activeExclusiveProject.societyName || cleanDevelopmentType(activeExclusiveProject.developmentType)}
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {activeExclusiveProject.locality || activeExclusiveProject.city || selectedCity}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button type="button" className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-rose-300 hover:text-rose-600">
+                        <Heart className="h-4 w-4" />
+                      </button>
+                      <button type="button" className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-teal-300 hover:text-teal-700">
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="mt-5 text-xl font-black text-amber-600">{getExclusiveProjectPrice(activeExclusiveProject)}</p>
+
+                  <div className="mt-5 grid grid-cols-2 gap-4 border-t border-slate-100 pt-5">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Configuration</p>
+                      <p className="mt-1 font-black text-slate-950">{activeExclusiveProject.bedrooms || 'On request'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Builtup area</p>
+                      <p className="mt-1 font-black text-slate-950">
+                        {activeExclusiveProject.flatSize
+                          ? `${activeExclusiveProject.flatSize} sq ft`
+                          : activeExclusiveProject.totalArea
+                            ? `${activeExclusiveProject.totalArea} ${activeExclusiveProject.areaUnit || ''}`
+                            : 'On request'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-auto flex gap-3 pt-6">
+                    <Link
+                      to={`/property/${activeExclusiveProject._id}`}
+                      className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-950 hover:border-teal-700 hover:text-teal-700"
+                    >
+                      Contact Us
+                    </Link>
+                    <Link
+                      to={`/property/${activeExclusiveProject._id}`}
+                      className="inline-flex items-center justify-center rounded-lg bg-slate-950 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800"
+                    >
+                      Explore now
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-lg bg-slate-200">
+                  <img
+                    src={exclusiveGalleryImages[exclusiveImageIndex] ? `${API_ORIGIN}${exclusiveGalleryImages[exclusiveImageIndex]}` : fallbackExclusiveProjectImage}
+                    alt={activeExclusiveProject.projectName || 'Exclusive project'}
+                    className="h-72 w-full object-cover md:h-96"
+                    onError={(e) => { e.currentTarget.src = fallbackExclusiveProjectImage; }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => goToExclusiveProject(-1)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:border-teal-700 hover:text-teal-700"
+                  aria-label="Previous project"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {exclusiveGalleryImages.slice(0, 3).map((url: string, index: number) => (
+                  <button
+                    key={`${url}-${index}`}
+                    type="button"
+                    onClick={() => setExclusiveImageIndex(index)}
+                    className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 ${index === exclusiveImageIndex ? 'border-teal-600' : 'border-transparent'}`}
+                  >
+                    <img src={`${API_ORIGIN}${url}`} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => goToExclusiveProject(1)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:border-teal-700 hover:text-teal-700"
+                  aria-label="Next project"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="overflow-hidden bg-white py-28">
         <div className="ld-container relative grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
