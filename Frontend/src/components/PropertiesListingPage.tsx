@@ -1580,7 +1580,7 @@ const PropertiesListingPage: React.FC = () => {
                     onClick={() => requireLoginForDetails(property)}
                     className="block w-full overflow-hidden rounded-lg border border-slate-100 bg-white text-left shadow-sm transition hover:shadow-md"
                   >
-                    <div className="h-24 w-full overflow-hidden bg-slate-100">
+                    <div className="h-40 w-full overflow-hidden bg-slate-100">
                       <img
                         src={getCardImageSrc(property)}
                         alt={propertyTitle(property)}
