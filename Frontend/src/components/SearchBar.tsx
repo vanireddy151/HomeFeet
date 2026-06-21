@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Briefcase, Building2, ChevronDown, Home, MapPin, Mic, Search, Tag } from 'lucide-react';
+import { BarChart3, Briefcase, Building2, ChevronDown, Home, IndianRupee, Layers, MapPin, Mic, Search, Tag } from 'lucide-react';
+import { API_BASE } from '../lib/api';
 
 interface SearchBarProps {
   compact?: boolean;
@@ -21,6 +22,32 @@ const SEARCH_TABS = [
   { label: 'Post Property', icon: Briefcase, listingIntent: 'development', propertyType: '', badge: 'FREE' }
 ];
 
+const RESIDENTIAL_PROPERTY_TYPES = [
+  { label: 'Standalone', value: 'standalone' },
+  { label: 'High-rise', value: 'high-rise' },
+  { label: 'Group House', value: 'group-house' },
+  { label: 'Residential House', value: 'residential-house' },
+  { label: 'Villa', value: 'villa' },
+  { label: 'Farm House', value: 'farm-house' },
+];
+
+const COMMERCIAL_PROPERTY_TYPES = [
+  { label: 'Office Space', value: 'office-space' },
+  { label: 'Retail', value: 'retail' },
+  { label: 'Hospitality', value: 'hospitality' },
+  { label: 'Industrial', value: 'industrial' },
+];
+
+const BUDGET_RANGES = [
+  { label: 'Up to ₹25 Lac', value: 'upto-25l', max: 2500000 },
+  { label: '₹25 - 50 Lac', value: '25l-50l', min: 2500000, max: 5000000 },
+  { label: '₹50 Lac - 1 Cr', value: '50l-1cr', min: 5000000, max: 10000000 },
+  { label: '₹1 - 2 Cr', value: '1cr-2cr', min: 10000000, max: 20000000 },
+  { label: '₹2 Cr+', value: '2cr-plus', min: 20000000 },
+];
+
+const PROJECT_STATUS_OPTIONS = ['Ready to Move', 'Under Construction'];
+
 const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations = fallbackPopularLocations }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,7 +58,19 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
   const searchInputRef = useRef<HTMLInputElement>(null);
   const cityInputRef = useRef<HTMLInputElement>(null);
   const cityContainerRef = useRef<HTMLDivElement>(null);
+  const filterRowRef = useRef<HTMLDivElement>(null);
   const filteredCities = metroCities.filter((option) => option.toLowerCase().includes(cityQuery.toLowerCase()));
+
+  const [budgetFilter, setBudgetFilter] = useState('');
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [openFilter, setOpenFilter] = useState<'budget' | 'type' | 'status' | null>(null);
+  const [propertyCount, setPropertyCount] = useState<number | null>(null);
+
+  const isCommercialTab = SEARCH_TABS[activeTab].propertyType === 'commercial-plot';
+  const propertyTypeOptions = isCommercialTab ? COMMERCIAL_PROPERTY_TYPES : RESIDENTIAL_PROPERTY_TYPES;
+  const selectedBudgetLabel = BUDGET_RANGES.find((range) => range.value === budgetFilter)?.label || 'Budget';
+  const selectedTypeLabel = propertyTypeOptions.find((option) => option.value === propertyTypeFilter)?.label || 'Property Type';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,10 +78,50 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
         setShowCityDropdown(false);
         setCityQuery(city);
       }
+      if (filterRowRef.current && !filterRowRef.current.contains(event.target as Node)) {
+        setOpenFilter(null);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [city]);
+
+  useEffect(() => {
+    setPropertyTypeFilter('');
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (SEARCH_TABS[activeTab].label === 'Post Property') {
+      setPropertyCount(null);
+      return;
+    }
+    let cancelled = false;
+    const tab = SEARCH_TABS[activeTab];
+    const params = new URLSearchParams({ listingIntent: tab.listingIntent, city });
+    const developmentType = propertyTypeFilter || tab.propertyType;
+    if (developmentType) params.set('developmentType', developmentType);
+
+    fetch(`${API_BASE}/search?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !Array.isArray(data)) return;
+        const budgetRange = BUDGET_RANGES.find((range) => range.value === budgetFilter);
+        const filtered = data.filter((property: any) => {
+          if (budgetRange) {
+            const budget = Number(property.totalBudget || 0);
+            if (!budget) return false;
+            if (budgetRange.min && budget < budgetRange.min) return false;
+            if (budgetRange.max && budget > budgetRange.max) return false;
+          }
+          if (statusFilter && property.possessionStatus !== statusFilter) return false;
+          return true;
+        });
+        setPropertyCount(filtered.length);
+      })
+      .catch(() => { if (!cancelled) setPropertyCount(null); });
+
+    return () => { cancelled = true; };
+  }, [activeTab, city, propertyTypeFilter, budgetFilter, statusFilter]);
 
   const buildLocationUrl = (location: string) => {
     const tab = SEARCH_TABS[activeTab];
@@ -52,6 +131,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
       city
     });
     if (tab.propertyType) params.set('propertyType', tab.propertyType);
+    if (propertyTypeFilter) params.set('developmentType', propertyTypeFilter);
     if (location) params.set('q', location);
     return `/properties?${params.toString()}`;
   };
@@ -180,18 +260,103 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
             </button>
           </div>
 
-          <div className="-mx-4 -mb-4 mt-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-b-lg bg-slate-100/85 px-4 py-3 ld-scrollbar-hide">
-            <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Trending Searches:</span>
-            {popularLocations.map((location) => (
-              <button
-                key={location}
-                onClick={() => navigate(buildLocationUrl(location))}
-                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
-              >
-                {location}
-                <ArrowRight className="h-3 w-3" />
-              </button>
-            ))}
+          <div className="-mx-4 -mb-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-b-lg bg-slate-100/85 px-4 py-3">
+            <div ref={filterRowRef} className="flex flex-1 items-center gap-2 overflow-x-auto whitespace-nowrap ld-scrollbar-hide">
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setOpenFilter((prev) => (prev === 'budget' ? null : 'budget'))}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                    budgetFilter ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-700 hover:border-teal-600'
+                  }`}
+                >
+                  <IndianRupee className="h-3.5 w-3.5" />
+                  {selectedBudgetLabel}
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openFilter === 'budget' ? 'rotate-180' : ''}`} />
+                </button>
+                {openFilter === 'budget' && (
+                  <div className="absolute left-0 top-full z-30 mt-1 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-2xl">
+                    <button type="button" onClick={() => { setBudgetFilter(''); setOpenFilter(null); }} className="block w-full px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">Any Budget</button>
+                    {BUDGET_RANGES.map((range) => (
+                      <button
+                        key={range.value}
+                        type="button"
+                        onClick={() => { setBudgetFilter(range.value); setOpenFilter(null); }}
+                        className={`block w-full px-4 py-2 text-left text-sm font-semibold hover:bg-slate-50 ${budgetFilter === range.value ? 'text-teal-700' : 'text-slate-700'}`}
+                      >
+                        {range.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setOpenFilter((prev) => (prev === 'type' ? null : 'type'))}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                    propertyTypeFilter ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-700 hover:border-teal-600'
+                  }`}
+                >
+                  <Layers className="h-3.5 w-3.5" />
+                  {selectedTypeLabel}
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openFilter === 'type' ? 'rotate-180' : ''}`} />
+                </button>
+                {openFilter === 'type' && (
+                  <div className="absolute left-0 top-full z-30 mt-1 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-2xl">
+                    <button type="button" onClick={() => { setPropertyTypeFilter(''); setOpenFilter(null); }} className="block w-full px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">Any Type</button>
+                    {propertyTypeOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => { setPropertyTypeFilter(option.value); setOpenFilter(null); }}
+                        className={`block w-full px-4 py-2 text-left text-sm font-semibold hover:bg-slate-50 ${propertyTypeFilter === option.value ? 'text-teal-700' : 'text-slate-700'}`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setOpenFilter((prev) => (prev === 'status' ? null : 'status'))}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                    statusFilter ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-700 hover:border-teal-600'
+                  }`}
+                >
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  {statusFilter || 'Project Status'}
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openFilter === 'status' ? 'rotate-180' : ''}`} />
+                </button>
+                {openFilter === 'status' && (
+                  <div className="absolute left-0 top-full z-30 mt-1 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-2xl">
+                    <button type="button" onClick={() => { setStatusFilter(''); setOpenFilter(null); }} className="block w-full px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">Any Status</button>
+                    {PROJECT_STATUS_OPTIONS.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => { setStatusFilter(option); setOpenFilter(null); }}
+                        className={`block w-full px-4 py-2 text-left text-sm font-semibold hover:bg-slate-50 ${statusFilter === option ? 'text-teal-700' : 'text-slate-700'}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate(buildLocationUrl(searchQuery.trim()))}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800"
+            >
+              {propertyCount === null ? 'View Properties' : `View ${propertyCount} Properties`}
+            </button>
           </div>
         </div>
       </div>
