@@ -1115,7 +1115,7 @@ function HomePage() {
         <div className="ld-container">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">Housing's top picks</h2>
+              <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">HomeFeet's Happening Projects</h2>
               <p className="mt-1 text-slate-600">Explore top living options with us</p>
             </div>
             {housingTopPicks[0] && (
@@ -1160,7 +1160,7 @@ function HomePage() {
                     </div>
                     <Link
                       to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
-                      className="mt-4 inline-flex items-center justify-center rounded-lg bg-indigo-700 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-800"
+                      className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-6 py-3 text-sm font-bold text-white hover:bg-[#088f8f]"
                     >
                       Contact
                     </Link>
