@@ -4,6 +4,7 @@ import {
   ArrowUpDown,
   Building2,
   Car,
+  CircleDot,
   Droplet,
   Dumbbell,
   Image,
@@ -12,9 +13,12 @@ import {
   Shield,
   ShieldCheck,
   Trees,
+  Trophy,
   Upload,
+  UtensilsCrossed,
   Users,
   Video,
+  Waves,
   Zap
 } from 'lucide-react';
 import { API_BASE, API_ORIGIN } from '../lib/api';
@@ -1311,7 +1315,11 @@ const PostProperty = () => {
     { label: 'Gym', icon: Dumbbell },
     { label: 'Clubhouse', icon: Users },
     { label: 'Water Supply', icon: Droplet },
-    { label: 'Park', icon: Trees }
+    { label: 'Park', icon: Trees },
+    { label: 'Swimming Pool', icon: Waves },
+    { label: 'Badminton Court', icon: Trophy },
+    { label: 'Cricket Court', icon: CircleDot },
+    { label: 'Food Court', icon: UtensilsCrossed }
   ];
 
   const toggleAmenity = (amenity: string) => {
