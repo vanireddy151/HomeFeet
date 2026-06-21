@@ -2520,185 +2520,6 @@ const PostProperty = () => {
       )}
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-5 flex items-center gap-3">
-        <MapPin className="h-6 w-6 text-teal-700" />
-        <h2 className="text-xl font-bold text-slate-900">Location Details</h2>
-      </div>
-      
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
-            <select
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className="w-full border p-2 rounded focus:ring-2 focus:ring-teal-500"
-              required
-            >
-              {states.map(state => (
-                <option key={state} value={state}>{state}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-            <select
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              className="w-full border p-2 rounded focus:ring-2 focus:ring-teal-500"
-              required
-            >
-              {cities.map(city => (
-                <option key={city.value} value={city.value}>{city.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded">
-          <input
-            type="checkbox"
-            id="useMapLink"
-            checked={useMapLink}
-            onChange={toggleMapLinkMode}
-            className="w-4 h-4 text-teal-600"
-          />
-          <label htmlFor="useMapLink" className="text-sm text-gray-700">
-            Use Google Maps link instead
-          </label>
-        </div>
-
-        {useMapLink ? (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Paste Google Maps Link *
-            </label>
-            <input
-              ref={mapLinkInputRef}
-              type="text"
-              value={mapLinkInput}
-              onFocus={() => setHighlightedLocation('link')}
-              onChange={handleMapLinkChange}
-              onBlur={handleMapLinkBlur}
-              placeholder="Paste your Google Maps link here"
-              className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-teal-500 ${highlightedLocation === 'link' ? 'border-teal-600 ring-1 ring-teal-200' : ''}`}
-              required
-            />
-          </div>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Colony Name
-              </label>
-              <input 
-                ref={societyInputRef}
-                name="societyName" 
-                value={formData.societyName} 
-                onFocus={() => setHighlightedLocation('address')}
-                onChange={handleChange} 
-                placeholder="Enter colony name" 
-                className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-teal-500 ${highlightedLocation === 'address' ? 'border-teal-600 ring-1 ring-teal-200' : ''}`}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Locality *
-                <button
-                  type="button"
-                  onClick={handleUseCurrentLocation}
-                  className="ml-2 text-xs text-teal-600 hover:text-teal-800 bg-teal-50 px-2 py-1 rounded"
-                >
-                  Use Current Location
-                </button>
-              </label>
-              <input 
-                ref={localityInputRef}
-                name="locality" 
-                value={formData.locality} 
-                onFocus={() => setHighlightedLocation('address')}
-                onChange={handleChange} 
-                placeholder="Enter locality (e.g., Gachibowli, Kondapur)" 
-                className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-teal-500 ${highlightedLocation === 'address' ? 'border-teal-600 ring-1 ring-teal-200' : ''}`}
-                required
-              />
-            </div>
-          </>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
-          <input
-            name="pincode"
-            value={formData.pincode}
-            onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
-            className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-            placeholder="Pincode auto-fills from locality when available"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Landmark / Street *</label>
-          <input 
-            name="landmark" 
-            value={formData.landmark} 
-            onChange={handleChange} 
-            placeholder="e.g., Near Metro Station, Main Road" 
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-teal-500"
-            required
-          />
-        </div>
-
-        {(formData.locality || formData.societyName) && (
-          <div className="p-3 bg-teal-50 rounded-lg">
-            <p className="text-sm text-teal-700">
-              <strong>Selected Location:</strong>
-            </p>
-            <p className="text-sm text-gray-700">
-              {formData.societyName && `${formData.societyName}, `}
-              {formData.locality}, {formData.landmark}, {formData.city}, {formData.state}
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Location Link
-          </label>
-          <input
-            ref={!useMapLink ? mapLinkInputRef : undefined}
-            type="text"
-            value={mapLinkInput}
-            onFocus={() => setHighlightedLocation('link')}
-            onChange={handleMapLinkChange}
-            onBlur={handleMapLinkBlur}
-            placeholder="Paste Google Maps location link"
-            className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-teal-500 ${highlightedLocation === 'link' ? 'border-teal-600 ring-1 ring-teal-200' : ''}`}
-            disabled={!isMapLoaded}
-          />
-        </div>
-
-        <label className="block text-sm font-medium text-gray-700">
-          Mark Location on Map *
-        </label>
-        <p className="text-xs text-gray-500 mb-2">
-          Click on the map or drag the marker to mark the exact property location
-        </p>
-        <div 
-          id="map" 
-          className={`w-full h-80 rounded-lg border bg-gray-100 ${highlightedLocation === 'map' ? 'border-teal-600 ring-2 ring-teal-200' : 'border-gray-200'}`}
-          style={{ minHeight: '320px' }}
-        ></div>
-      </div>
-      </section>
-
       <section className="space-y-2 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center gap-3">
         <Ruler className="h-6 w-6 text-teal-700" />
@@ -2906,6 +2727,185 @@ const PostProperty = () => {
             {formData.video && <p className="mt-2 text-sm font-semibold text-teal-700">New video selected: {formData.video.name}</p>}
           </label>
         </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-5 flex items-center gap-3">
+        <MapPin className="h-6 w-6 text-teal-700" />
+        <h2 className="text-xl font-bold text-slate-900">Location Details</h2>
+      </div>
+
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+            <select
+              name="state"
+              value={formData.state}
+              onChange={handleChange}
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-teal-500"
+              required
+            >
+              {states.map(state => (
+                <option key={state} value={state}>{state}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+            <select
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-teal-500"
+              required
+            >
+              {cities.map(city => (
+                <option key={city.value} value={city.value}>{city.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded">
+          <input
+            type="checkbox"
+            id="useMapLink"
+            checked={useMapLink}
+            onChange={toggleMapLinkMode}
+            className="w-4 h-4 text-teal-600"
+          />
+          <label htmlFor="useMapLink" className="text-sm text-gray-700">
+            Use Google Maps link instead
+          </label>
+        </div>
+
+        {useMapLink ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Paste Google Maps Link *
+            </label>
+            <input
+              ref={mapLinkInputRef}
+              type="text"
+              value={mapLinkInput}
+              onFocus={() => setHighlightedLocation('link')}
+              onChange={handleMapLinkChange}
+              onBlur={handleMapLinkBlur}
+              placeholder="Paste your Google Maps link here"
+              className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-teal-500 ${highlightedLocation === 'link' ? 'border-teal-600 ring-1 ring-teal-200' : ''}`}
+              required
+            />
+          </div>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Colony Name
+              </label>
+              <input
+                ref={societyInputRef}
+                name="societyName"
+                value={formData.societyName}
+                onFocus={() => setHighlightedLocation('address')}
+                onChange={handleChange}
+                placeholder="Enter colony name"
+                className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-teal-500 ${highlightedLocation === 'address' ? 'border-teal-600 ring-1 ring-teal-200' : ''}`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Locality *
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  className="ml-2 text-xs text-teal-600 hover:text-teal-800 bg-teal-50 px-2 py-1 rounded"
+                >
+                  Use Current Location
+                </button>
+              </label>
+              <input
+                ref={localityInputRef}
+                name="locality"
+                value={formData.locality}
+                onFocus={() => setHighlightedLocation('address')}
+                onChange={handleChange}
+                placeholder="Enter locality (e.g., Gachibowli, Kondapur)"
+                className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-teal-500 ${highlightedLocation === 'address' ? 'border-teal-600 ring-1 ring-teal-200' : ''}`}
+                required
+              />
+            </div>
+          </>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
+          <input
+            name="pincode"
+            value={formData.pincode}
+            onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+            className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            placeholder="Pincode auto-fills from locality when available"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Landmark / Street *</label>
+          <input
+            name="landmark"
+            value={formData.landmark}
+            onChange={handleChange}
+            placeholder="e.g., Near Metro Station, Main Road"
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-teal-500"
+            required
+          />
+        </div>
+
+        {(formData.locality || formData.societyName) && (
+          <div className="p-3 bg-teal-50 rounded-lg">
+            <p className="text-sm text-teal-700">
+              <strong>Selected Location:</strong>
+            </p>
+            <p className="text-sm text-gray-700">
+              {formData.societyName && `${formData.societyName}, `}
+              {formData.locality}, {formData.landmark}, {formData.city}, {formData.state}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Location Link
+          </label>
+          <input
+            ref={!useMapLink ? mapLinkInputRef : undefined}
+            type="text"
+            value={mapLinkInput}
+            onFocus={() => setHighlightedLocation('link')}
+            onChange={handleMapLinkChange}
+            onBlur={handleMapLinkBlur}
+            placeholder="Paste Google Maps location link"
+            className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-teal-500 ${highlightedLocation === 'link' ? 'border-teal-600 ring-1 ring-teal-200' : ''}`}
+            disabled={!isMapLoaded}
+          />
+        </div>
+
+        <label className="block text-sm font-medium text-gray-700">
+          Mark Location on Map *
+        </label>
+        <p className="text-xs text-gray-500 mb-2">
+          Click on the map or drag the marker to mark the exact property location
+        </p>
+        <div
+          id="map"
+          className={`w-full h-80 rounded-lg border bg-gray-100 ${highlightedLocation === 'map' ? 'border-teal-600 ring-2 ring-teal-200' : 'border-gray-200'}`}
+          style={{ minHeight: '320px' }}
+        ></div>
+      </div>
       </section>
 
       {cropModal && (
