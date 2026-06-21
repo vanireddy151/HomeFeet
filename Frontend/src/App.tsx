@@ -311,6 +311,18 @@ function SEOManager() {
 
 const fallbackExclusiveProjectImage = 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80';
 
+const hotSellingZones = ['All', 'West Zone', 'South Zone', 'Central Zone', 'East Zone', 'North Zone'];
+
+// TODO: dummy hot-selling projects until real listings carry a zone tag; will be replaced once builder properties are added.
+const hotSellingProjects = [
+  { name: 'Prestige Golden Grove', location: 'Tellapur, Hyderabad', priceRange: 'Rs. 93.00 Lac to 2.48 Cr', zone: 'West Zone', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80' },
+  { name: 'Brigade Enclave', location: 'Erragadda, Hyderabad', priceRange: 'Rs. 2.10 Cr to 3.15 Cr', zone: 'West Zone', image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80' },
+  { name: 'Brigade Manor', location: 'Moti Nagar, Hyderabad', priceRange: 'Rs. 2.35 Cr to 3.59 Cr', zone: 'West Zone', image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80' },
+  { name: 'The Prestige City Hyderabad', location: 'Rajendra Nagar, Hyderabad', priceRange: 'Rs. 1.11 Cr to 3.19 Cr', zone: 'South Zone', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80' },
+  { name: 'My Home Avatar', location: 'Narsingi, Hyderabad', priceRange: 'Rs. 1.50 Cr to 2.90 Cr', zone: 'South Zone', image: 'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?auto=format&fit=crop&w=600&q=80' },
+  { name: 'Ramky One Galaxia', location: 'Nallagandla, Hyderabad', priceRange: 'Rs. 85.00 Lac to 1.60 Cr', zone: 'West Zone', image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=600&q=80' },
+];
+
 const cleanDevelopmentType = (value?: string) =>
   value ? value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Project';
 
@@ -772,6 +784,8 @@ function HomePage() {
   const [exclusiveProjects, setExclusiveProjects] = useState<any[]>([]);
   const [exclusiveIndex, setExclusiveIndex] = useState(0);
   const [exclusiveImageIndex, setExclusiveImageIndex] = useState(0);
+  const [selectedHotSellingZone, setSelectedHotSellingZone] = useState('All');
+  const hotSellingScrollRef = useRef<HTMLDivElement>(null);
   const [marketplaceStats, setMarketplaceStats] = useState<MarketplaceStats>({
     builders: 0,
     owners: 0,
@@ -1034,6 +1048,10 @@ function HomePage() {
     setExclusiveIndex((current) => (current + direction + exclusiveProjects.length) % exclusiveProjects.length);
     setExclusiveImageIndex(0);
   };
+
+  const visibleHotSellingProjects = selectedHotSellingZone === 'All'
+    ? hotSellingProjects
+    : hotSellingProjects.filter((project) => project.zone === selectedHotSellingZone);
 
   return (
     <div className="overflow-hidden bg-slate-50">
@@ -1370,6 +1388,73 @@ function HomePage() {
           </div>
         </section>
       )}
+
+      <section className="bg-white py-16">
+        <div className="ld-container">
+          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70 md:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Hot Selling Real Estate Projects in {selectedCity}</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+              In search of the most talked-about homes? Our list of hot-selling projects in {selectedCity} features properties with modern architecture, future-ready features, and exceptional ROI potential. All of them are known to be located in rapidly developing areas; these homes are selling out quickly.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              {hotSellingZones.map((zone) => (
+                <button
+                  key={zone}
+                  type="button"
+                  onClick={() => setSelectedHotSellingZone(zone)}
+                  className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
+                    selectedHotSellingZone === zone
+                      ? 'bg-slate-950 text-white'
+                      : 'border border-slate-200 text-slate-800 hover:border-slate-400'
+                  }`}
+                >
+                  {zone}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative mt-10">
+              <div
+                ref={hotSellingScrollRef}
+                className="flex gap-6 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {visibleHotSellingProjects.map((project, index) => (
+                  <div key={project.name} className="relative w-64 shrink-0">
+                    <span className="pointer-events-none absolute -left-2 -top-7 select-none text-6xl font-black text-slate-200">
+                      {index + 1}
+                    </span>
+                    <div className="relative overflow-hidden rounded-lg">
+                      <img src={project.image} alt={project.name} className="h-40 w-full object-cover" />
+                    </div>
+                    <div className="mt-3 rounded-lg border border-slate-200 p-4">
+                      <p className="font-black text-slate-950">{project.name}</p>
+                      <p className="mt-1 text-sm text-teal-700">{project.location}</p>
+                      <p className="mt-2 font-black text-slate-950">{project.priceRange}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => hotSellingScrollRef.current?.scrollBy({ left: 320, behavior: 'smooth' })}
+                aria-label="Scroll for more projects"
+                className="absolute right-0 top-1/3 hidden h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-slate-800 text-white shadow-lg hover:bg-slate-950 lg:flex"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+
+            <Link
+              to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+              className="mt-7 inline-flex items-center gap-1 text-sm font-bold text-slate-950 hover:text-teal-700"
+            >
+              Projects in {selectedCity} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <section className="overflow-hidden bg-white py-28">
         <div className="ld-container relative grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
