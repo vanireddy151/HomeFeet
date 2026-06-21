@@ -47,6 +47,7 @@ import LoginModal from './components/LoginModal';
 import BrandName from './components/BrandName';
 import LegalPage from './components/LegalPage';
 import TestimonialsPage from './components/TestimonialsPage';
+import SubscriptionPlansPage from './components/SubscriptionPlansPage';
 import { RAZORPAY_CHECKOUT_URL, razorpayConfig } from './config/razorpay.config';
 import { API_BASE, API_ORIGIN } from './lib/api';
 
@@ -166,6 +167,11 @@ const seoByPath: Record<string, SeoConfig> = {
     title: 'HomeFeet Testimonials | Marketplace Feedback',
     description:
       'Read city-wise testimonials from builders, owners, mediators, buyers, and property seekers using HomeFeet.'
+  },
+  '/subscription-plans': {
+    title: 'Subscription Plans | HomeFeet',
+    description:
+      'Choose the right HomeFeet access plan for builders, owners, mediators, buyers, and corporates with controlled property posting and contact access.'
   },
   '/contact': {
     title: 'Contact HomeFeet',
@@ -799,48 +805,6 @@ function HomePage() {
     { icon: BadgeCheck, title: 'Builders are verified', text: 'Builder contact access opens only after admin approval.' },
     { icon: LockKeyhole, title: 'Contacts stay private', text: 'Owner details unlock after mutual interest, with chat history retained.' },
   ];
-  const membershipOfferings = [
-    {
-      icon: Users,
-      title: 'For Builders',
-      text: 'Access verified apartment and commercial space inventory for sale conversations and outright purchase.',
-      stat: '250 Builders Onboarded',
-      action: 'Subscribe',
-      to: `/builder-membership?redirect=${encodeURIComponent(`/properties?view=developers&listingIntent=sell&city=${selectedCity}`)}`,
-      className: 'border-blue-200 bg-blue-50',
-      buttonClassName: 'border-blue-600 bg-white text-blue-700 shadow-blue-100 hover:bg-blue-600 hover:text-white'
-    },
-    {
-      icon: Crown,
-      title: 'For Owners|Mediators',
-      text: 'Post property for free. Membership is only for viewing complete details from other owners and mediators.',
-      stat: `${marketplaceStats.ownersAndMediators} Owners/Mediators Onboarded`,
-      action: 'Subscribe',
-      to: `/owner-mediator-membership?redirect=${encodeURIComponent('/properties')}`,
-      className: 'border-amber-200 bg-amber-50',
-      buttonClassName: 'border-amber-400 bg-amber-300 text-slate-950 shadow-amber-100 hover:bg-amber-400'
-    },
-    {
-      icon: Search,
-      title: 'Buyers | Property Seekers',
-      text: 'Subscribe to explore sale flats and commercial space with controlled owner and mediator contact access.',
-      stat: 'Sale flats and commercial space access',
-      action: 'Subscribe',
-      to: `/owner-mediator-membership?useCase=buyer&redirect=${encodeURIComponent(`/properties?view=developers&listingIntent=sell&city=${selectedCity}`)}`,
-      className: 'border-teal-200 bg-teal-50',
-      buttonClassName: 'border-[#0AA6A6] bg-[#0AA6A6] text-white shadow-teal-100 hover:bg-[#088f8f]'
-    },
-    {
-      icon: Building2,
-      title: 'For Corporates',
-      text: 'Commercial space acquisition support for larger budgets, verified supply, and professional deal flow.',
-      stat: `${marketplaceStats.approvedProperties} Verified Listings`,
-      action: 'Corporate Space Acquisition',
-      to: '/contact',
-      className: 'border-emerald-200 bg-emerald-50',
-      buttonClassName: 'border-blue-600 bg-white text-blue-700 shadow-blue-100 hover:bg-blue-600 hover:text-white'
-    },
-  ];
   const curatedBuilders = buildersByCity[selectedCity] || buildersByCity.Hyderabad;
   const storedBuilderKeys = new Set(storedBuilderLogos.map((builder) => builder.name.trim().toLowerCase()));
   const topBuilders = [
@@ -1140,53 +1104,6 @@ function HomePage() {
                   </div>
                   <h3 className="text-xl font-bold text-slate-950">{item.title}</h3>
                   <p className="mt-3 text-slate-600">{item.text}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="relative overflow-hidden bg-white py-20">
-        <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-gradient-to-br from-[#E7FAF8] via-[#F8FCFF] to-[#EAF3FF] lg:block" />
-        <div className="ld-container relative grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <div className="flex items-center gap-3 text-sm font-black uppercase tracking-[0.18em] text-slate-500">
-              <span className="h-px w-9 bg-slate-400" />
-              Subscription Plans
-            </div>
-            <h2 className="mt-6 max-w-2xl text-4xl font-black leading-[1.05] tracking-tight text-slate-950 md:text-6xl">
-              Choose the right access for a more{' '}
-              <span className="bg-gradient-to-r from-[#0AA6A6] to-[#0077CC] bg-clip-text text-transparent">
-                transparent
-              </span>{' '}
-              market.
-            </h2>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-700">
-              Builders, owners, mediators, and corporates get focused access paths while property posting and contact access stay controlled.
-            </p>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            {membershipOfferings.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.title}
-                  className={`flex min-h-[260px] flex-col rounded-lg border p-6 shadow-xl shadow-slate-200/70 ${item.className}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-7 w-7 shrink-0 text-[#0AA6A6]" />
-                    <h3 className="min-w-0 whitespace-nowrap text-lg font-black leading-tight text-slate-950 sm:text-xl">{item.title}</h3>
-                  </div>
-                  <p className="mt-5 text-sm leading-6 text-slate-800">{item.text}</p>
-                  <p className="mt-auto pt-6 text-sm font-black text-slate-950">{item.stat}</p>
-                  <Link
-                    to={item.to}
-                    className={`mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border px-4 py-3 text-center text-sm font-black leading-tight shadow-md transition hover:-translate-y-0.5 hover:shadow-lg ${item.buttonClassName}`}
-                  >
-                    {item.action} <ArrowRight className="h-5 w-5" />
-                  </Link>
                 </div>
               );
             })}
@@ -3344,6 +3261,7 @@ function App() {
           <Route path="/search" element={<PropertiesListingPage />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/testimonials" element={<TestimonialsPage />} />
+          <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/terms-and-conditions" element={<LegalPage type="terms" />} />
           <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />

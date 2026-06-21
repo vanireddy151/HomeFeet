@@ -80,6 +80,7 @@ export default function Footer() {
               <Link className="block hover:text-white" to="/properties">Properties</Link>
               <Link className="block hover:text-white" to="/post-property-options">Post Property</Link>
               <Link className="block hover:text-white" to="/about">About</Link>
+              <Link className="block hover:text-white" to="/subscription-plans">Subscription Plans</Link>
               <Link className="block hover:text-white" to="/testimonials">Testimonials</Link>
               <Link className="block hover:text-white" to="/contact">Contact</Link>
               <Link className="block hover:text-white" to="/terms-and-conditions">Terms and Conditions</Link>
