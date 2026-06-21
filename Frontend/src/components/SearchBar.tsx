@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, MapPin, Search, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Briefcase, Building2, Home, MapPin, Mic, Search, ShieldCheck, Tag } from 'lucide-react';
 
 interface SearchBarProps {
   compact?: boolean;
@@ -9,17 +9,48 @@ interface SearchBarProps {
 
 const fallbackPopularLocations = ['Kokapet', 'Gachibowli', 'Kondapur', 'Financial District', 'Madhapur', 'Narsingi'];
 
+const metroCities = [
+  'Hyderabad', 'Bengaluru', 'Chennai', 'Mumbai', 'Delhi', 'Kolkata',
+  'Pune', 'Ahmedabad', 'Jaipur', 'Kochi', 'Lucknow', 'Chandigarh'
+];
+
+const SEARCH_TABS = [
+  { label: 'Buyer', icon: Home, listingIntent: 'buy', propertyType: '' },
+  { label: 'Sale Flats', icon: Tag, listingIntent: 'sell', propertyType: '' },
+  { label: 'Commercial Space', icon: Building2, listingIntent: 'sell', propertyType: 'commercial-plot' },
+  { label: 'Post Property', icon: Briefcase, listingIntent: 'development', propertyType: '', badge: 'FREE' }
+];
+
 const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations = fallbackPopularLocations }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState(0);
+  const [city, setCity] = useState(() => localStorage.getItem('selectedCity') || 'Hyderabad');
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const selectedCity = localStorage.getItem('selectedCity') || 'Hyderabad';
-  const buildDeveloperLocationUrl = (location: string) =>
-    `/properties?view=developers&listingIntent=development&city=${encodeURIComponent(selectedCity)}&q=${encodeURIComponent(location)}`;
+
+  const buildLocationUrl = (location: string) => {
+    const tab = SEARCH_TABS[activeTab];
+    const params = new URLSearchParams({
+      view: 'developers',
+      listingIntent: tab.listingIntent,
+      city
+    });
+    if (tab.propertyType) params.set('propertyType', tab.propertyType);
+    if (location) params.set('q', location);
+    return `/properties?${params.toString()}`;
+  };
+
+  const handleTabClick = (index: number) => {
+    if (SEARCH_TABS[index].label === 'Post Property') {
+      navigate('/post-property-options');
+      return;
+    }
+    setActiveTab(index);
+  };
 
   const handleSearch = () => {
-    const query = searchQuery.trim();
-    navigate(query ? buildDeveloperLocationUrl(query) : `/properties?view=developers&listingIntent=development&city=${encodeURIComponent(selectedCity)}`);
+    navigate(buildLocationUrl(searchQuery.trim()));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -29,50 +60,110 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
     }
   };
 
+  const selectCity = (value: string) => {
+    setCity(value);
+    localStorage.setItem('selectedCity', value);
+    setShowCityDropdown(false);
+  };
+
   return (
     <div className={compact ? 'w-full' : 'mx-auto max-w-5xl'}>
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-xl shadow-slate-950/10">
-        <div className="mb-4 flex items-center gap-3 border-b border-slate-100 pb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-slate-950">Search verified development listings</p>
-            <p className="text-xs text-slate-500">Location, pincode, project, landmark or society</p>
-          </div>
+      <div className="overflow-hidden rounded-lg shadow-xl shadow-slate-950/10">
+        <div className="flex flex-wrap bg-slate-950">
+          {SEARCH_TABS.map((tab, index) => {
+            const Icon = tab.icon;
+            const active = index === activeTab && tab.label !== 'Post Property';
+            return (
+              <button
+                key={tab.label}
+                type="button"
+                onClick={() => handleTabClick(index)}
+                className={`relative flex items-center gap-2 px-4 py-3 text-sm font-semibold transition ${
+                  active ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+                {tab.badge && (
+                  <span className="absolute -top-1 right-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-          <div className="relative">
-            <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Try Kokapet, 500032, Gachibowli..."
-              className="ld-input pl-12"
-            />
+        <div className="bg-white p-4">
+          <div className="mb-3 flex items-center gap-3 border-b border-slate-100 pb-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-950">Search verified development listings</p>
+              <p className="text-xs text-slate-500">Location, pincode, project, landmark or society</p>
+            </div>
           </div>
-          <button onClick={handleSearch} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0AA6A6] px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-[#088f8f] disabled:cursor-not-allowed disabled:bg-slate-400">
-            <Search className="h-5 w-5" />
-            Search
-          </button>
-        </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Popular</span>
-          {popularLocations.map((location) => (
-            <button
-              key={location}
-              onClick={() => navigate(buildDeveloperLocationUrl(location))}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
-            >
-              {location}
-              <ArrowRight className="h-3 w-3" />
+          <div className="grid gap-3 md:grid-cols-[auto_1fr_auto]">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowCityDropdown((prev) => !prev)}
+                className="ld-input flex items-center gap-2 whitespace-nowrap font-semibold text-slate-800"
+              >
+                {city}
+                <ArrowRight className="h-3 w-3 rotate-90" />
+              </button>
+              {showCityDropdown && (
+                <div className="absolute left-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-slate-200 bg-white py-2 shadow-2xl">
+                  {metroCities.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => selectCity(option)}
+                      className={`block w-full px-4 py-2 text-left text-sm font-semibold hover:bg-slate-50 ${
+                        city === option ? 'text-teal-700' : 'text-slate-700'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Try Kokapet, 500032, Gachibowli..."
+                className="ld-input pl-12 pr-12"
+              />
+              <Mic className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            </div>
+            <button onClick={handleSearch} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0AA6A6] px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-[#088f8f] disabled:cursor-not-allowed disabled:bg-slate-400">
+              <Search className="h-5 w-5" />
+              Search
             </button>
-          ))}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Trending Searches:</span>
+            {popularLocations.map((location) => (
+              <button
+                key={location}
+                onClick={() => navigate(buildLocationUrl(location))}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
+              >
+                {location}
+                <ArrowRight className="h-3 w-3" />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
