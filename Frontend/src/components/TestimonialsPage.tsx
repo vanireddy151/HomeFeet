@@ -15,7 +15,7 @@ const defaultTestimonials: Testimonial[] = [
   {
     name: 'Vani Kalavala',
     role: 'Mediator',
-    summary: 'HomeFeet helped us present land information clearly, with admin-reviewed listings and controlled contact access.',
+    summary: 'HomeFeet helped us present apartment and commercial space information clearly, with admin-reviewed listings and controlled contact access.',
     city: 'Hyderabad'
   },
   {
@@ -26,8 +26,8 @@ const defaultTestimonials: Testimonial[] = [
   },
   {
     name: 'PropHunt Sourcing Desk',
-    role: 'Land Seeker',
-    summary: 'Structured property summaries make it easier to review development opportunities before serious discussions.',
+    role: 'Property Seeker',
+    summary: 'Structured property summaries make it easier to review apartment and commercial space opportunities before serious discussions.',
     city: 'Bengaluru'
   }
 ];
@@ -40,7 +40,7 @@ export default function TestimonialsPage() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const roleOptions = useMemo(() => ['Builder', 'Owner', 'Mediator', 'Buyer', 'Land Seeker', 'Other'], []);
+  const roleOptions = useMemo(() => ['Builder', 'Owner', 'Mediator', 'Buyer', 'Property Seeker', 'Other'], []);
   const cityOptions = useMemo(() => {
     const cities = testimonials.map((item) => item.city || '').filter(Boolean);
     return Array.from(new Set(cities)).sort();
@@ -116,7 +116,7 @@ export default function TestimonialsPage() {
             Trusted voices from the HomeFeet marketplace.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
-            City-wise feedback from builders, owners, mediators, buyers, and land seekers.
+            City-wise feedback from builders, owners, mediators, buyers, and property seekers.
           </p>
         </div>
       </section>
@@ -133,7 +133,7 @@ export default function TestimonialsPage() {
               Share your real marketplace experience.
             </h2>
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-700">
-              Builders, owners, mediators, buyers, and land seekers can submit a short testimonial summary. Testimonials appear city-wise on this page.
+              Builders, owners, mediators, buyers, and property seekers can submit a short testimonial summary. Testimonials appear city-wise on this page.
             </p>
           </div>
 
@@ -182,7 +182,7 @@ export default function TestimonialsPage() {
                 value={form.summary}
                 onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))}
                 className="mt-2 min-h-32 w-full rounded-md border border-slate-300 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-                placeholder="Share what you experienced as a builder, owner, mediator, buyer, or land seeker..."
+                placeholder="Share what you experienced as a builder, owner, mediator, buyer, or property seeker..."
                 maxLength={800}
               />
             </label>

@@ -604,7 +604,7 @@ const PropertiesListingPage: React.FC = () => {
   const membershipModalCopy = isBuyerRequirementAccess
     ? 'Owners and mediators need an active subscription to access buyer requirement details and buyer contact information.'
     : isBuyerMarketplaceAccess
-      ? 'Buyers and land seekers need an active subscription to explore sell plots, commercial plots, complete details, and owner or mediator contact information.'
+      ? 'Buyers and property seekers need an active subscription to explore sale flats, commercial space, complete details, and owner or mediator contact information.'
       : 'To access other people\'s complete property details and owner contact, please upgrade your membership.';
 
   const requireLoginForDetails = async (property: Property) => {
@@ -1805,8 +1805,8 @@ const PropertiesListingPage: React.FC = () => {
       <section className="bg-slate-950 px-4 py-12 text-white">
         <div className="mx-auto max-w-7xl">
           <p className="text-sm font-bold uppercase tracking-wide text-amber-300">Marketplace</p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight md:text-6xl">Verified development listings</h1>
-          <p className="mt-4 max-w-2xl text-slate-300">Search curated land opportunities by location, area, zoning, and commercial expectations.</p>
+          <h1 className="mt-2 text-4xl font-black tracking-tight md:text-6xl">Verified property listings</h1>
+          <p className="mt-4 max-w-2xl text-slate-300">Search curated apartment and commercial space opportunities by location, area, and budget.</p>
         </div>
       </section>
       {/* Header with Search */}

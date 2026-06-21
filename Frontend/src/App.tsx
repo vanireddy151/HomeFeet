@@ -94,35 +94,35 @@ const SITE_URL = 'https://www.homefeet.in';
 const SITE_NAME = 'HomeFeet';
 const DEFAULT_IMAGE = '/HomeFeet_Logo_Name.png';
 const DEFAULT_KEYWORDS =
-  'land development marketplace, verified properties, Hyderabad plots, Bengaluru land, Mumbai builders, owner listings, mediator listings, commercial plots, sell plot, buyer requirements';
+  'apartment sales, commercial space, buyer information, verified properties, Hyderabad apartments, Bengaluru flats, Mumbai commercial space, owner listings, mediator listings, sale flats, buyer requirements';
 
 const DEFAULT_SEO: SeoConfig = {
-  title: 'HomeFeet | Verified Land Development Marketplace in India',
+  title: 'HomeFeet | Verified Marketplace for Apartments, Commercial Space & Buyers',
   description:
-    'HomeFeet helps owners, mediators, builders, buyers, and land seekers share verified land, plot, villa, and commercial property opportunities with admin-reviewed listings.',
+    'HomeFeet helps owners, mediators, builders, buyers, and property seekers share verified apartment sales, commercial space, and buyer information with admin-reviewed listings.',
   keywords: DEFAULT_KEYWORDS
 };
 
 const seoByPath: Record<string, SeoConfig> = {
   '/': {
-    title: 'HomeFeet | Verified Land Development Marketplace',
+    title: 'HomeFeet | Verified Marketplace for Apartments, Commercial Space & Buyers',
     description:
-      'Discover verified owner listings, development opportunities, sell plots, commercial plots, buyer requirements, and builder contacts across Hyderabad, Bengaluru, Mumbai, and India.'
+      'Discover verified owner listings, apartment sales, commercial space, buyer requirements, and builder contacts across Hyderabad, Bengaluru, Mumbai, and India.'
   },
   '/properties': {
-    title: 'Verified Properties, Development Lands & Plots | HomeFeet',
+    title: 'Verified Apartments, Flats & Commercial Space | HomeFeet',
     description:
-      'Explore verified development lands, sell plots, villas, commercial plots, and buyer requirements with map view, filters, and controlled owner contact access.'
+      'Explore verified apartment sales, sale flats, commercial space, and buyer requirements with map view, filters, and controlled owner contact access.'
   },
   '/properties-map': {
     title: 'Properties Map View | HomeFeet',
     description:
-      'View verified land development opportunities, sell plots, buyer requirements, and commercial properties on an interactive city-wise map.'
+      'View verified apartment sales, sale flats, buyer requirements, and commercial space opportunities on an interactive city-wise map.'
   },
   '/post-property-options': {
     title: 'Post Property Options | HomeFeet',
     description:
-      'Choose the full property form or quick property details flow to submit land, plot, villa, or commercial property for admin approval.'
+      'Choose the full property form or quick property details flow to submit an apartment, flat, or commercial space for admin approval.'
   },
   '/post-property-summary': {
     title: 'Share Property Details Quickly | HomeFeet',
@@ -132,22 +132,22 @@ const seoByPath: Record<string, SeoConfig> = {
   '/post-property': {
     title: 'Post a Verified Property | HomeFeet',
     description:
-      'Submit land, plot, villa, and commercial property details for admin review and verified listing publication.'
+      'Submit apartment, flat, and commercial space details for admin review and verified listing publication.'
   },
   '/buyer-requirement': {
     title: 'Buyer Requirement Form | HomeFeet',
     description:
-      'Share buyer or land seeker requirements by land type, location, city, budget, area, and expected price range.'
+      'Share buyer or property seeker requirements by property type, location, city, budget, area, and expected price range.'
   },
   '/membership': {
     title: 'HomeFeet Membership Plans',
     description:
-      'Choose membership access for builders, owners, mediators, buyers, land seekers, and corporate land acquisition teams.'
+      'Choose membership access for builders, owners, mediators, buyers, property seekers, and corporate property acquisition teams.'
   },
   '/builder-membership': {
     title: 'Builder Membership | HomeFeet',
     description:
-      'Builder membership for verified development opportunities, owner conversations, and land acquisition workflows.'
+      'Builder membership for verified apartment sales opportunities, owner conversations, and commercial space workflows.'
   },
   '/owner-mediator-membership': {
     title: 'Owner & Mediator Membership | HomeFeet',
@@ -155,23 +155,23 @@ const seoByPath: Record<string, SeoConfig> = {
       'Owner and mediator membership for controlled access to complete listing details from other verified property owners and mediators.'
   },
   '/about': {
-    title: 'About HomeFeet | Verified Land Development Marketplace',
+    title: 'About HomeFeet | Verified Marketplace for Apartments, Commercial Space & Buyers',
     description:
-      'Learn about HomeFeet, a professional platform for verified land development opportunities, moderated listings, and trusted property conversations.'
+      'Learn about HomeFeet, a professional platform for verified apartment sales, commercial space, moderated listings, and trusted buyer conversations.'
   },
   '/testimonials': {
     title: 'HomeFeet Testimonials | Marketplace Feedback',
     description:
-      'Read city-wise testimonials from builders, owners, mediators, buyers, and land seekers using HomeFeet.'
+      'Read city-wise testimonials from builders, owners, mediators, buyers, and property seekers using HomeFeet.'
   },
   '/contact': {
     title: 'Contact HomeFeet',
     description:
-      'Contact HomeFeet for verified property listings, owner and mediator support, builder contacts, and land development marketplace help.'
+      'Contact HomeFeet for verified apartment and commercial space listings, owner and mediator support, builder contacts, and buyer information help.'
   },
   '/terms-and-conditions': {
     title: 'Terms and Conditions | HomeFeet',
-    description: 'Review the HomeFeet terms and conditions for using the verified land development marketplace.'
+    description: 'Review the HomeFeet terms and conditions for using the verified apartment, commercial space, and buyer information marketplace.'
   },
   '/privacy-policy': {
     title: 'Privacy Policy | HomeFeet',
@@ -733,10 +733,10 @@ function HomePage() {
     {
       icon: Users,
       title: 'For Builders',
-      text: 'Access prime city lands for joint development and outright purchase conversations.',
+      text: 'Access verified apartment and commercial space inventory for sale conversations and outright purchase.',
       stat: '250 Builders Onboarded',
       action: 'Subscribe',
-      to: `/builder-membership?redirect=${encodeURIComponent(`/properties?view=developers&listingIntent=development&city=${selectedCity}`)}`,
+      to: `/builder-membership?redirect=${encodeURIComponent(`/properties?view=developers&listingIntent=sell&city=${selectedCity}`)}`,
       className: 'border-blue-200 bg-blue-50',
       buttonClassName: 'border-blue-600 bg-white text-blue-700 shadow-blue-100 hover:bg-blue-600 hover:text-white'
     },
@@ -752,9 +752,9 @@ function HomePage() {
     },
     {
       icon: Search,
-      title: 'Buyers | Land Seekers',
-      text: 'Subscribe to explore sell plots and commercial plots with controlled owner and mediator contact access.',
-      stat: 'Sell plot and commercial plot access',
+      title: 'Buyers | Property Seekers',
+      text: 'Subscribe to explore sale flats and commercial space with controlled owner and mediator contact access.',
+      stat: 'Sale flats and commercial space access',
       action: 'Subscribe',
       to: `/owner-mediator-membership?useCase=buyer&redirect=${encodeURIComponent(`/properties?view=developers&listingIntent=sell&city=${selectedCity}`)}`,
       className: 'border-teal-200 bg-teal-50',
@@ -763,9 +763,9 @@ function HomePage() {
     {
       icon: Building2,
       title: 'For Corporates',
-      text: 'Land acquisition support for larger budgets, verified supply, and professional deal flow.',
+      text: 'Commercial space acquisition support for larger budgets, verified supply, and professional deal flow.',
       stat: `${marketplaceStats.approvedProperties} Verified Listings`,
-      action: 'Corporate Land Acquisition',
+      action: 'Corporate Space Acquisition',
       to: '/contact',
       className: 'border-emerald-200 bg-emerald-50',
       buttonClassName: 'border-blue-600 bg-white text-blue-700 shadow-blue-100 hover:bg-blue-600 hover:text-white'
@@ -864,7 +864,7 @@ function HomePage() {
     const loadPopularLocations = async () => {
       try {
         const fallbackForCity = fallbackPopularLocations.map((location) => ({ ...location, city: selectedCity }));
-        const response = await fetch(`${API_BASE}/search?listingIntent=development&city=${encodeURIComponent(selectedCity)}`);
+        const response = await fetch(`${API_BASE}/search?listingIntent=sell&city=${encodeURIComponent(selectedCity)}`);
         const data = await response.json();
         if (!response.ok || !Array.isArray(data)) throw new Error('Unable to load popular locations');
 
@@ -949,19 +949,19 @@ function HomePage() {
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold backdrop-blur">
               <Sparkles className="h-4 w-4 text-amber-300" />
-              India's moderated land-development marketplace
+              India's verified marketplace for apartments, commercial space & buyers
             </div>
             <h1 className="max-w-4xl text-5xl font-black leading-[1.02] tracking-tight md:text-7xl">
               <BrandName />
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200 md:text-xl">
-              Discover verified owner listings, compare development potential, request contact with confidence, and move serious conversations into one professional workflow.
+              Discover verified apartment sales, explore commercial space, and share buyer requirements with confidence, all in one professional workflow.
             </p>
             <div className="mt-8 max-w-4xl">
               <SearchBar compact popularLocations={popularLocations.map((location) => location.name)} />
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link to={`/properties?view=developers&listingIntent=development&city=${encodeURIComponent(selectedCity)}`} className="ld-btn-primary bg-white text-slate-950 hover:bg-teal-50">
+              <Link to={`/properties?view=developers&listingIntent=sell&city=${encodeURIComponent(selectedCity)}`} className="ld-btn-primary bg-white text-slate-950 hover:bg-teal-50">
                 Explore Properties <ArrowRight className="h-5 w-5" />
               </Link>
               <button onClick={handlePostProperty} className="ld-btn-ghost border-white/30 bg-white/10 text-white hover:border-white hover:text-white">
@@ -1001,11 +1001,11 @@ function HomePage() {
             <div>
               <p className="ld-eyebrow">Platform Built For Serious Deals</p>
               <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
-                Better Land. Quicker Connections. Smarter Deals.
+                Better Homes. Quicker Connections. Smarter Deals.
               </h2>
             </div>
             <p className="max-w-xl text-slate-600">
-              HomeFeet keeps the marketplace curated: owners get protected contact details, builders get searchable development data, and admins get operational control.
+              HomeFeet keeps the marketplace curated: owners get protected contact details, builders get searchable apartment and commercial space data, and admins get operational control.
             </p>
           </div>
           <div className="grid gap-5 md:grid-cols-3">
@@ -1142,10 +1142,10 @@ function HomePage() {
               About us
             </p>
             <h2 className="mt-6 max-w-lg text-4xl font-black leading-tight tracking-tight text-slate-950 md:text-5xl">
-              Land development needs a more <span className="text-[#0AA6A6]">transparent</span> market.
+              Apartment and commercial space deals need a more <span className="text-[#0AA6A6]">transparent</span> market.
             </h2>
             <p className="mt-6 max-w-xl text-base leading-7 text-slate-700">
-              HomeFeet keeps property posting, builder access, and admin review in one verified workflow so serious land conversations move faster.
+              HomeFeet keeps property posting, builder access, and admin review in one verified workflow so serious buyer conversations move faster.
             </p>
             <Link to="/about" className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-[#0077CC]">
               Read More <ArrowRight className="h-4 w-4" />
@@ -1154,7 +1154,7 @@ function HomePage() {
 
           <div className="relative grid gap-5 sm:grid-cols-2">
             {[
-              { icon: Building2, value: 'Owner Desk', text: 'Post land with diagrams, video, frontage, zoning, map, and pincode.' },
+              { icon: Building2, value: 'Owner Desk', text: 'Post apartments and commercial space with photos, video, amenities, and pincode.' },
               { icon: Users, value: 'Builder Desk', text: 'Shortlist opportunities and request contact only after verification.' },
               { icon: TrendingUp, value: 'Admin Operations', text: 'Approve listings, verify builders, review inquiries, and monitor quality.', wide: true },
             ].map((item) => {
@@ -1184,7 +1184,7 @@ function HomePage() {
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-6 text-slate-600">
-              Every week updated government policy, housing demand, land development, and real estate market signals from major Indian cities.
+              Every week updated government policy, housing demand, apartment and commercial space trends, and real estate market signals from major Indian cities.
             </p>
           </div>
 
@@ -2640,7 +2640,7 @@ function MembershipPage({ audience }: { audience?: 'builder' | 'owner_mediator' 
       : builderMembershipPrices;
   const membershipFeatures = isBuyerAccessPlan
     ? [
-        'Subscribe before exploring sell plots and commercial plots',
+        'Subscribe before exploring sale flats and commercial space',
         'Access complete listing details from owners and mediators',
         'Continue from the property search you were browsing',
       ]
@@ -2652,7 +2652,7 @@ function MembershipPage({ audience }: { audience?: 'builder' | 'owner_mediator' 
       ]
     : isOwnerMediatorPlan
     ? [
-        'Free property posting for land owners and mediators',
+        'Free property posting for owners and mediators',
         'Access complete property details',
         'Continue from the property page you were browsing',
       ]
@@ -2833,7 +2833,7 @@ function MembershipPage({ audience }: { audience?: 'builder' | 'owner_mediator' 
           <p className="text-sm font-bold tracking-wide text-[#0877C9]">HomeFeet Membership</p>
           <h1 className="relative -top-2 mt-1 text-[2.25rem] font-black tracking-tight text-slate-950 sm:text-[2.7rem] md:whitespace-nowrap md:text-[4.3rem]">
             {isBuyerAccessPlan
-              ? 'Buyer | Land Seeker Membership'
+              ? 'Buyer | Property Seeker Membership'
               : isBuyerInfoAccessPlan
                 ? 'Unlock buyer information'
                 : 'Unlock complete property details'}

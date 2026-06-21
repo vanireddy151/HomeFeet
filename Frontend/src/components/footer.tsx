@@ -48,11 +48,11 @@ export default function Footer() {
               <img src="/HomeFeet_logo.png" alt="HomeFeet" className="h-12 w-12 rounded-lg bg-white p-1" />
               <div>
                 <p className="text-2xl font-black"><BrandName /></p>
-                <p className="text-sm text-teal-200">Verified land development marketplace</p>
+                <p className="text-sm text-teal-200">Verified marketplace for apartments, commercial space & buyers</p>
               </div>
             </div>
             <p className="mt-5 max-w-xl text-sm leading-7 text-slate-300">
-              A professional platform for owners, builders, and administrators to manage verified land development opportunities with moderated listings, trust signals, private contact reveal, and chat.
+              A professional platform for owners, builders, and administrators to manage verified apartment sales and commercial space opportunities with moderated listings, trust signals, private contact reveal, and chat.
             </p>
             <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-teal-400/30 bg-teal-400/10 px-4 py-2 text-sm font-semibold text-teal-100">
               <ShieldCheck className="h-4 w-4" />
@@ -100,7 +100,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-6 text-xs leading-6 text-slate-400">
-          <p>"Lands Develop" trademark is owned by Inventor Heads Animation Studios Pvt. Ltd. and licensed to its affiliates and subsidiaries.</p>
+          <p>"HomeFeet" trademark is owned by Inventor Heads Animation Studios Pvt. Ltd. and licensed to its affiliates and subsidiaries.</p>
           <p className="mt-1">All rights to this website, including copyright in content represented thereat, vest in Inventor Heads Animation Studios Pvt. Ltd. and/or its respective affiliates and subsidiaries. All rights reserved.</p>
         </div>
       </div>

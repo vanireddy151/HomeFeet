@@ -1,7 +1,7 @@
 {
   "name": "HomeFeet",
   "short_name": "HomeFeet",
-  "description": "Verified land development marketplace for owners, mediators, builders, buyers, and land seekers.",
+  "description": "Verified marketplace for apartment sales, commercial space, and buyer information.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

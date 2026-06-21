@@ -50,8 +50,8 @@ const ContactPage: React.FC = () => {
           {[
             { icon: Phone, label: 'Phone', value: '+91 90140 11885' },
             { icon: Mail, label: 'Email', value: 'contact@homefeet.in' },
-            { icon: MapPin, label: 'Market', value: 'Hyderabad development opportunities' },
-            { icon: Building2, label: 'For', value: 'Owners, builders, partners, admins' }
+            { icon: MapPin, label: 'Market', value: 'Hyderabad apartment & commercial space opportunities' },
+            { icon: Building2, label: 'For', value: 'Owners, builders, buyers, partners, admins' }
           ].map((item) => {
             const Icon = item.icon;
             return (

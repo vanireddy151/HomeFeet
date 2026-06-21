@@ -21,10 +21,10 @@ const AboutUs: React.FC = () => {
         <div className="ld-container relative py-24">
           <p className="text-sm font-bold uppercase tracking-wide text-amber-300">About HomeFeet</p>
           <h1 className="mt-4 max-w-4xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
-            A sharper way to connect landowners and serious builders.
+            A sharper way to connect property owners, buyers, and serious builders.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
-            HomeFeet is built for high-trust development opportunities: owners can list with confidence, builders can evaluate richer property data, and admins can keep the marketplace curated.
+            HomeFeet is built for high-trust apartment sales and commercial space opportunities: owners can list with confidence, builders can evaluate richer property data, and admins can keep the marketplace curated.
           </p>
         </div>
       </section>
@@ -49,14 +49,14 @@ const AboutUs: React.FC = () => {
               About Us
             </div>
             <h2 className="mt-6 max-w-2xl text-4xl font-black leading-[1.05] tracking-tight text-slate-950 md:text-6xl">
-              Land development needs a more{' '}
+              Apartment and commercial space deals need a more{' '}
               <span className="bg-gradient-to-r from-[#0AA6A6] to-[#0077CC] bg-clip-text text-transparent">
                 transparent
               </span>{' '}
               market.
             </h2>
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-700">
-              Typical listing sites expose contact details too early and miss the data builders actually need. HomeFeet focuses on verified listings, structured land data, and professional follow-through.
+              Typical listing sites expose contact details too early and miss the data buyers actually need. HomeFeet focuses on verified listings, structured property data, and professional follow-through.
             </p>
             <a href="#operating-model" className="mt-6 inline-flex items-center text-base font-semibold text-[#0077CC] hover:text-[#0AA6A6]">
               Read More ↓

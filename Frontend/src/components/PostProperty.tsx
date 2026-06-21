@@ -2019,13 +2019,13 @@ const PostProperty = () => {
       eyebrow: 'Buyer requirement desk',
       createTitle: 'Submit a verified buy requirement',
       editTitle: 'Edit your buy requirement',
-      description: 'Share your desired location, budget, and time frame so owners and mediators can contact you with matching plots or land.'
+      description: 'Share your desired location, budget, and time frame so owners and mediators can contact you with matching apartments or commercial space.'
     },
     sell: {
       eyebrow: 'Owner selling desk',
-      createTitle: 'Submit a verified plot or land listing',
-      editTitle: 'Edit your plot or land listing',
-      description: 'Share property details, location, and square yard price so serious buyers and mediators can shortlist faster.'
+      createTitle: 'Submit a verified apartment or commercial space listing',
+      editTitle: 'Edit your apartment or commercial space listing',
+      description: 'Share property details, location, and price so serious buyers and mediators can shortlist faster.'
     }
   }[formData.listingIntent as 'development' | 'buy' | 'sell'];
 
