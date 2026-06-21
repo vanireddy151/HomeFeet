@@ -1069,33 +1069,6 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white pb-12 pt-8 md:pb-16 md:pt-10">
-        <div className="ld-container">
-          <div className="mb-7 text-center">
-            <p className="ld-eyebrow justify-center">Top Builders</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 md:text-4xl">
-              Trusted By Leading{' '}
-              <span className="bg-gradient-to-r from-[#0AA6A6] to-[#0077CC] bg-clip-text text-transparent">
-                Developer
-              </span>{' '}
-              From {selectedCity}
-            </h2>
-          </div>
-
-          <div className="ld-builders-marquee mx-auto max-w-7xl">
-            <div className="ld-builders-track">
-              {scrollingBuilders.map((builder, index) => (
-                <BuilderLogoCard
-                  key={`${builder.name}-${builder.domain}-${index}`}
-                  builder={builder}
-                  index={index}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="bg-white py-16">
         <div className="ld-container">
           <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-5xl">Top Developers in {selectedCity}</h2>
@@ -1202,6 +1175,34 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      <section className="bg-white pb-12 pt-8 md:pb-16 md:pt-10">
+        <div className="ld-container">
+          <div className="mb-7 text-center">
+            <p className="ld-eyebrow justify-center">Top Builders</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 md:text-4xl">
+              Trusted By Leading{' '}
+              <span className="bg-gradient-to-r from-[#0AA6A6] to-[#0077CC] bg-clip-text text-transparent">
+                Developer
+              </span>{' '}
+              From {selectedCity}
+            </h2>
+          </div>
+
+          <div className="ld-builders-marquee mx-auto max-w-7xl">
+            <div className="ld-builders-track">
+              {scrollingBuilders.map((builder, index) => (
+                <BuilderLogoCard
+                  key={`${builder.name}-${builder.domain}-${index}`}
+                  builder={builder}
+                  index={index}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {showLoginModal && (
         <LoginModal
           onClose={() => setShowLoginModal(false)}
