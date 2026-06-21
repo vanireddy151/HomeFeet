@@ -46,8 +46,10 @@ const PostPropertyChoice = () => {
                 onClick={option.action}
                 className="flex min-h-[198px] flex-col rounded-lg border border-slate-200 bg-white p-4 text-left shadow-lg shadow-slate-200/70 transition hover:-translate-y-0.5 hover:border-teal-600 hover:shadow-xl sm:min-h-[240px] sm:p-6"
               >
-                <Icon className="h-7 w-7 text-[#0AA6A6] sm:h-8 sm:w-8" />
-                <h2 className="mt-4 text-lg font-black text-slate-950 sm:mt-5 sm:text-2xl">{option.title}</h2>
+                <div className="flex items-center gap-3">
+                  <Icon className="h-7 w-7 shrink-0 text-[#0AA6A6] sm:h-8 sm:w-8" />
+                  <h2 className="text-lg font-black text-slate-950 sm:text-2xl">{option.title}</h2>
+                </div>
                 {'badge' in option && option.badge && (
                   <span className="mt-1 text-xs font-black text-red-600 ld-blink-text sm:text-sm">
                     {option.badge}
