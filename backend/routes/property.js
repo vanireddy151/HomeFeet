@@ -254,7 +254,7 @@ const upload = multer({
 });
 const propertyUpload = upload.fields([
   { name: 'image', maxCount: 1 },
-  { name: 'images', maxCount: 5 },
+  { name: 'images', maxCount: 10 },
   { name: 'plotDiagram', maxCount: 1 },
   { name: 'video', maxCount: 1 }
 ]);
@@ -474,7 +474,7 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
     };
     const imageUrl = await saveFileToGridFS(files.image?.[0], uploadNamingData);
     const galleryImageUrls = (
-      await Promise.all((files.images || []).slice(0, 5).map((file) => saveFileToGridFS(file, uploadNamingData)))
+      await Promise.all((files.images || []).slice(0, 10).map((file) => saveFileToGridFS(file, uploadNamingData)))
     ).filter(Boolean);
     const plotDiagramUrl = await saveFileToGridFS(files.plotDiagram?.[0], uploadNamingData);
     const listingImageUrl = galleryImageUrls[0] || imageUrl || (isDisplayableImageUpload(files.plotDiagram?.[0]) ? plotDiagramUrl : '');
@@ -797,7 +797,7 @@ router.put('/properties/:id', handlePropertyUpload, async (req, res) => {
     }
     if (files.images?.length) {
       const galleryImageUrls = (
-        await Promise.all(files.images.slice(0, 5).map((file) => saveFileToGridFS(file, uploadNamingData)))
+        await Promise.all(files.images.slice(0, 10).map((file) => saveFileToGridFS(file, uploadNamingData)))
       ).filter(Boolean);
       updates.images = galleryImageUrls;
       if (galleryImageUrls[0]) {

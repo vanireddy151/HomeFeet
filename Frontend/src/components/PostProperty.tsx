@@ -1268,7 +1268,7 @@ const PostProperty = () => {
     setFormData(prev => ({ ...prev, image: file }));
   };
 
-  const MAX_GALLERY_IMAGES = 5;
+  const MAX_GALLERY_IMAGES = 10;
 
   const handleGalleryImagesChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -2801,7 +2801,7 @@ const PostProperty = () => {
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
             <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Photo Gallery</span>
             <p className="mb-3 text-xs text-slate-500">
-              Upload 4 to 5 clear photos of your property (exterior, interior, surroundings). Max {MAX_GALLERY_IMAGES} photos.
+              Upload up to {MAX_GALLERY_IMAGES} clear photos of your property (exterior, interior, surroundings).
             </p>
             {existingMedia.imageUrls.length > 0 && (
               <div className="mb-3 grid grid-cols-3 gap-2">
