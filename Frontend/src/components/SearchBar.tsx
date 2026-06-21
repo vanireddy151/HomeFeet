@@ -69,7 +69,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
   return (
     <div className={compact ? 'w-full' : 'mx-auto max-w-5xl'}>
       <div className="overflow-hidden rounded-lg shadow-xl shadow-slate-950/10 backdrop-blur-md">
-        <div className="flex flex-wrap bg-slate-950/80">
+        <div className="flex overflow-x-auto whitespace-nowrap bg-slate-950/80">
           {SEARCH_TABS.map((tab, index) => {
             const Icon = tab.icon;
             const active = index === activeTab && tab.label !== 'Post Property';
@@ -78,7 +78,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
                 key={tab.label}
                 type="button"
                 onClick={() => handleTabClick(index)}
-                className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition sm:gap-2 sm:px-4 sm:py-3 sm:text-sm ${
+                className={`relative flex shrink-0 items-center gap-1.5 px-3 py-2 text-xs font-semibold transition sm:gap-2 sm:px-4 sm:py-3 sm:text-sm ${
                   active ? 'bg-slate-800/90 text-white' : 'text-slate-300 hover:bg-slate-900/80 hover:text-white'
                 }`}
               >
@@ -144,13 +144,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
             </button>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Trending Searches:</span>
+          <div className="mt-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
+            <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Trending Searches:</span>
             {popularLocations.map((location) => (
               <button
                 key={location}
                 onClick={() => navigate(buildLocationUrl(location))}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800"
               >
                 {location}
                 <ArrowRight className="h-3 w-3" />
