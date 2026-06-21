@@ -1160,7 +1160,7 @@ function HomePage() {
                     </div>
                     <Link
                       to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
-                      className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-6 py-3 text-sm font-bold text-white hover:bg-[#088f8f]"
+                      className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#088f8f]"
                     >
                       Contact
                     </Link>
