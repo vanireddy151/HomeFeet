@@ -18,7 +18,7 @@ import {
   Zap
 } from 'lucide-react';
 import { API_BASE, API_ORIGIN } from '../lib/api';
-import { isAdminPhone } from '../lib/admin';
+import { isAdminUser as checkIsAdminUser } from '../lib/admin';
 
 declare global {
   interface Window {
@@ -162,7 +162,7 @@ const PostProperty = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const isEditMode = Boolean(id);
-  const isAdminUser = isAdminPhone(localStorage.getItem('phone'));
+  const isAdminUser = checkIsAdminUser(localStorage.getItem('phone'), localStorage.getItem('accountType'));
   const isAdminEditMode = isEditMode && searchParams.get('admin') === 'true' && isAdminUser;
   const canUseAssistedUpload = isAdminUser && !isEditMode;
   const [formData, setFormData] = useState({

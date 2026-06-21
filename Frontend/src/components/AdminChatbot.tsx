@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Bot, ExternalLink, MessageCircle, Send, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { isAdminPhone } from '../lib/admin';
+import { isAdminUser } from '../lib/admin';
 import { API_BASE } from '../lib/api';
 
 type ChatMessage = {
@@ -78,7 +78,7 @@ const getBotReply = (message: string) => {
 };
 
 export default function AdminChatbot() {
-  const isAdmin = isAdminPhone(localStorage.getItem('phone'));
+  const isAdmin = isAdminUser(localStorage.getItem('phone'), localStorage.getItem('accountType'));
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([

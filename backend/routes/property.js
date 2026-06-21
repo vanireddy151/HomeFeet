@@ -173,6 +173,7 @@ const isOwnerOrAdmin = (user, property) =>
   Boolean(user && (
     user.phone === property.phone ||
     user._id?.toString() === String(property.userId || '') ||
+    user.accountType === 'admin' ||
     ADMIN_PHONES.includes(user.phone)
   ));
 
@@ -741,7 +742,7 @@ router.put('/properties/:id', handlePropertyUpload, async (req, res) => {
     }
 
     const files = req.files || {};
-    const isAdminUser = ADMIN_PHONES.includes(user.phone);
+    const isAdminUser = user.accountType === 'admin' || ADMIN_PHONES.includes(user.phone);
 
     const updates = {
       ...req.body

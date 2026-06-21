@@ -39,7 +39,7 @@ const isAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     const user = await User.findById(decoded.id);
 
-    if (!user || !ADMIN_PHONES.includes(user.phone)) {
+    if (!user || !(user.accountType === 'admin' || ADMIN_PHONES.includes(user.phone))) {
       return res.status(403).json({ error: 'Access denied. Admin only.' });
     }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Check, Eye, Filter, Mail, MapPin, MessageCircle, Pencil, Phone, Search, Trash2, UserPlus, X } from 'lucide-react';
 import { API_BASE, API_ORIGIN } from '../lib/api';
-import { isAdminPhone } from '../lib/admin';
+import { isAdminUser } from '../lib/admin';
 
 interface Property {
   _id: string;
@@ -178,8 +178,9 @@ const AdminPanel: React.FC = () => {
   useEffect(() => {
     // Check if user is admin
     const phone = localStorage.getItem('phone');
-    
-    if (!isAdminPhone(phone)) {
+    const accountType = localStorage.getItem('accountType');
+
+    if (!isAdminUser(phone, accountType)) {
       alert('Access denied. Admin only.');
       navigate('/');
       return;

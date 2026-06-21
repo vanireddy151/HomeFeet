@@ -2,7 +2,7 @@ import React, { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'reac
 import { ArrowRight, FileText, Image, MapPin, Mic, MicOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../lib/api';
-import { isAdminPhone } from '../lib/admin';
+import { isAdminUser as checkIsAdminUser } from '../lib/admin';
 
 declare global {
   interface Window {
@@ -1702,7 +1702,7 @@ const createPlotDiagramFromSummary = async (details: ReturnType<typeof parseSumm
 
 const PropertySummary = () => {
   const navigate = useNavigate();
-  const isAdminUser = (localStorage.getItem('accountType') === 'admin') || isAdminPhone(localStorage.getItem('phone'));
+  const isAdminUser = checkIsAdminUser(localStorage.getItem('phone'), localStorage.getItem('accountType'));
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);

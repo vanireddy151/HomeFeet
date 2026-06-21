@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Menu, User, X } from 'lucide-react';
 import LoginModal from './LoginModal';
-import { isAdminPhone } from '../lib/admin';
+import { isAdminUser } from '../lib/admin';
 import BrandName from './BrandName';
 
 const Navbar: React.FC = () => {
@@ -245,7 +245,7 @@ const Navbar: React.FC = () => {
                         {label}
                       </button>
                     ))}
-                    {isAdminPhone(localStorage.getItem('phone')) && (
+                    {isAdminUser(localStorage.getItem('phone'), localStorage.getItem('accountType')) && (
                       <button onClick={() => { setShowDropdown(false); navigate('/admin'); }} className="block w-full px-4 py-2.5 text-left text-sm font-semibold text-teal-700 hover:bg-teal-50">
                         Admin Panel
                       </button>
@@ -325,7 +325,7 @@ const Navbar: React.FC = () => {
                       {label}
                     </button>
                   ))}
-                  {isAdminPhone(localStorage.getItem('phone')) && (
+                  {isAdminUser(localStorage.getItem('phone'), localStorage.getItem('accountType')) && (
                     <button
                       onClick={() => {
                         setMobileOpen(false);
