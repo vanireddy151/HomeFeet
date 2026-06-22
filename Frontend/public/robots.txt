@@ -7,5 +7,6 @@ Disallow: /chat
 Disallow: /interest-shown
 Disallow: /interested-in-your-properties
 Disallow: /user-posted-properties
+Disallow: /compare
 
 Sitemap: https://www.homefeet.in/sitemap.xml

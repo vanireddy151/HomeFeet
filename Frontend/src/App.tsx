@@ -226,7 +226,8 @@ const privateSeoPaths = [
   '/chat',
   '/interest-shown',
   '/interested-in-your-properties',
-  '/user-posted-properties'
+  '/user-posted-properties',
+  '/compare'
 ];
 
 const getSeoConfig = (pathname: string): SeoConfig => {
