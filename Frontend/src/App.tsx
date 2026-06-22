@@ -388,6 +388,15 @@ const housingTopPicks = [
     configuration: '4, 5, 6 BHK Villas',
     image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80'
   },
+  {
+    builder: 'Vessella Group',
+    logo: 'https://www.google.com/s2/favicons?domain=vessellagroup.com&sz=256',
+    projectName: 'Vessella Palms',
+    location: 'Bandlaguda Jagir, Hyderabad',
+    priceRange: 'Rs. 5.36 Cr - 6.88 Cr',
+    configuration: '4 BHK Villas',
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'
+  },
 ];
 
 const homeBannerSlides = [
@@ -1168,7 +1177,7 @@ function HomePage() {
           <div className="relative">
             <div
               ref={housingPicksScrollRef}
-              className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [-webkit-mask-image:linear-gradient(to_right,black_82%,transparent_100%)] [mask-image:linear-gradient(to_right,black_82%,transparent_100%)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {housingTopPicks.map((pick) => (
                 <div
