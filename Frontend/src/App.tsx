@@ -1111,7 +1111,7 @@ function HomePage() {
             <div className="mx-auto mt-8 max-w-4xl">
               <SearchBar compact popularLocations={popularLocations.map((location) => location.name)} />
             </div>
-            <div className="mx-auto mt-8 flex max-w-4xl flex-wrap items-center justify-center gap-3">
+            <div className="mx-auto mt-8 flex max-w-4xl flex-wrap items-center gap-3">
               <Link to={`/properties?view=developers&listingIntent=sell&city=${encodeURIComponent(selectedCity)}`} className="ld-btn-primary bg-white text-slate-950 hover:bg-teal-50">
                 Explore Properties <ArrowRight className="h-5 w-5" />
               </Link>
@@ -1129,7 +1129,7 @@ function HomePage() {
                 </div>
               ))}
             </div>
-            <div className="mx-auto mt-6 flex max-w-4xl items-center justify-center gap-2">
+            <div className="mx-auto mt-6 flex max-w-4xl items-center gap-2">
               {homeBannerSlides.map((slide, index) => (
                 <button
                   key={slide.title}
