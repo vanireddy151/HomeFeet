@@ -2996,7 +2996,7 @@ const PostProperty = () => {
             />
           </div>
         ) : (
-          <>
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Colony Name
@@ -3034,31 +3034,33 @@ const PostProperty = () => {
                 required
               />
             </div>
-          </>
+          </div>
         )}
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
-          <input
-            name="pincode"
-            value={formData.pincode}
-            onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
-            className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-            placeholder="Pincode auto-fills from locality when available"
-            required
-          />
-        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
+            <input
+              name="pincode"
+              value={formData.pincode}
+              onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              placeholder="Pincode auto-fills from locality when available"
+              required
+            />
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Landmark / Street *</label>
-          <input
-            name="landmark"
-            value={formData.landmark}
-            onChange={handleChange}
-            placeholder="e.g., Near Metro Station, Main Road"
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-teal-500"
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Landmark / Street *</label>
+            <input
+              name="landmark"
+              value={formData.landmark}
+              onChange={handleChange}
+              placeholder="e.g., Near Metro Station, Main Road"
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-teal-500"
+              required
+            />
+          </div>
         </div>
 
         {(formData.locality || formData.societyName) && (
