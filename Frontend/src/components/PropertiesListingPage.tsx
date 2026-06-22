@@ -1563,16 +1563,16 @@ const PropertiesListingPage: React.FC = () => {
 
           {isDeveloperView && (
             <div className="order-2 flex flex-col gap-2.5">
-              <div className="rounded-xl bg-white p-3 shadow-sm">
-                <h2 className="text-sm font-semibold text-slate-950">Properties Marked on Map</h2>
+              <div className="rounded-xl bg-white/40 p-2.5 sm:p-3">
+                <h2 className="text-base font-semibold text-slate-950">Properties Marked on Map</h2>
                 <div className="relative mt-2">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={mapLocationQuery}
                     onChange={(e) => setMapLocationQuery(e.target.value)}
                     placeholder="Search Location"
-                    className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
                   />
                 </div>
               </div>
