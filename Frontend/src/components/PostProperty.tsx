@@ -266,7 +266,7 @@ const PostProperty = () => {
     video: null as File | null,
   });
   const [showParcelShapePicker, setShowParcelShapePicker] = useState(false);
-  const formSteps = ['Property Details', 'Media Uploads', 'Location Details'];
+  const formSteps = ['Property Details', 'Pricing & Amenities', 'Media Uploads', 'Location Details'];
   const [currentStep, setCurrentStep] = useState(0);
   const [assistedOwner, setAssistedOwner] = useState({
     accountType: 'owner',
@@ -2704,7 +2704,11 @@ const PostProperty = () => {
         </>
       )}
       </section>
+      </>
+      )}
 
+      {currentStep === 1 && (
+      <>
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <p className="mb-2 text-sm font-semibold text-slate-800">Amenities Details</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -2848,7 +2852,7 @@ const PostProperty = () => {
       </>
       )}
 
-      {currentStep === 1 && (
+      {currentStep === 2 && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3">
           <Upload className="h-6 w-6 text-teal-700" />
@@ -2922,7 +2926,7 @@ const PostProperty = () => {
       </section>
       )}
 
-      {currentStep === 2 && (
+      {currentStep === 3 && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center gap-3">
         <MapPin className="h-6 w-6 text-teal-700" />
