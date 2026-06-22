@@ -121,13 +121,13 @@ const Navbar: React.FC = () => {
   };
 
   const buyerRequirementButton = (
-    <button onClick={goToBuyerRequirement} className="inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-[#0AA6A6] bg-white px-4 py-2.5 text-sm font-semibold text-[#087f7f] shadow-sm transition hover:bg-teal-50">
+    <button onClick={goToBuyerRequirement} className="inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-[#0AA6A6] bg-white px-3.5 py-2 text-sm font-semibold text-[#087f7f] shadow-sm transition hover:bg-teal-50">
       Buyer Requirement
     </button>
   );
 
   const menuButton = (
-    <button onClick={goToPost} className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-[#0AA6A6] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#088f8f]">
+    <button onClick={goToPost} className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-[#0AA6A6] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#088f8f]">
       Post Property
     </button>
   );
