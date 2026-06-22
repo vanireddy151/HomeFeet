@@ -205,8 +205,6 @@ const PropertyDetails: React.FC = () => {
   const categoryDetails = property ? [
     { label: 'Category', value: property.propertyCategory ? cleanType(property.propertyCategory) : '' },
     { label: 'Property Type', value: cleanType(property.developmentType) },
-    { label: 'Configuration', value: property.bedrooms },
-    { label: 'Bathrooms', value: property.bathrooms },
     { label: 'Total Area', value: property.totalArea ? `${property.totalArea} ${property.areaUnit || ''}` : '' },
     { label: 'Facing', value: property.facing },
   ].filter((item) => item.value) : [];
