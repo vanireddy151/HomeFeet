@@ -96,7 +96,23 @@ const SITE_URL = 'https://www.homefeet.in';
 const SITE_NAME = 'HomeFeet';
 const DEFAULT_IMAGE = '/HomeFeet_Logo_Name.png';
 const DEFAULT_KEYWORDS =
-  'apartment sales, commercial space, buyer information, verified properties, Hyderabad apartments, Bengaluru flats, Mumbai commercial space, owner listings, mediator listings, sale flats, buyer requirements';
+  'real estate, real estate near me, real estate for sale, real estate listings, real estate agent, real estate agency, real estate broker, real estate brokerage, real estate marketplace, ' +
+  'apartment for sale, flats for sale, sale flats, house for sale, property for sale, luxury homes for sale, residential real estate, commercial real estate, commercial space for sale, investment property, ' +
+  'verified property listings, verified real estate listings, builder listings, owner listings, mediator listings, buyer requirements, real estate investment, real estate market trends, best real estate agents, ' +
+  'real estate Hyderabad, real estate Bengaluru, real estate Mumbai, Hyderabad apartments, Bengaluru flats, Mumbai commercial space, real estate agents in Hyderabad, ' +
+  'property for sale in Hyderabad, flats for sale in Bengaluru, houses for sale in Hyderabad, Hyderabad real estate market';
+
+const PROPERTIES_KEYWORDS =
+  'apartment for sale, flats for sale, sale flats, commercial space for sale, property for sale, house for sale, luxury homes for sale, condos for sale, single-family homes, townhomes for sale, ' +
+  'real estate listings, property listings, verified property listings, homes for sale in Hyderabad, flats for sale in Bengaluru, houses for sale in Mumbai, real estate market trends';
+
+const POST_PROPERTY_KEYWORDS =
+  'sell your home, sell your apartment, sell your flat, how to sell a home, sell your house, real estate listing agent, home selling process, home selling checklist, pricing your home to sell, ' +
+  'real estate marketing, list your property, post property online, owner listings, real estate broker';
+
+const BUYER_REQUIREMENT_KEYWORDS =
+  'home for sale, how to buy a home, property for sale, house for sale, real estate agent, real estate buyers, first-time homebuyer, home buying process, home buying checklist, ' +
+  'affordable homes for sale, move-in ready homes, buyer requirement, real estate agents in Hyderabad';
 
 const DEFAULT_SEO: SeoConfig = {
   title: 'HomeFeet | Verified Marketplace for Apartments, Commercial Space & Buyers',
@@ -114,7 +130,8 @@ const seoByPath: Record<string, SeoConfig> = {
   '/properties': {
     title: 'Verified Apartments, Flats & Commercial Space | HomeFeet',
     description:
-      'Explore verified apartment sales, sale flats, commercial space, and buyer requirements with map view, filters, and controlled owner contact access.'
+      'Explore verified apartment sales, sale flats, commercial space, and buyer requirements with map view, filters, and controlled owner contact access.',
+    keywords: PROPERTIES_KEYWORDS
   },
   '/properties-map': {
     title: 'Properties Map View | HomeFeet',
@@ -134,12 +151,14 @@ const seoByPath: Record<string, SeoConfig> = {
   '/post-property': {
     title: 'Post a Verified Property | HomeFeet',
     description:
-      'Submit apartment, flat, and commercial space details for admin review and verified listing publication.'
+      'Submit apartment, flat, and commercial space details for admin review and verified listing publication.',
+    keywords: POST_PROPERTY_KEYWORDS
   },
   '/buyer-requirement': {
     title: 'Buyer Requirement Form | HomeFeet',
     description:
-      'Share buyer or property seeker requirements by property type, location, city, budget, area, and expected price range.'
+      'Share buyer or property seeker requirements by property type, location, city, budget, area, and expected price range.',
+    keywords: BUYER_REQUIREMENT_KEYWORDS
   },
   '/membership': {
     title: 'HomeFeet Membership Plans',
