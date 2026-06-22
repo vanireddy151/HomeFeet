@@ -1129,7 +1129,7 @@ function HomePage() {
                 </div>
               ))}
             </div>
-            <div className="mt-6 flex items-center gap-2">
+            <div className="mx-auto mt-6 flex max-w-4xl items-center justify-center gap-2">
               {homeBannerSlides.map((slide, index) => (
                 <button
                   key={slide.title}
