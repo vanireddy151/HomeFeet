@@ -263,7 +263,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
           <div className="-mx-4 -mb-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-b-lg bg-slate-100/85 px-4 py-3">
             <div
               ref={filterRowRef}
-              className={`flex flex-1 flex-nowrap items-center gap-2 whitespace-nowrap ld-scrollbar-hide ${
+              className={`flex w-full flex-nowrap items-center gap-2 whitespace-nowrap ld-scrollbar-hide sm:w-auto sm:flex-1 ${
                 openFilter ? 'overflow-x-visible' : 'overflow-x-auto'
               }`}
             >
@@ -358,7 +358,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
             <button
               type="button"
               onClick={() => navigate(buildLocationUrl(searchQuery.trim()))}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-amber-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-amber-300"
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-amber-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-amber-300 sm:w-auto"
             >
               {propertyCount === null ? 'View Properties' : `View ${propertyCount} Properties`}
             </button>
