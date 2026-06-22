@@ -1107,10 +1107,10 @@ function HomePage() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200 md:text-xl">
               Discover verified apartment sales, explore commercial space, and share buyer requirements with confidence, all in one professional workflow.
             </p>
-            <div className="mt-8 max-w-4xl">
+            <div className="mx-auto mt-8 max-w-4xl">
               <SearchBar compact popularLocations={popularLocations.map((location) => location.name)} />
             </div>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mx-auto mt-8 flex max-w-4xl flex-wrap items-center justify-center gap-3">
               <Link to={`/properties?view=developers&listingIntent=sell&city=${encodeURIComponent(selectedCity)}`} className="ld-btn-primary bg-white text-slate-950 hover:bg-teal-50">
                 Explore Properties <ArrowRight className="h-5 w-5" />
               </Link>
