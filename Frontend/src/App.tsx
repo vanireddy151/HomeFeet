@@ -1087,6 +1087,14 @@ function HomePage() {
     setExclusiveImageIndex((current) => (current + direction + exclusiveGalleryImages.length) % exclusiveGalleryImages.length);
   };
 
+  const scrollHousingPicks = (direction: 1 | -1) => {
+    const container = housingPicksScrollRef.current;
+    const card = container?.firstElementChild as HTMLElement | null;
+    if (!container || !card) return;
+    const gap = parseFloat(getComputedStyle(container).columnGap || '0') || 16;
+    container.scrollBy({ left: direction * (card.offsetWidth + gap), behavior: 'smooth' });
+  };
+
   const visibleHotSellingProjects = selectedHotSellingZone === 'All'
     ? hotSellingProjects
     : hotSellingProjects.filter((project) => project.zone === selectedHotSellingZone);
@@ -1216,7 +1224,7 @@ function HomePage() {
 
             <button
               type="button"
-              onClick={() => housingPicksScrollRef.current?.scrollBy({ left: -480, behavior: 'smooth' })}
+              onClick={() => scrollHousingPicks(-1)}
               aria-label="Previous top pick"
               className="absolute left-0 top-1/2 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 hover:bg-slate-50 lg:flex"
             >
@@ -1224,7 +1232,7 @@ function HomePage() {
             </button>
             <button
               type="button"
-              onClick={() => housingPicksScrollRef.current?.scrollBy({ left: 480, behavior: 'smooth' })}
+              onClick={() => scrollHousingPicks(1)}
               aria-label="Next top pick"
               className="absolute right-0 top-1/2 hidden h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 hover:bg-slate-50 lg:flex"
             >
