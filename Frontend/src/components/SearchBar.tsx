@@ -261,7 +261,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
           </div>
 
           <div className="-mx-4 -mb-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-b-lg bg-slate-100/85 px-4 py-3">
-            <div ref={filterRowRef} className="flex flex-1 flex-wrap items-center gap-2">
+            <div
+              ref={filterRowRef}
+              className={`flex flex-1 flex-nowrap items-center gap-2 whitespace-nowrap ld-scrollbar-hide ${
+                openFilter ? 'overflow-x-visible' : 'overflow-x-auto'
+              }`}
+            >
               <div className="relative shrink-0">
                 <button
                   type="button"
