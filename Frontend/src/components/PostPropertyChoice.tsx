@@ -51,7 +51,7 @@ const PostPropertyChoice = () => {
                   <h2 className="text-lg font-black text-slate-950 sm:text-2xl">{option.title}</h2>
                 </div>
                 {'badge' in option && option.badge && (
-                  <span className="mt-1 text-xs font-black text-red-600 ld-blink-text sm:text-sm">
+                  <span className="mt-3 text-xs font-black text-red-600 ld-blink-text sm:text-sm">
                     {option.badge}
                   </span>
                 )}
