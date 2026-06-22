@@ -1244,7 +1244,7 @@ function HomePage() {
 
       <section className="bg-slate-50 py-16">
         <div className="ld-container">
-          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70 md:p-8">
+          <div className="rounded-lg border border-slate-200 bg-white p-6 pt-[1.425rem] shadow-xl shadow-slate-200/70 md:p-8 md:pt-[1.9rem]">
             <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Top Developers in {selectedCity}</h2>
             <p className="mt-3 w-full text-sm leading-6 text-slate-600">
               These top developers in {selectedCity} have proven track records and a history of satisfied customers. Whether it's gated villas, high-rise apartments, or township living, they build with integrity and care. Choose a name that enhances the value of your property.
