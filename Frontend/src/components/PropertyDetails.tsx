@@ -213,7 +213,8 @@ const PropertyDetails: React.FC = () => {
     { label: 'Project Name', value: property.projectName },
     { label: 'Company Name', value: property.companyName },
     { label: 'Total Area', value: property.totalArea ? `${property.totalArea} ${property.areaUnit || ''}` : '' },
-    { label: 'Square Yard Price', value: formatMoney(property.squareYardPrice) },
+    { label: 'Square Feet Price', value: formatMoney(property.squareFeetPrice) },
+    { label: 'Total Budget', value: formatMoney(property.totalBudget) },
     { label: 'Bedrooms', value: property.bedrooms },
     { label: 'Bathrooms', value: property.bathrooms },
     { label: developerRatioLabel, value: isApartmentListing ? '' : property.developerRatio },
@@ -226,13 +227,10 @@ const PropertyDetails: React.FC = () => {
     { label: 'Road Size', value: property.roadSize ? `${property.roadSize} ft` : '' },
     { label: 'Frontage', value: property.frontageWidth ? `${property.frontageWidth} ft` : '' },
     { label: 'Road Facing Direction', value: property.roadFacingDirection },
-    { label: 'Pincode', value: property.pincode },
     { label: 'Zoning', value: property.zoningClassification },
-    { label: 'North Side', value: property.northSideLength ? `${property.northSideLength} ft` : '' },
-    { label: 'South Side', value: property.southSideLength ? `${property.southSideLength} ft` : '' },
-    { label: 'East Side', value: property.eastSideLength ? `${property.eastSideLength} ft` : '' },
-    { label: 'West Side', value: property.westSideLength ? `${property.westSideLength} ft` : '' },
   ].filter((item) => item.value) : [];
+
+  const amenities: string[] = Array.isArray(property?.selectedAmenities) ? property.selectedAmenities : [];
 
   const handleShowContact = async () => {
     const builderStatus = localStorage.getItem('builderVerificationStatus');
@@ -513,6 +511,19 @@ const PropertyDetails: React.FC = () => {
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{detail.label}</p>
                       <p className="mt-1 font-black text-slate-950">{detail.value}</p>
                     </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {amenities.length > 0 && (
+              <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-black text-slate-950">Amenities</h2>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {amenities.map((amenity) => (
+                    <span key={amenity} className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1.5 text-sm font-semibold text-teal-800">
+                      {amenity}
+                    </span>
                   ))}
                 </div>
               </section>
