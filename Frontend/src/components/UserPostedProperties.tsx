@@ -18,27 +18,35 @@ const UserPostedProperties: React.FC = () => {
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      const phone = localStorage.getItem('phone');
-      
-      if (!phone) {
-        setError('Phone number not found. Please log in again.');
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        setError('Please log in again.');
         return;
       }
 
-      // Try the new phone-based endpoint first
-      let res = await fetch(`${API_BASE}/user-properties-by-phone/${phone}`);
-      
+      // Token-based lookup works for both phone and email accounts.
+      let res = await fetch(`${API_BASE}/user-properties`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
       if (!res.ok) {
-        // Fallback to the old method if the new endpoint doesn't exist yet
-        res = await fetch(`${API_BASE}/all`);
-        const all = await res.json();
-        const filtered = all.filter((p: any) => p.phone === phone || p.contactPhone === phone);
-        setUserProperties(filtered);
-      } else {
-        const properties = await res.json();
-        setUserProperties(properties);
+        const phone = localStorage.getItem('phone');
+        if (phone) {
+          res = await fetch(`${API_BASE}/user-properties-by-phone/${phone}`);
+        }
+        if (!res.ok) {
+          res = await fetch(`${API_BASE}/all`);
+          const all = await res.json();
+          const filtered = all.filter((p: any) => p.phone === phone || p.contactPhone === phone);
+          setUserProperties(filtered);
+          setError(null);
+          return;
+        }
       }
-      
+
+      const properties = await res.json();
+      setUserProperties(properties);
       setError(null);
     } catch (err) {
       console.error('Error fetching properties:', err);

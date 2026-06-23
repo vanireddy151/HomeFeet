@@ -38,12 +38,6 @@ const extractAmount = (text: string, patterns: RegExp[]) => {
 
 const formatFeet = (value = '') => value.replace(/,/g, '').replace(/\.0+$/, '');
 
-const formatInferredFeet = (value: number) => {
-  if (!Number.isFinite(value) || value <= 0) return '';
-  const rounded = Math.round(value * 10) / 10;
-  return String(rounded).replace(/\.0$/, '');
-};
-
 const stripNumberFormatting = (value = '') => value.replace(/,/g, '');
 
 const valueAfterEquals = (value = '') => {
@@ -58,25 +52,6 @@ const numericValue = (value = '') => {
 
 const isLargeAcreLand = (details: { areaUnit?: string; totalArea?: string }) =>
   /acre/i.test(details.areaUnit || '') && numericValue(details.totalArea) > 2;
-
-const inferPlotDimensionsFromArea = (area = '', unit = 'Sq Yards', frontage = '') => {
-  const numericArea = Number(area.replace(/,/g, ''));
-  if (!Number.isFinite(numericArea) || numericArea <= 0) return { length: '', width: '' };
-  const areaSqFt = /acre/i.test(unit) ? numericArea * 43560 : numericArea * 9;
-  const frontageWidth = Number(frontage.replace(/,/g, ''));
-  if (Number.isFinite(frontageWidth) && frontageWidth > 0) {
-    return {
-      length: formatInferredFeet(areaSqFt / frontageWidth),
-      width: formatInferredFeet(frontageWidth)
-    };
-  }
-  const width = Math.sqrt(areaSqFt * 3 / 4);
-  const length = areaSqFt / width;
-  return {
-    length: formatInferredFeet(Math.max(length, width)),
-    width: formatInferredFeet(Math.min(length, width))
-  };
-};
 
 const extractAreaFromSummary = (summary: string) => {
   const acresGuntas = summary.match(/\b([\d,.]+)\s*acres?\s*([\d,.]+)\s*guntas?\b/i);
@@ -171,7 +146,9 @@ const extractTotalBudget = (text: string) =>
   extractAmount(text, [
     /\btotal\s*budget\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,.]+)\s*(cr|crores?|lakhs?|lacs?|l)?/i,
     /\bexpected\s*price\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,.]+)\s*(cr|crores?|lakhs?|lacs?|l)?/i,
-    /\btotal\s*price\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,.]+)\s*(cr|crores?|lakhs?|lacs?|l)?/i
+    /\btotal\s*price\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,.]+)\s*(cr|crores?|lakhs?|lacs?|l)?/i,
+    /\bprice\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,.]+)\s*(cr|crores?|lakhs?|lacs?|l)?/i,
+    /(?:rs\.?|₹)\s*([\d,.]+)\s*(cr|crores?|lakhs?|lacs?|l)?\s*(?:only|onwards|negotiable|fixed)?\b/i
   ]);
 
 const AMENITY_KEYWORD_MAP: Array<[RegExp, string]> = [
@@ -1070,9 +1047,11 @@ const parseSummary = (summary: string) => {
   const frontagePattern = /(?:frontage(?:\s*width)?|frontage\s*plot)(?:\s*\(?\s*(?:ft|feet)\s*\)?)?\s*[:\-]?\s*([\d,.]+)/i;
   const explicitFrontageWidth = extractNumber(normalizedSummary, [frontagePattern]);
   const skipPlotDimensions = isLargeAcreLand({ areaUnit, totalArea });
-  const inferredDimensions = skipPlotDimensions ? { length: '', width: '' } : inferPlotDimensionsFromArea(totalArea, areaUnit, explicitFrontageWidth);
-  const dimensionLength = formatFeet(extractedDimensionPair.length || plotDimensionMatch?.[1] || inferredDimensions.length);
-  const dimensionWidth = formatFeet(extractedDimensionPair.width || plotDimensionMatch?.[2] || inferredDimensions.width);
+  // Plot Dimensions (North/South/East/West) are no longer a field in the property
+  // form, so only use dimensions the summary explicitly states - never fabricate
+  // them geometrically from the total area.
+  const dimensionLength = formatFeet(extractedDimensionPair.length || plotDimensionMatch?.[1] || '');
+  const dimensionWidth = formatFeet(extractedDimensionPair.width || plotDimensionMatch?.[2] || '');
   const directionalRoadSizes = extractDirectionalRoadSizes(normalizedSummary);
   const roadFacingFromRoads = selectRoadFacingFromDirectionalRoads(directionalRoadSizes);
   const cornerFacing = extractCornerFacingFromSummary(normalizedSummary);
@@ -1136,7 +1115,7 @@ const parseSummary = (summary: string) => {
   const projectName = extractProjectName(normalizedSummary) || ventureName;
   const companyName = extractCompanyName(normalizedSummary);
   const squareFeetPrice = extractSquareFeetPrice(normalizedSummary);
-  const totalBudget = extractTotalBudget(normalizedSummary) || askingPrice || marketPrice;
+  const totalBudget = extractTotalBudget(normalizedSummary);
   const selectedAmenities = extractAmenitiesFromSummary(normalizedSummary);
 
   return {
@@ -1596,21 +1575,16 @@ const getMissingPropertyFormFields = (details: ReturnType<typeof parseSummary>, 
     add('Development Ratio (Owner : Builder)');
   }
 
-  if (isApartmentLike) {
-    if (!hasValue(details.bedrooms)) add('Bedrooms (BHK)');
-    if (details.listingIntent !== 'development' && !hasPositiveNumber(details.squareFeetPrice) && !hasPositiveNumber(details.totalBudget)) {
-      add(details.listingIntent === 'buy' ? 'Budget per Sq Ft' : 'Square Feet Price');
-    }
-  } else if (details.listingIntent !== 'development' && !hasPositiveNumber(details.squareYardPrice)) {
-    add(details.listingIntent === 'buy' ? 'Budget per Sq Yard' : isLargeAcreLand(details) ? 'Per Acre Price' : 'Square Yard Price');
+  if (isApartmentLike && !hasValue(details.bedrooms)) add('Bedrooms (BHK)');
+
+  // Square Feet Price / Total Budget is required for every sell or buy listing
+  // regardless of property type - Square Yard Price is no longer a form field.
+  if (details.listingIntent !== 'development' && !hasPositiveNumber(details.squareFeetPrice) && !hasPositiveNumber(details.totalBudget)) {
+    add(details.listingIntent === 'buy' ? 'Budget per Sq Ft' : 'Square Feet Price');
   }
 
-  if (!isApartmentLike && details.developmentType !== 'high-rise' && !hasPlotDiagram && !isLargeAcreLand(details)) {
-    if (!hasPositiveNumber(details.northSideLength)) add('North Side Length');
-    if (!hasPositiveNumber(details.southSideLength)) add('South Side Length');
-    if (!hasPositiveNumber(details.eastSideLength)) add('East Side Length');
-    if (!hasPositiveNumber(details.westSideLength)) add('West Side Length');
-  }
+  // Plot Dimensions (North/South/East/West) are no longer collected by the
+  // property form, so they are never required here either.
 
   return missing;
 };

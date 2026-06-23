@@ -3071,7 +3071,7 @@ const PostProperty = () => {
             <p className="text-sm text-teal-700">
               <strong>Selected Location:</strong>
             </p>
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-gray-700 break-words">
               {formData.societyName && `${formData.societyName}, `}
               {formData.locality}, {formData.landmark}, {formData.city}, {formData.state}
             </p>

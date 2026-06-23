@@ -463,8 +463,8 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (!user.phone) {
-      return res.status(400).json({ error: 'User phone number not found' });
+    if (!user.phone && !user.email) {
+      return res.status(400).json({ error: 'User contact information not found. Please log in again.' });
     }
 
     const { listingOwner, createdAssistedUser } = await resolveListingOwnerForAdminUpload(req, user);
@@ -698,9 +698,11 @@ router.get('/user-properties', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const properties = await Property.find({ phone: user.phone });
-    
-    console.log(`Found ${properties.length} properties for user phone: ${user.phone}`);
+    const ownerMatch = [{ userId: user._id.toString() }];
+    if (user.phone) ownerMatch.push({ phone: user.phone });
+    const properties = await Property.find({ $or: ownerMatch });
+
+    console.log(`Found ${properties.length} properties for user ${user.phone || user.email}`);
     
     res.json(properties);
   } catch (err) {
