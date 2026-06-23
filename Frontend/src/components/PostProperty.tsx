@@ -265,6 +265,8 @@ const PostProperty = () => {
     images: [] as File[],
     plotDiagram: null as File | null,
     video: null as File | null,
+    floorPlan: null as File | null,
+    propertyForm: null as File | null,
   });
   const [showParcelShapePicker, setShowParcelShapePicker] = useState(false);
   const formSteps = ['Property Details', 'Pricing & Amenities', 'Media Uploads', 'Location Details'];
@@ -291,6 +293,8 @@ const PostProperty = () => {
     imageUrl: '',
     imageUrls: [] as string[],
     plotDiagramUrl: '',
+    floorPlanUrl: '',
+    propertyFormUrl: '',
     videoUrl: ''
   });
   const [cropModal, setCropModal] = useState<CropModalState | null>(null);
@@ -609,6 +613,8 @@ const PostProperty = () => {
             ? property.images
             : (property.imageUrl ? [property.imageUrl] : []),
           plotDiagramUrl: property.plotDiagramUrl || '',
+          floorPlanUrl: property.floorPlanUrl || '',
+          propertyFormUrl: property.propertyFormUrl || '',
           videoUrl: property.videoUrl || ''
         });
         if (coordinates) {
@@ -1504,6 +1510,16 @@ const PostProperty = () => {
     setFormData(prev => ({ ...prev, video: file }));
   };
 
+  const handleFloorPlanChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData(prev => ({ ...prev, floorPlan: file }));
+  };
+
+  const handlePropertyFormChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData(prev => ({ ...prev, propertyForm: file }));
+  };
+
   const hasCompletePlotMeasurements = () =>
     [
       formData.northSideLength,
@@ -2020,6 +2036,12 @@ const PostProperty = () => {
     }
     if (formData.video) {
       data.append('video', formData.video);
+    }
+    if (formData.floorPlan) {
+      data.append('floorPlan', formData.floorPlan);
+    }
+    if (formData.propertyForm) {
+      data.append('propertyForm', formData.propertyForm);
     }
 
     try {
@@ -2927,6 +2949,24 @@ const PostProperty = () => {
             )}
             <input type="file" onChange={handleVideoChange} className="w-full rounded bg-white p-2" accept="video/*" />
             {formData.video && <p className="mt-2 text-sm font-semibold text-teal-700">New video selected: {formData.video.name}</p>}
+          </label>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <label className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+            <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Flat Floor Plan</span>
+            {isEditMode && existingMedia.floorPlanUrl && !formData.floorPlan && (
+              <p className="mb-3 rounded-lg bg-white p-3 text-sm text-slate-600">Current floor plan is saved. Upload a new one only if you want to replace it.</p>
+            )}
+            <input type="file" onChange={handleFloorPlanChange} className="w-full rounded bg-white p-2" accept="image/*,.pdf" />
+            {formData.floorPlan && <p className="mt-2 text-sm font-semibold text-teal-700">Selected: {formData.floorPlan.name}</p>}
+          </label>
+          <label className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+            <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Property Form</span>
+            {isEditMode && existingMedia.propertyFormUrl && !formData.propertyForm && (
+              <p className="mb-3 rounded-lg bg-white p-3 text-sm text-slate-600">Current property form is saved. Upload a new one only if you want to replace it.</p>
+            )}
+            <input type="file" onChange={handlePropertyFormChange} className="w-full rounded bg-white p-2" accept="image/*,.pdf" />
+            {formData.propertyForm && <p className="mt-2 text-sm font-semibold text-teal-700">Selected: {formData.propertyForm.name}</p>}
           </label>
         </div>
       </section>

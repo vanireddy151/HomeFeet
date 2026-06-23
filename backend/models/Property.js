@@ -205,6 +205,14 @@ const propertySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  floorPlanUrl: {  // Flat floor plan image
+    type: String,
+    default: ''
+  },
+  propertyFormUrl: {  // Uploaded property form / document
+    type: String,
+    default: ''
+  },
   videoUrl: {
     type: String,
     default: ''
