@@ -23,7 +23,7 @@ const PostPropertyChoice = () => {
 
   return (
     <main className="bg-white px-3 py-6 sm:px-4 sm:py-10 lg:py-14">
-      <section className="mx-auto grid w-full max-w-[78rem] gap-8 bg-cyan-50/70 px-4 py-8 sm:px-8 sm:py-10 lg:grid-cols-[0.85fr_1.25fr] lg:items-center lg:px-12 lg:py-12">
+      <section className="mx-auto grid w-full max-w-[78rem] gap-8 bg-cyan-50/70 px-4 py-8 sm:px-8 sm:py-10 lg:grid-cols-[0.79fr_1.31fr] lg:items-center lg:px-12 lg:py-12">
         <div>
           <p className="inline-flex items-center gap-3 text-sm font-black uppercase tracking-wide text-[#0AA6A6] before:h-px before:w-9 before:bg-slate-400 before:content-['']">
             Owner Listing Desk
