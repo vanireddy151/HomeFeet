@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, MapPin, User } from 'lucide-react';
+import { MapPin, MessageCircle, Phone, User } from 'lucide-react';
 import { API_BASE } from '../lib/api';
 
 type Agent = {
@@ -119,25 +119,42 @@ export default function AgentDirectory() {
               ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {visibleAgents.map((agent) => (
-                <Link
+                <div
                   key={agent.id}
-                  to={`/agent/${agent.id}`}
-                  className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-600 hover:shadow-lg"
+                  className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-600 hover:shadow-lg"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-lg font-black text-teal-700">
-                    {agent.firstName?.charAt(0).toUpperCase() || <User className="h-6 w-6" />}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal-700 text-xl font-black text-white">
+                      {agent.firstName?.charAt(0).toUpperCase() || <User className="h-6 w-6" />}
+                    </div>
+                    <Link to={`/agent/${agent.id}`} className="text-xs font-bold text-teal-700 hover:underline">
+                      View Profile
+                    </Link>
                   </div>
-                  <h3 className="mt-4 text-lg font-black text-slate-950">
-                    {agent.firstName} {agent.lastName}
-                  </h3>
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
-                    <MapPin className="h-4 w-4 text-teal-700" />
-                    {[agent.city, agent.state].filter(Boolean).join(', ') || 'Location not specified'}
-                  </p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-teal-700">
-                    View Profile <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Link>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-lg font-black text-slate-950">
+                      {agent.firstName} {agent.lastName}
+                    </h3>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-500">
+                      <MapPin className="h-4 w-4 shrink-0 text-teal-700" />
+                      <span className="truncate">{[agent.city, agent.state].filter(Boolean).join(', ') || 'Location not specified'}</span>
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        to={`/agent/${agent.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-green-700"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                      </Link>
+                      <Link
+                        to={`/agent/${agent.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-800"
+                      >
+                        <Phone className="h-3.5 w-3.5" /> Contact
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               ))}
               </div>
               )}
