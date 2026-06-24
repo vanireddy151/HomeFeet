@@ -5,6 +5,8 @@ import {
   Building,
   Building2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Factory,
   Grid,
   Home,
@@ -153,6 +155,7 @@ const PropertiesListingPage: React.FC = () => {
   const pendingGeocodePropertyIdsRef = React.useRef<Set<string>>(new Set());
   const pendingGeocodeCallbacksRef = React.useRef<Record<string, Array<(coords: { lat: number; lng: number }) => void>>>({});
   const fetchRequestRef = React.useRef(0);
+  const housingPicksScrollRef = React.useRef<HTMLDivElement>(null);
   const [selectedCity, setSelectedCity] = useState(() => searchParams.get('city') || getStoredSelectedCity());
   const [focusedPropertyId, setFocusedPropertyId] = useState('');
   const [geocodeTick, setGeocodeTick] = useState(0);
@@ -628,6 +631,14 @@ const PropertiesListingPage: React.FC = () => {
       ...(!isMarketplaceView && listingIntent ? { listingIntent } : {}),
       city: cityToKeep
     } : {});
+  };
+
+  const scrollHousingPicks = (direction: 1 | -1) => {
+    const container = housingPicksScrollRef.current;
+    const card = container?.firstElementChild as HTMLElement | null;
+    if (!container || !card) return;
+    const gap = parseFloat(getComputedStyle(container).columnGap || '0') || 16;
+    container.scrollBy({ left: direction * (card.offsetWidth + gap), behavior: 'smooth' });
   };
 
   const formatPrice = (price: string) => {
@@ -1607,31 +1618,57 @@ const PropertiesListingPage: React.FC = () => {
             <div className="rounded-xl bg-white/40 p-2.5 sm:p-3">
               <h2 className="text-base font-semibold text-slate-950">HomeFeet's Happening Projects</h2>
               <p className="mt-0.5 text-xs text-slate-500">Explore top living options with us</p>
-              <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {housingTopPicks.map((pick) => (
-                  <div
-                    key={pick.projectName}
-                    className="w-64 shrink-0 overflow-hidden rounded-lg bg-white shadow-sm"
-                  >
-                    <img src={pick.image} alt={pick.projectName} className="h-32 w-full object-cover" />
-                    <div className="p-3">
-                      <div className="flex items-center gap-2">
-                        <img src={pick.logo} alt={pick.builder} className="h-6 w-6 shrink-0 rounded bg-slate-50 object-contain" />
-                        <p className="line-clamp-1 text-xs font-bold text-slate-950">{pick.builder}</p>
+              <div className="relative mt-3">
+                <div
+                  ref={housingPicksScrollRef}
+                  className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [-webkit-mask-image:linear-gradient(to_right,black_82%,transparent_100%)] [mask-image:linear-gradient(to_right,black_82%,transparent_100%)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  {housingTopPicks.map((pick) => (
+                    <div
+                      key={pick.projectName}
+                      className="grid w-[min(80vw,460px)] shrink-0 grid-cols-[140px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 shadow-sm"
+                    >
+                      <img src={pick.image} alt={pick.projectName} className="h-full w-full object-cover" />
+                      <div className="flex flex-col justify-between p-3">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <img src={pick.logo} alt={pick.builder} className="h-5 w-5 shrink-0 rounded bg-white object-contain" />
+                            <p className="line-clamp-1 text-[11px] font-bold leading-tight text-slate-950">{pick.builder}</p>
+                          </div>
+                          <p className="mt-1.5 text-sm font-black leading-tight text-slate-950">{pick.projectName}</p>
+                          <p className="text-xs text-slate-600">{pick.location}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-slate-950">{pick.priceRange}</p>
+                          <p className="text-[11px] text-slate-600">{pick.configuration}</p>
+                          <Link
+                            to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+                            className="mt-1.5 inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#088f8f]"
+                          >
+                            View Projects
+                          </Link>
+                        </div>
                       </div>
-                      <p className="mt-2 text-sm font-black text-slate-950">{pick.projectName}</p>
-                      <p className="text-xs text-slate-600">{pick.location}</p>
-                      <p className="mt-1.5 text-xs font-bold text-slate-950">{pick.priceRange}</p>
-                      <p className="text-xs text-slate-600">{pick.configuration}</p>
-                      <Link
-                        to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
-                        className="mt-2 inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#088f8f]"
-                      >
-                        View Projects
-                      </Link>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => scrollHousingPicks(-1)}
+                  aria-label="Previous top pick"
+                  className="absolute left-0 top-1/2 hidden h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollHousingPicks(1)}
+                  aria-label="Next top pick"
+                  className="absolute right-0 top-1/2 hidden h-8 w-8 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
             </div>
             </div>
