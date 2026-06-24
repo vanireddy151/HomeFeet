@@ -93,6 +93,21 @@ export default function AgentDirectory() {
     .filter((agent) => agent.propertiesCount > 0)
     .slice(0, 8);
 
+  const mostExperiencedAgents = [...agents]
+    .filter((agent) => typeof agent.agentExperienceYears === 'number')
+    .sort((a, b) => (b.agentExperienceYears || 0) - (a.agentExperienceYears || 0))
+    .slice(0, 8);
+
+  const leaderboards = [
+    { key: 'listings', label: 'Most Listings', agents: mostListedAgents, valueFor: (agent: Agent) => agent.propertiesCount },
+    { key: 'experience', label: 'Most Experienced', agents: mostExperiencedAgents, valueFor: (agent: Agent) => `${agent.agentExperienceYears} Yrs` },
+  ].filter((board) => board.agents.length > 0);
+  const [activeLeaderboard, setActiveLeaderboard] = useState(0);
+  const currentLeaderboard = leaderboards[Math.min(activeLeaderboard, leaderboards.length - 1)];
+
+  const rankBadgeClass = (index: number) =>
+    index === 0 ? 'text-amber-500' : index === 1 ? 'text-slate-400' : index === 2 ? 'text-orange-700' : 'text-slate-400';
+
   const filterSelectClass = "rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-teal-600";
 
   return (
@@ -169,7 +184,7 @@ export default function AgentDirectory() {
                       >
                         <div className="flex flex-col items-center gap-1.5">
                           <div
-                            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-black text-white"
+                            className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full text-4xl font-black text-white"
                             style={{ backgroundColor: BRAND_TEAL }}
                           >
                             {agent.firstName?.charAt(0).toUpperCase() || <User className="h-6 w-6" />}
@@ -229,19 +244,42 @@ export default function AgentDirectory() {
                 )}
               </div>
 
-              {mostListedAgents.length > 0 && (
+              {leaderboards.length > 0 && currentLeaderboard && (
                 <aside className="h-fit rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                  <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-slate-700">
-                    <Trophy className="h-4 w-4 text-amber-500" /> Most Listings
-                  </h2>
+                  {leaderboards.length > 1 ? (
+                    <div className="flex gap-4 border-b border-slate-100 text-sm font-bold">
+                      {leaderboards.map((board, index) => (
+                        <button
+                          key={board.key}
+                          type="button"
+                          onClick={() => setActiveLeaderboard(index)}
+                          className={`-mb-px border-b-2 pb-2 ${
+                            index === activeLeaderboard
+                              ? 'border-slate-950 text-slate-950'
+                              : 'border-transparent text-slate-400 hover:text-slate-600'
+                          }`}
+                        >
+                          {board.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-slate-700">
+                      <Trophy className="h-4 w-4 text-amber-500" /> {currentLeaderboard.label}
+                    </h2>
+                  )}
                   <div className="mt-3 space-y-1">
-                    {mostListedAgents.map((agent, index) => (
+                    {currentLeaderboard.agents.map((agent, index) => (
                       <Link
                         key={agent.id}
                         to={`/agent/${agent.id}`}
                         className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-teal-50"
                       >
-                        <span className="w-4 shrink-0 text-sm font-bold text-slate-400">{index + 1}</span>
+                        {index < 3 ? (
+                          <Trophy className={`h-4 w-4 shrink-0 ${rankBadgeClass(index)}`} />
+                        ) : (
+                          <span className="w-4 shrink-0 text-sm font-bold text-slate-400">{index + 1}</span>
+                        )}
                         <div
                           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black text-white"
                           style={{ backgroundColor: BRAND_TEAL }}
@@ -251,7 +289,7 @@ export default function AgentDirectory() {
                         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">
                           {agent.firstName} {agent.lastName}
                         </span>
-                        <span className="shrink-0 text-xs font-bold text-slate-500">{agent.propertiesCount}</span>
+                        <span className="shrink-0 text-xs font-bold text-slate-500">{currentLeaderboard.valueFor(agent)}</span>
                       </Link>
                     ))}
                   </div>

@@ -95,7 +95,7 @@ export default function AgentProfile() {
 
         <div className="mt-5 grid gap-6 lg:grid-cols-[340px_1fr]">
           <aside className="h-fit rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-black text-white" style={{ backgroundColor: '#0AA6A6' }}>
+            <div className="flex h-32 w-32 items-center justify-center rounded-full text-5xl font-black text-white" style={{ backgroundColor: '#0AA6A6' }}>
               {agent.firstName?.charAt(0).toUpperCase() || <User className="h-8 w-8" />}
             </div>
             <h1 className="mt-4 text-2xl font-black text-slate-950">{agent.firstName} {agent.lastName}</h1>
