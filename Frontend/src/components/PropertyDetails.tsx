@@ -108,6 +108,9 @@ const PropertyDetails: React.FC = () => {
   const [accessListingIntent, setAccessListingIntent] = useState('');
   const [accessPropertyType, setAccessPropertyType] = useState('');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [compareCandidates, setCompareCandidates] = useState<any[]>([]);
+  const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
 
   const token = localStorage.getItem('token');
   const accountType = localStorage.getItem('accountType') || 'owner';
@@ -199,6 +202,52 @@ const PropertyDetails: React.FC = () => {
     };
     fetchProperty();
   }, [id, token]);
+
+  useEffect(() => {
+    if (!property?.locality) {
+      setCompareCandidates([]);
+      setSelectedCompareIds([]);
+      setShowComparison(false);
+      return;
+    }
+    const fetchCompareCandidates = async () => {
+      try {
+        const params = new URLSearchParams({ q: property.locality });
+        if (property.city) params.set('city', property.city);
+        const res = await fetch(`${API_BASE}/search?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data)) return;
+        const seenProjects = new Set<string>([
+          (property.projectName || property.societyName || '').trim().toLowerCase()
+        ].filter(Boolean));
+        const candidates = data.filter((candidate: any) => {
+          if (candidate._id === property._id) return false;
+          const key = (candidate.projectName || candidate.societyName || '').trim().toLowerCase();
+          if (!key || seenProjects.has(key)) return false;
+          seenProjects.add(key);
+          return true;
+        }).slice(0, 6);
+        setCompareCandidates(candidates);
+        setSelectedCompareIds([]);
+        setShowComparison(false);
+      } catch (err) {
+        console.error('Error fetching comparable properties:', err);
+      }
+    };
+    fetchCompareCandidates();
+  }, [property?._id, property?.locality, property?.city]);
+
+  const toggleCompareSelection = (propertyId: string) => {
+    setSelectedCompareIds(prev =>
+      prev.includes(propertyId) ? prev.filter(pid => pid !== propertyId) : [...prev, propertyId].slice(0, 3)
+    );
+  };
+
+  const comparisonProperties = useMemo(() => {
+    if (!property) return [];
+    const selected = compareCandidates.filter((candidate) => selectedCompareIds.includes(candidate._id));
+    return [property, ...selected];
+  }, [property, compareCandidates, selectedCompareIds]);
 
   const title = useMemo(() => {
     if (!property) return '';
@@ -650,6 +699,118 @@ const PropertyDetails: React.FC = () => {
                 <video controls className="max-h-[520px] w-full rounded-lg border bg-black">
                   <source src={`${API_ORIGIN}${property.videoUrl}`} />
                 </video>
+              </section>
+            )}
+
+            {compareCandidates.length > 0 && (
+              <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-black text-slate-950">Compare Properties in {property.locality}</h2>
+                <p className="mt-1 text-sm text-slate-600">Select up to 3 other projects nearby to compare side by side with this one.</p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {compareCandidates.map((candidate) => {
+                    const checked = selectedCompareIds.includes(candidate._id);
+                    return (
+                      <label
+                        key={candidate._id}
+                        className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
+                          checked ? 'border-teal-600 bg-teal-50' : 'border-slate-200 hover:border-teal-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleCompareSelection(candidate._id)}
+                          className="h-4 w-4 accent-teal-700"
+                        />
+                        <img
+                          src={candidate.imageUrl ? `${API_ORIGIN}${candidate.imageUrl}` : fallbackPropertyImage}
+                          alt={candidate.projectName || candidate.societyName || 'Property'}
+                          className="h-12 w-12 rounded-lg object-cover"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-slate-950">
+                            {candidate.projectName || candidate.societyName || cleanType(candidate.developmentType)}
+                          </p>
+                          <p className="truncate text-xs text-slate-500">
+                            {[candidate.locality, candidate.city].filter(Boolean).join(', ')}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {selectedCompareIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowComparison(true)}
+                    className="mt-4 inline-flex items-center justify-center rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-teal-800"
+                  >
+                    Compare Selected ({comparisonProperties.length})
+                  </button>
+                )}
+
+                {showComparison && comparisonProperties.length > 1 && (
+                  <div className="mt-6 overflow-x-auto">
+                    <div className="flex gap-4">
+                      {comparisonProperties.map((item) => {
+                        const itemAmenities: string[] = Array.isArray(item.selectedAmenities) ? item.selectedAmenities : [];
+                        return (
+                          <div key={item._id} className="w-56 shrink-0 rounded-lg border border-slate-200 p-4">
+                            <img
+                              src={item.imageUrl ? `${API_ORIGIN}${item.imageUrl}` : fallbackPropertyImage}
+                              alt={item.projectName || item.societyName || 'Property'}
+                              className="h-28 w-full rounded-lg object-cover"
+                            />
+                            <p className="mt-2 truncate text-sm font-black text-slate-950">
+                              {item.projectName || item.societyName || cleanType(item.developmentType)}
+                            </p>
+                            <p className="truncate text-xs text-slate-500">{[item.locality, item.city].filter(Boolean).join(', ')}</p>
+                            {item.bedrooms && (
+                              <p className="mt-2 text-xs font-semibold text-slate-700">
+                                {item.bedrooms}{item.flatSize ? ` - ${item.flatSize} Sq Ft` : ''}
+                              </p>
+                            )}
+                            <p className="mt-2 text-base font-black text-teal-700">{formatMoney(item.totalBudget) || formatMoney(item.squareFeetPrice)}</p>
+                            {item.squareFeetPrice && <p className="text-xs text-slate-500">{formatMoney(item.squareFeetPrice)}/sq.ft</p>}
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Status</p>
+                            <p className="text-sm font-bold text-slate-900">{item.possessionStatus || '-'}</p>
+                            {item.possessionDate && (
+                              <>
+                                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Possession By</p>
+                                <p className="text-sm font-bold text-slate-900">{item.possessionDate}</p>
+                              </>
+                            )}
+                            {itemAmenities.length > 0 && (
+                              <div className="mt-3 grid grid-cols-3 gap-2">
+                                {itemAmenities.slice(0, 6).map((amenity) => {
+                                  const AmenityIcon = AMENITY_ICONS[amenity] || Sparkles;
+                                  return (
+                                    <div key={amenity} className="flex flex-col items-center gap-1 text-center">
+                                      <AmenityIcon className="h-4 w-4 text-teal-700" />
+                                      <p className="text-[10px] leading-tight text-slate-600">{amenity}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {itemAmenities.length > 6 && (
+                              <p className="mt-1 text-center text-xs font-semibold text-teal-700">+{itemAmenities.length - 6} more</p>
+                            )}
+                            {item._id !== property._id && (
+                              <Link
+                                to={`/property/${item._id}`}
+                                className="mt-3 block rounded-lg border border-teal-200 px-3 py-1.5 text-center text-xs font-bold text-teal-800 hover:bg-teal-50"
+                              >
+                                View Details
+                              </Link>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </section>
             )}
           </div>
