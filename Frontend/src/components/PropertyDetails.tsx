@@ -638,7 +638,9 @@ const PropertyDetails: React.FC = () => {
 
             {details.length > 0 && (
               <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-black text-slate-950">Property Details</h2>
+                <h2 className="text-xl font-black text-slate-950">
+                  {property.projectName ? `${property.projectName} Overview` : 'Property Details'}
+                </h2>
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {details.map((detail) => (
                     <div key={detail.label} className="rounded-lg bg-slate-50 p-4">
