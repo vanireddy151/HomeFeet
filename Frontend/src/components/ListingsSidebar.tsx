@@ -4,6 +4,7 @@ import { HeartHandshake, Home, LayoutDashboard, MessageSquare, User } from 'luci
 
 const ListingsSidebar: React.FC<{ activePage: string }> = ({ activePage }) => {
   const links = [
+    { page: 'dashboard', to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { page: 'profile', to: '/profile', label: 'Profile', icon: User },
     { page: 'posted', to: '/user-posted-properties', label: 'Posted Properties', icon: Home },
     { page: 'shown', to: '/interest-shown', label: 'Owners Contacted', icon: MessageSquare },

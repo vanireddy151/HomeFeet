@@ -39,6 +39,7 @@ import Footer from './components/footer';
 import AdminPanel from './components/AdminPanel';
 import AdminChatbot from './components/AdminChatbot';
 import PropertiesListingPage from './components/PropertiesListingPage';
+import Dashboard from './components/Dashboard';
 import { housingTopPicks } from './lib/housingTopPicks';
 import ContactPage from './components/ContactPage';
 import ChatPage from './components/ChatPage';
@@ -178,6 +179,12 @@ const seoByPath: Record<string, SeoConfig> = {
     title: 'Owner & Agent (Mediator) Membership | HomeFeet',
     description:
       'Owner and agent (mediator) membership for controlled access to complete listing details from other verified property owners and agents.'
+  },
+  '/dashboard': {
+    title: 'Dashboard | HomeFeet',
+    description:
+      'Manage your HomeFeet account and choose a subscription plan to boost your property listing visibility.',
+    noIndex: true
   },
   '/about': {
     title: 'About HomeFeet | Verified Marketplace for Apartments, Commercial Space & Buyers',
@@ -3455,6 +3462,7 @@ function App() {
           <Route path="/project/:id" element={<PropertyDetails />} />
           <Route path="/property/:id" element={<PropertyDetails />} />
           <Route path="/profile" element={<UserProfile />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/edit-property/:id" element={<PostProperty />} />
           <Route path="/interest-shown" element={<InterestShown />} />
           <Route path="/interested-in-your-properties" element={<InterestedInYourProperties />} />

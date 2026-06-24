@@ -11,6 +11,8 @@ const { keyId, keySecret, razorpayApi, isRazorpayConfigured } = require('../conf
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const MembershipPayment = require('../models/MembershipPayment');
+const OwnerPlanPayment = require('../models/OwnerPlanPayment');
+const { OWNER_PLAN_TIERS } = require('../config/ownerPlans');
 const speechUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 }
@@ -34,6 +36,8 @@ const publicUser = (user) => ({
   builderReraId: user.builderReraId,
   builderSubscriptionPlan: user.builderSubscriptionPlan,
   builderSubscriptionExpiresAt: user.builderSubscriptionExpiresAt,
+  ownerPlanTier: user.ownerPlanTier,
+  ownerPlanExpiresAt: user.ownerPlanExpiresAt,
   freeContactCredits: user.freeContactCredits,
   contactUnlocksUsed: user.contactUnlocksUsed
 });
@@ -69,6 +73,14 @@ const subscriptionExpiry = (plan) => {
   if (!months) return null;
   const expiresAt = new Date();
   expiresAt.setMonth(expiresAt.getMonth() + months);
+  return expiresAt;
+};
+
+const ownerPlanExpiry = (tier) => {
+  const config = OWNER_PLAN_TIERS[tier];
+  if (!config) return null;
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + config.validityDays);
   return expiresAt;
 };
 
@@ -663,6 +675,125 @@ router.post('/membership-payment/verify', async (req, res) => {
     res.json({ success: true, user: publicUser(user) });
   } catch (err) {
     console.error('Membership payment verify error:', err);
+    res.status(500).json({ message: 'Failed to verify Razorpay payment' });
+  }
+});
+
+router.post('/owner-plan-order', async (req, res) => {
+  try {
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    if (!['owner', 'mediator'].includes(user.accountType)) {
+      return res.status(403).json({ message: 'Only owner and agent (mediator) accounts can subscribe to these plans' });
+    }
+
+    const { tier } = req.body;
+    const planConfig = OWNER_PLAN_TIERS[tier];
+    if (!planConfig) {
+      return res.status(400).json({ message: 'Please select a valid plan' });
+    }
+
+    if (!isRazorpayConfigured()) {
+      return res.status(500).json({ message: 'Razorpay credentials are not configured' });
+    }
+
+    const amount = planConfig.price * 100;
+    const receipt = `ownerplan_${tier}_${user._id}_${Date.now()}`.slice(0, 40);
+    const response = await razorpayApi.post('/orders', {
+      amount,
+      currency: 'INR',
+      receipt,
+      notes: {
+        tier,
+        accountType: user.accountType,
+        userId: String(user._id),
+        phone: user.phone || ''
+      }
+    });
+
+    await OwnerPlanPayment.create({
+      user: user._id,
+      tier,
+      amount,
+      currency: 'INR',
+      razorpayOrderId: response.data.id,
+      status: 'created'
+    });
+
+    res.json({
+      success: true,
+      keyId,
+      order: response.data,
+      tier,
+      amount
+    });
+  } catch (err) {
+    const razorpayError = err.response?.data?.error;
+    console.error('Owner plan order error:', razorpayError || err.message || err);
+
+    if (err.name === 'MongooseError' || err.name === 'MongoServerSelectionError') {
+      return res.status(503).json({ message: 'Database connection is not ready. Please try again in a moment.' });
+    }
+
+    if (razorpayError?.description === 'Authentication failed') {
+      return res.status(err.response?.status || 502).json({
+        message: 'Razorpay authentication failed. Please use a matching Razorpay key id and secret, then restart the backend server.'
+      });
+    }
+
+    if (razorpayError?.description) {
+      return res.status(err.response?.status || 502).json({ message: razorpayError.description });
+    }
+
+    res.status(500).json({ message: 'Failed to create Razorpay order' });
+  }
+});
+
+router.post('/owner-plan-payment/verify', async (req, res) => {
+  try {
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: 'Missing Razorpay payment verification data' });
+    }
+
+    if (!keySecret) {
+      return res.status(500).json({ message: 'Razorpay credentials are not configured' });
+    }
+
+    const expectedSignature = crypto
+      .createHmac('sha256', keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ message: 'Razorpay payment verification failed' });
+    }
+
+    const payment = await OwnerPlanPayment.findOne({
+      razorpayOrderId: razorpay_order_id,
+      user: user._id,
+      status: 'created'
+    });
+    if (!payment) {
+      return res.status(400).json({ message: 'Matching pending plan order was not found' });
+    }
+
+    payment.razorpayPaymentId = razorpay_payment_id;
+    payment.status = 'paid';
+    payment.paidAt = new Date();
+    await payment.save();
+
+    user.ownerPlanTier = payment.tier;
+    user.ownerPlanExpiresAt = ownerPlanExpiry(payment.tier);
+    await user.save();
+
+    res.json({ success: true, user: publicUser(user) });
+  } catch (err) {
+    console.error('Owner plan payment verify error:', err);
     res.status(500).json({ message: 'Failed to verify Razorpay payment' });
   }
 });

@@ -101,6 +101,15 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  ownerPlanTier: {
+    type: String,
+    enum: ['none', 'basic', 'premium_plus', 'assist', 'super_assist'],
+    default: 'none'
+  },
+  ownerPlanExpiresAt: {
+    type: Date,
+    default: null
+  },
   freeContactCredits: {
     type: Number,
     default: 2

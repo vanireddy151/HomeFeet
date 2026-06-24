@@ -39,6 +39,8 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
     localStorage.setItem('builderVerificationStatus', user.builderVerificationStatus || 'not_required');
     localStorage.setItem('builderSubscriptionPlan', user.builderSubscriptionPlan || 'none');
     localStorage.setItem('builderSubscriptionExpiresAt', user.builderSubscriptionExpiresAt || '');
+    localStorage.setItem('ownerPlanTier', user.ownerPlanTier || 'none');
+    localStorage.setItem('ownerPlanExpiresAt', user.ownerPlanExpiresAt || '');
     localStorage.setItem('freeContactCredits', String(user.freeContactCredits ?? 2));
     localStorage.setItem('contactUnlocksUsed', String(user.contactUnlocksUsed ?? 0));
     if (user.email) localStorage.setItem('email', user.email);

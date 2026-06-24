@@ -58,6 +58,7 @@ const Navbar: React.FC = () => {
     { to: '/properties-map', label: 'Properties Map-View' },
   ];
   const accountLinks = [
+    ['Dashboard', '/dashboard'],
     ['My Profile', '/profile'],
     ['My Listings', '/user-posted-properties'],
     ['Owners Contacted', '/interest-shown'],
