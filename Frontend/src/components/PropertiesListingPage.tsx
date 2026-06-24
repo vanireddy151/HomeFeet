@@ -1679,10 +1679,33 @@ const PropertiesListingPage: React.FC = () => {
               ? 'max-h-[75vh] lg:h-[calc(100vh-24px)] lg:min-h-[620px] lg:max-h-none'
               : 'max-h-[78vh] lg:h-[calc(100vh-140px)] lg:min-h-[620px] lg:max-h-[780px]'
           }`}>
-            <div className="mb-3 flex shrink-0 items-center justify-end">
-              <button onClick={() => setShowMobileFilters(true)} className="rounded-full bg-white p-2 shadow-sm lg:hidden">
-                <SlidersHorizontal className="h-5 w-5 text-slate-700" />
-              </button>
+            <div className="mb-3 flex shrink-0 flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base font-semibold text-slate-950">{pageTitle}</h2>
+                <button onClick={() => setShowMobileFilters(true)} className="rounded-full bg-white p-2 shadow-sm lg:hidden">
+                  <SlidersHorizontal className="h-5 w-5 text-slate-700" />
+                </button>
+              </div>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={propertyNumberQuery}
+                  onChange={(event) => setPropertyNumberQuery(event.target.value)}
+                  placeholder="Search property no. TEL-DP-101"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-9 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                />
+                {propertyNumberQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setPropertyNumberQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    aria-label="Clear property number search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="min-h-0 flex-1 grid grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
               {loading && Array.from({ length: 6 }).map((_, index) => (
