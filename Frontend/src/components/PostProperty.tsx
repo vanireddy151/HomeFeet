@@ -276,7 +276,7 @@ const PostProperty = () => {
     propertyForm: null as File | null,
   });
   const [showParcelShapePicker, setShowParcelShapePicker] = useState(false);
-  const formSteps = ['Property Details', 'Pricing & Amenities', 'Media Uploads', 'Location Details'];
+  const formSteps = ['Property Details', 'Apartment Details', 'Pricing & Amenities', 'Media Uploads', 'Location Details'];
   const [currentStep, setCurrentStep] = useState(0);
   const [assistedOwner, setAssistedOwner] = useState({
     accountType: 'owner',
@@ -2609,9 +2609,72 @@ const PostProperty = () => {
         {facings.map(f => <option key={f} value={f}>{f}</option>)}
       </select>
 
-      {isApartment && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-teal-600">Apartment Details</h3>
+      {!isApartment && (
+        <>
+          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <select
+              onChange={e => setFormData(prev => ({ ...prev, roadSize: e.target.value }))}
+              className="w-full border p-2 rounded"
+            >
+              <option value="">Select Road Size (ft)</option>
+              {roadSizes.map(size => <option key={size} value={size}>{size}</option>)}
+            </select>
+            <input
+              name="roadSize"
+              value={formData.roadSize}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+              placeholder="Or enter road size (in feet)"
+            />
+            <input
+              name="frontageWidth"
+              value={formData.frontageWidth}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              placeholder="Frontage width (ft)"
+              type="number"
+              min="0"
+              step="any"
+            />
+            <select
+              name="roadFacingDirection"
+              value={formData.roadFacingDirection}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              required
+            >
+              <option value="">Road Facing Direction *</option>
+              {roadFacingDirections.map(direction => (
+                <option key={direction} value={direction}>{direction}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 items-start gap-4">
+            <select
+              name="zoningClassification"
+              value={formData.zoningClassification}
+              onChange={handleChange}
+              className="rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              required
+            >
+              <option value="">Zoning Classification *</option>
+              {zoningOptions.map(option => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </div>
+        </>
+      )}
+      </section>
+      </>
+      )}
+
+      {currentStep === 1 && (
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5 flex items-center gap-3">
+          <Building2 className="h-6 w-6 text-teal-700" />
+          <h2 className="text-xl font-bold text-slate-900">Apartment Details</h2>
+        </div>
+        {isApartment ? (
           <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
             <input
               name="projectName"
@@ -2744,69 +2807,13 @@ const PostProperty = () => {
               {possessionOptions.map(option => <option key={option} value={option}>{option}</option>)}
             </select>
           </div>
-        </div>
-      )}
-
-      {!isApartment && (
-        <>
-          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <select
-              onChange={e => setFormData(prev => ({ ...prev, roadSize: e.target.value }))}
-              className="w-full border p-2 rounded"
-            >
-              <option value="">Select Road Size (ft)</option>
-              {roadSizes.map(size => <option key={size} value={size}>{size}</option>)}
-            </select>
-            <input
-              name="roadSize"
-              value={formData.roadSize}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-              placeholder="Or enter road size (in feet)"
-            />
-            <input
-              name="frontageWidth"
-              value={formData.frontageWidth}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-              placeholder="Frontage width (ft)"
-              type="number"
-              min="0"
-              step="any"
-            />
-            <select
-              name="roadFacingDirection"
-              value={formData.roadFacingDirection}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-              required
-            >
-              <option value="">Road Facing Direction *</option>
-              {roadFacingDirections.map(direction => (
-                <option key={direction} value={direction}>{direction}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 items-start gap-4">
-            <select
-              name="zoningClassification"
-              value={formData.zoningClassification}
-              onChange={handleChange}
-              className="rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-              required
-            >
-              <option value="">Zoning Classification *</option>
-              {zoningOptions.map(option => <option key={option} value={option}>{option}</option>)}
-            </select>
-          </div>
-        </>
-      )}
+        ) : (
+          <p className="text-sm text-slate-500">This section applies to apartment-type listings only. Click Next to continue.</p>
+        )}
       </section>
-      </>
       )}
 
-      {currentStep === 1 && (
+      {currentStep === 2 && (
       <>
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <p className="mb-2 text-sm font-semibold text-slate-800">Amenities Details</p>
@@ -2951,7 +2958,7 @@ const PostProperty = () => {
       </>
       )}
 
-      {currentStep === 2 && (
+      {currentStep === 3 && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3">
           <Upload className="h-6 w-6 text-teal-700" />
@@ -3090,7 +3097,7 @@ const PostProperty = () => {
       </section>
       )}
 
-      {currentStep === 3 && (
+      {currentStep === 4 && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center gap-3">
         <MapPin className="h-6 w-6 text-teal-700" />
