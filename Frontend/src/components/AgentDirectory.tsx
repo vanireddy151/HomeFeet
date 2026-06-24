@@ -15,6 +15,8 @@ export default function AgentDirectory() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedState, setSelectedState] = useState('All');
+  const [selectedCity, setSelectedCity] = useState('All');
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +35,18 @@ export default function AgentDirectory() {
     loadAgents();
     return () => { cancelled = true; };
   }, []);
+
+  const stateOptions = Array.from(new Set(agents.map((agent) => agent.state).filter(Boolean))).sort();
+  const cityOptions = Array.from(new Set(
+    agents
+      .filter((agent) => selectedState === 'All' || agent.state === selectedState)
+      .map((agent) => agent.city)
+      .filter(Boolean)
+  )).sort();
+  const visibleAgents = agents.filter((agent) =>
+    (selectedState === 'All' || agent.state === selectedState) &&
+    (selectedCity === 'All' || agent.city === selectedCity)
+  );
 
   return (
     <div className="bg-slate-50">
@@ -64,8 +78,47 @@ export default function AgentDirectory() {
             </div>
           )}
           {!loading && agents.length > 0 && (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {agents.map((agent) => (
+            <>
+              <div className="mb-6 flex flex-wrap items-center gap-3">
+                <select
+                  value={selectedState}
+                  onChange={(e) => { setSelectedState(e.target.value); setSelectedCity('All'); }}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-teal-600"
+                >
+                  <option value="All">All States</option>
+                  {stateOptions.map((state) => (
+                    <option key={state} value={state}>{state}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-teal-600"
+                >
+                  <option value="All">All Cities</option>
+                  {cityOptions.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+                {(selectedState !== 'All' || selectedCity !== 'All') && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedState('All'); setSelectedCity('All'); }}
+                    className="text-sm font-semibold text-teal-700 underline-offset-2 hover:underline"
+                  >
+                    Reset filters
+                  </button>
+                )}
+                <span className="text-sm font-semibold text-slate-500">{visibleAgents.length} of {agents.length} agents</span>
+              </div>
+
+              {visibleAgents.length === 0 ? (
+                <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
+                  <p className="font-black text-slate-950">No agents found for this location.</p>
+                </div>
+              ) : (
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleAgents.map((agent) => (
                 <Link
                   key={agent.id}
                   to={`/agent/${agent.id}`}
@@ -86,7 +139,9 @@ export default function AgentDirectory() {
                   </span>
                 </Link>
               ))}
-            </div>
+              </div>
+              )}
+            </>
           )}
         </div>
       </section>
