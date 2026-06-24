@@ -267,7 +267,7 @@ const propertyUpload = upload.fields([
   { name: 'images', maxCount: 10 },
   { name: 'plotDiagram', maxCount: 1 },
   { name: 'video', maxCount: 1 },
-  { name: 'floorPlan', maxCount: 1 },
+  { name: 'floorPlan', maxCount: 6 },
   { name: 'propertyForm', maxCount: 1 }
 ]);
 const handlePropertyUpload = (req, res, next) => {
@@ -367,6 +367,35 @@ const saveFileToGridFS = async (file, propertyData = {}) => {
     uploadStream.on('finish', () => resolve(`/api/files/${uploadStream.id.toString()}`));
     uploadStream.end(file.buffer);
   });
+};
+
+const buildFloorPlanUnits = async (rawUnitsJson, floorPlanFiles = [], uploadNamingData = {}) => {
+  let unitsMeta = [];
+  try {
+    unitsMeta = JSON.parse(rawUnitsJson || '[]');
+  } catch {
+    unitsMeta = [];
+  }
+  if (!Array.isArray(unitsMeta)) return [];
+
+  let fileCursor = 0;
+  const units = [];
+  for (const unit of unitsMeta) {
+    let imageUrl = unit.existingImageUrl || '';
+    if (unit.hasNewFile && floorPlanFiles[fileCursor]) {
+      imageUrl = await saveFileToGridFS(floorPlanFiles[fileCursor], uploadNamingData);
+      fileCursor += 1;
+    }
+    units.push({
+      size: unit.size || '',
+      price: unit.price || '',
+      imageUrl,
+      rooms: Array.isArray(unit.rooms)
+        ? unit.rooms.map((room) => ({ name: room.name || '', dimension: room.dimension || '' }))
+        : []
+    });
+  }
+  return units;
 };
 
 router.get('/files/:id', async (req, res) => {
@@ -493,8 +522,9 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
     const plotDiagramUrl = await saveFileToGridFS(files.plotDiagram?.[0], uploadNamingData);
     const listingImageUrl = galleryImageUrls[0] || imageUrl || (isDisplayableImageUpload(files.plotDiagram?.[0]) ? plotDiagramUrl : '');
     const videoUrl = await saveFileToGridFS(files.video?.[0], uploadNamingData);
-    const floorPlanUrl = await saveFileToGridFS(files.floorPlan?.[0], uploadNamingData);
     const propertyFormUrl = await saveFileToGridFS(files.propertyForm?.[0], uploadNamingData);
+    const floorPlanUnits = await buildFloorPlanUnits(req.body.floorPlanUnits, files.floorPlan || [], uploadNamingData);
+    const floorPlanUrl = floorPlanUnits[0]?.imageUrl || '';
 
     const newProperty = new Property({
       listingIntent,
@@ -553,6 +583,7 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       images: galleryImageUrls,
       plotDiagramUrl,
       floorPlanUrl,
+      floorPlanUnits,
       propertyFormUrl,
       videoUrl,
       contactEmail: listingOwner.email || '',
@@ -916,8 +947,10 @@ router.put('/properties/:id', handlePropertyUpload, async (req, res) => {
     if (files.video?.[0]) {
       updates.videoUrl = await saveFileToGridFS(files.video[0], uploadNamingData);
     }
-    if (files.floorPlan?.[0]) {
-      updates.floorPlanUrl = await saveFileToGridFS(files.floorPlan[0], uploadNamingData);
+    if (typeof updates.floorPlanUnits === 'string') {
+      const floorPlanUnits = await buildFloorPlanUnits(updates.floorPlanUnits, files.floorPlan || [], uploadNamingData);
+      updates.floorPlanUnits = floorPlanUnits;
+      updates.floorPlanUrl = floorPlanUnits[0]?.imageUrl || '';
     }
     if (files.propertyForm?.[0]) {
       updates.propertyFormUrl = await saveFileToGridFS(files.propertyForm[0], uploadNamingData);

@@ -1378,8 +1378,11 @@ const PropertiesListingPage: React.FC = () => {
     { label: 'Hospitality', value: 'hospitality', icon: Hotel },
     { label: 'Industrial', value: 'industrial', icon: Factory },
   ];
+  const visibleDeveloperTypeFilters = developerTypeFilters.filter((filter) =>
+    ['standalone', 'high-rise', 'villa', 'plotted'].includes(filter.value)
+  );
   const isCommercialPropertyView = currentPropertyType === 'commercial-plot';
-  const activeTypeFilters = isCommercialPropertyView ? commercialTypeFilters : isPlotDealView ? plotTypeFilters : developerTypeFilters;
+  const activeTypeFilters = isCommercialPropertyView ? commercialTypeFilters : isPlotDealView ? plotTypeFilters : visibleDeveloperTypeFilters;
   const marketplaceTypeFilters = [
     ...developerTypeFilters,
     ...plotTypeFilters.filter((filter) => !developerTypeFilters.some((item) => item.value === filter.value)),

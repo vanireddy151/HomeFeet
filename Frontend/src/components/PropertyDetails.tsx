@@ -134,6 +134,7 @@ const PropertyDetails: React.FC = () => {
   const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>([]);
   const [showComparison, setShowComparison] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const [activeFloorPlanUnit, setActiveFloorPlanUnit] = useState(0);
 
   const token = localStorage.getItem('token');
   const accountType = localStorage.getItem('accountType') || 'owner';
@@ -341,6 +342,15 @@ const PropertyDetails: React.FC = () => {
   ].filter((item) => item.value) : [];
 
   const amenities: string[] = Array.isArray(property?.selectedAmenities) ? property.selectedAmenities : [];
+
+  const floorPlanUnits: Array<{ size: string; price: string; imageUrl: string; rooms: { name: string; dimension: string }[] }> = property
+    ? (Array.isArray(property.floorPlanUnits) && property.floorPlanUnits.length
+      ? property.floorPlanUnits
+      : (property.floorPlanUrl
+        ? [{ size: property.flatSize || '', price: property.totalBudget || '', imageUrl: property.floorPlanUrl, rooms: [] }]
+        : []))
+    : [];
+  const selectedFloorPlanUnit = floorPlanUnits[activeFloorPlanUnit] || floorPlanUnits[0];
   const localityHighlights = property?.localityHighlights || '';
   const projectHighlights = property?.projectHighlights || '';
 

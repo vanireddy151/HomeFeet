@@ -281,7 +281,6 @@ const PostProperty = () => {
     images: [] as File[],
     plotDiagram: null as File | null,
     video: null as File | null,
-    floorPlan: null as File | null,
     propertyForm: null as File | null,
   });
   const [showParcelShapePicker, setShowParcelShapePicker] = useState(false);
@@ -313,6 +312,15 @@ const PostProperty = () => {
     propertyFormUrl: '',
     videoUrl: ''
   });
+  type FloorPlanUnit = {
+    size: string;
+    price: string;
+    file: File | null;
+    existingImageUrl: string;
+    rooms: { name: string; dimension: string }[];
+  };
+  const emptyFloorPlanUnit = (): FloorPlanUnit => ({ size: '', price: '', file: null, existingImageUrl: '', rooms: [] });
+  const [floorPlanUnits, setFloorPlanUnits] = useState<FloorPlanUnit[]>([]);
   const [cropModal, setCropModal] = useState<CropModalState | null>(null);
   const [cropArea, setCropArea] = useState<CropArea>({ x: 10, y: 10, width: 80, height: 80 });
   
@@ -642,6 +650,17 @@ const PostProperty = () => {
           propertyFormUrl: property.propertyFormUrl || '',
           videoUrl: property.videoUrl || ''
         });
+        if (Array.isArray(property.floorPlanUnits) && property.floorPlanUnits.length) {
+          setFloorPlanUnits(property.floorPlanUnits.map((unit: any) => ({
+            size: unit.size || '',
+            price: unit.price || '',
+            file: null,
+            existingImageUrl: unit.imageUrl || '',
+            rooms: Array.isArray(unit.rooms) ? unit.rooms.map((room: any) => ({ name: room.name || '', dimension: room.dimension || '' })) : []
+          })));
+        } else if (property.floorPlanUrl) {
+          setFloorPlanUnits([{ size: property.flatSize || '', price: property.totalBudget || '', file: null, existingImageUrl: property.floorPlanUrl, rooms: [] }]);
+        }
         if (coordinates) {
           setTimeout(() => moveMapToLocation(coordinates.lat, coordinates.lng), 300);
         }
@@ -1544,9 +1563,43 @@ const PostProperty = () => {
     setFormData(prev => ({ ...prev, video: file }));
   };
 
-  const handleFloorPlanChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const MAX_FLOOR_PLAN_UNITS = 6;
+
+  const addFloorPlanUnit = () => {
+    setFloorPlanUnits(prev => (prev.length >= MAX_FLOOR_PLAN_UNITS ? prev : [...prev, emptyFloorPlanUnit()]));
+  };
+
+  const removeFloorPlanUnit = (unitIndex: number) => {
+    setFloorPlanUnits(prev => prev.filter((_, i) => i !== unitIndex));
+  };
+
+  const updateFloorPlanUnit = (unitIndex: number, patch: Partial<FloorPlanUnit>) => {
+    setFloorPlanUnits(prev => prev.map((unit, i) => (i === unitIndex ? { ...unit, ...patch } : unit)));
+  };
+
+  const handleUnitFloorPlanFileChange = (unitIndex: number, e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData(prev => ({ ...prev, floorPlan: file }));
+    updateFloorPlanUnit(unitIndex, { file });
+  };
+
+  const addRoomToUnit = (unitIndex: number) => {
+    setFloorPlanUnits(prev => prev.map((unit, i) =>
+      i === unitIndex ? { ...unit, rooms: [...unit.rooms, { name: '', dimension: '' }] } : unit
+    ));
+  };
+
+  const updateUnitRoom = (unitIndex: number, roomIndex: number, patch: Partial<{ name: string; dimension: string }>) => {
+    setFloorPlanUnits(prev => prev.map((unit, i) =>
+      i === unitIndex
+        ? { ...unit, rooms: unit.rooms.map((room, ri) => (ri === roomIndex ? { ...room, ...patch } : room)) }
+        : unit
+    ));
+  };
+
+  const removeUnitRoom = (unitIndex: number, roomIndex: number) => {
+    setFloorPlanUnits(prev => prev.map((unit, i) =>
+      i === unitIndex ? { ...unit, rooms: unit.rooms.filter((_, ri) => ri !== roomIndex) } : unit
+    ));
   };
 
   const handlePropertyFormChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -2078,9 +2131,19 @@ const PostProperty = () => {
     if (formData.video) {
       data.append('video', formData.video);
     }
-    if (formData.floorPlan) {
-      data.append('floorPlan', formData.floorPlan);
-    }
+    const floorPlanUnitsMeta = floorPlanUnits.map((unit) => ({
+      size: unit.size,
+      price: unit.price,
+      existingImageUrl: unit.existingImageUrl,
+      hasNewFile: Boolean(unit.file),
+      rooms: unit.rooms.filter((room) => room.name || room.dimension)
+    }));
+    data.append('floorPlanUnits', JSON.stringify(floorPlanUnitsMeta));
+    floorPlanUnits.forEach((unit) => {
+      if (unit.file) {
+        data.append('floorPlan', unit.file);
+      }
+    });
     if (formData.propertyForm) {
       data.append('propertyForm', formData.propertyForm);
     }
@@ -3051,16 +3114,109 @@ const PostProperty = () => {
             {formData.video && <p className="mt-2 text-sm font-semibold text-teal-700">New video selected: {formData.video.name}</p>}
           </label>
         </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <label className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
-            <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Flat Floor Plan</span>
-            {isEditMode && existingMedia.floorPlanUrl && !formData.floorPlan && (
-              <p className="mb-3 rounded-lg bg-white p-3 text-sm text-slate-600">Current floor plan is saved. Upload a new one only if you want to replace it.</p>
-            )}
-            <input type="file" onChange={handleFloorPlanChange} className="w-full rounded bg-white p-2" accept="image/*,.pdf" />
-            {formData.floorPlan && <p className="mt-2 text-sm font-semibold text-teal-700">Selected: {formData.floorPlan.name}</p>}
-          </label>
-          <label className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+        <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+          <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Flat Floor Plans by Unit</span>
+          <p className="mb-3 text-xs text-slate-500">
+            If this project has different unit sizes, add one card per unit with its size, price, floor plan, and room dimensions (up to {MAX_FLOOR_PLAN_UNITS}).
+          </p>
+
+          <div className="space-y-4">
+            {floorPlanUnits.map((unit, unitIndex) => (
+              <div key={unitIndex} className="rounded-lg border border-slate-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-bold text-slate-800">Unit {unitIndex + 1}</p>
+                  <button
+                    type="button"
+                    onClick={() => removeFloorPlanUnit(unitIndex)}
+                    className="rounded-full bg-slate-950/70 px-2 py-0.5 text-xs font-bold text-white"
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <input
+                    value={unit.size}
+                    onChange={(e) => updateFloorPlanUnit(unitIndex, { size: e.target.value })}
+                    placeholder="Unit Size (e.g. 1550 Sq Ft)"
+                    className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+                  />
+                  <input
+                    value={unit.price}
+                    onChange={(e) => updateFloorPlanUnit(unitIndex, { price: e.target.value })}
+                    placeholder="Price for this unit (Rs)"
+                    type="number"
+                    min="0"
+                    step="any"
+                    className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="mt-3">
+                  {unit.existingImageUrl && !unit.file && (
+                    <p className="mb-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">Current floor plan is saved. Upload a new one only if you want to replace it.</p>
+                  )}
+                  <input
+                    type="file"
+                    onChange={(e) => handleUnitFloorPlanFileChange(unitIndex, e)}
+                    className="w-full rounded bg-white p-2"
+                    accept="image/*,.pdf"
+                  />
+                  {unit.file && <p className="mt-1 text-xs font-semibold text-teal-700">Selected: {unit.file.name}</p>}
+                </div>
+
+                <div className="mt-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Room Dimensions (optional)</p>
+                  <div className="space-y-2">
+                    {unit.rooms.map((room, roomIndex) => (
+                      <div key={roomIndex} className="flex gap-2">
+                        <input
+                          value={room.name}
+                          onChange={(e) => updateUnitRoom(unitIndex, roomIndex, { name: e.target.value })}
+                          placeholder="Room (e.g. Bedroom 1)"
+                          className="w-1/2 rounded-lg border border-slate-300 p-2 text-sm focus:ring-2 focus:ring-teal-500"
+                        />
+                        <input
+                          value={room.dimension}
+                          onChange={(e) => updateUnitRoom(unitIndex, roomIndex, { dimension: e.target.value })}
+                          placeholder={`Dimension (e.g. 11'9" X 14'2")`}
+                          className="w-1/2 rounded-lg border border-slate-300 p-2 text-sm focus:ring-2 focus:ring-teal-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeUnitRoom(unitIndex, roomIndex)}
+                          className="shrink-0 rounded-full bg-slate-950/70 px-2 text-xs font-bold text-white"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addRoomToUnit(unitIndex)}
+                    className="mt-2 text-xs font-bold text-teal-700 hover:text-teal-900"
+                  >
+                    + Add Room
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {floorPlanUnits.length < MAX_FLOOR_PLAN_UNITS && (
+            <button
+              type="button"
+              onClick={addFloorPlanUnit}
+              className="mt-4 inline-flex items-center justify-center rounded-lg border border-teal-600 bg-white px-4 py-2 text-sm font-bold text-teal-700 transition hover:bg-teal-50"
+            >
+              + Add Unit
+            </button>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <label className="block rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
             <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Property Brochure</span>
             {isEditMode && existingMedia.propertyFormUrl && !formData.propertyForm && (
               <p className="mb-3 rounded-lg bg-white p-3 text-sm text-slate-600">Current property form is saved. Upload a new one only if you want to replace it.</p>

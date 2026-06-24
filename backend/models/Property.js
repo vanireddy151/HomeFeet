@@ -233,9 +233,24 @@ const propertySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  floorPlanUrl: {  // Flat floor plan image
+  floorPlanUrl: {  // Flat floor plan image (legacy single plan)
     type: String,
     default: ''
+  },
+  floorPlanUnits: {  // Per-unit floor plans: size, price, image, and room dimensions
+    type: [{
+      size: { type: String, default: '' },
+      price: { type: String, default: '' },
+      imageUrl: { type: String, default: '' },
+      rooms: {
+        type: [{
+          name: { type: String, default: '' },
+          dimension: { type: String, default: '' }
+        }],
+        default: []
+      }
+    }],
+    default: []
   },
   propertyFormUrl: {  // Uploaded property form / document
     type: String,
