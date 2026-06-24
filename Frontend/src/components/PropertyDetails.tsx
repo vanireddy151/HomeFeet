@@ -1,16 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
+  Armchair,
   ArrowLeft,
   ArrowUpDown,
   BadgeCheck,
+  Bath,
   Bike,
   Car,
+  Castle,
   Check,
+  ChevronDown,
+  ChevronUp,
   CircleDot,
+  Clapperboard,
+  Compass,
   Download,
   Droplet,
   Dumbbell,
+  Flower2,
   IndianRupee,
   Lock,
   Mail,
@@ -20,7 +28,10 @@ import {
   Share2,
   Shield,
   ShieldCheck,
+  ShowerHead,
+  Snowflake,
   Sparkles,
+  Sprout,
   Tag,
   Trees,
   Trophy,
@@ -89,8 +100,19 @@ const AMENITY_ICONS: Record<string, typeof Sparkles> = {
   'Swimming Pool': Waves,
   'Badminton Court': Trophy,
   'Cricket Court': CircleDot,
-  'Food Court': UtensilsCrossed
+  'Food Court': UtensilsCrossed,
+  'Waiting Lounge': Armchair,
+  Amphitheater: Castle,
+  'Sauna Bath': Bath,
+  Spa: Flower2,
+  'Skating Rink': Snowflake,
+  'Vastu Compliant': Compass,
+  'Landscaping & Tree Park': Sprout,
+  'Mini Theatre': Clapperboard,
+  'Fire Fighting System': ShowerHead
 };
+
+const AMENITY_PREVIEW_COUNT = 11;
 
 const PropertyDetails: React.FC = () => {
   const { id } = useParams();
@@ -111,6 +133,7 @@ const PropertyDetails: React.FC = () => {
   const [compareCandidates, setCompareCandidates] = useState<any[]>([]);
   const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
 
   const token = localStorage.getItem('token');
   const accountType = localStorage.getItem('accountType') || 'owner';
@@ -629,9 +652,9 @@ const PropertyDetails: React.FC = () => {
 
             {amenities.length > 0 && (
               <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-black text-slate-950">Amenities</h2>
+                <h2 className="text-xl font-black text-slate-950">{title} Top Amenities</h2>
                 <div className="mt-5 grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-                  {amenities.map((amenity) => {
+                  {(showAllAmenities ? amenities : amenities.slice(0, AMENITY_PREVIEW_COUNT)).map((amenity) => {
                     const AmenityIcon = AMENITY_ICONS[amenity] || Sparkles;
                     return (
                       <div key={amenity} className="flex flex-col items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
@@ -642,6 +665,26 @@ const PropertyDetails: React.FC = () => {
                       </div>
                     );
                   })}
+                  {!showAllAmenities && amenities.length > AMENITY_PREVIEW_COUNT && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllAmenities(true)}
+                      className="flex flex-col items-center justify-center gap-1 rounded-lg border border-teal-200 bg-teal-50 p-3 text-center text-teal-700 transition hover:bg-teal-100"
+                    >
+                      <span className="text-sm font-black">+{amenities.length - AMENITY_PREVIEW_COUNT} more</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  )}
+                  {showAllAmenities && amenities.length > AMENITY_PREVIEW_COUNT && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllAmenities(false)}
+                      className="flex flex-col items-center justify-center gap-1 rounded-lg border border-teal-200 bg-teal-50 p-3 text-center text-teal-700 transition hover:bg-teal-100"
+                    >
+                      <span className="text-sm font-black">Show less</span>
+                      <ChevronUp className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </section>
             )}

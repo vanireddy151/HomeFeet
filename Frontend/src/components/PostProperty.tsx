@@ -1,19 +1,28 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
+  Armchair,
   ArrowLeft,
   ArrowUpDown,
+  Bath,
   Bike,
   Building2,
   Car,
+  Castle,
   CircleDot,
+  Clapperboard,
+  Compass,
   Droplet,
   Dumbbell,
+  Flower2,
   Image,
   MapPin,
   Ruler,
   Shield,
   ShieldCheck,
+  ShowerHead,
+  Snowflake,
+  Sprout,
   Trees,
   Trophy,
   Upload,
@@ -1402,7 +1411,16 @@ const PostProperty = () => {
     { label: 'Swimming Pool', icon: Waves },
     { label: 'Badminton Court', icon: Trophy },
     { label: 'Cricket Court', icon: CircleDot },
-    { label: 'Food Court', icon: UtensilsCrossed }
+    { label: 'Food Court', icon: UtensilsCrossed },
+    { label: 'Waiting Lounge', icon: Armchair },
+    { label: 'Amphitheater', icon: Castle },
+    { label: 'Sauna Bath', icon: Bath },
+    { label: 'Spa', icon: Flower2 },
+    { label: 'Skating Rink', icon: Snowflake },
+    { label: 'Vastu Compliant', icon: Compass },
+    { label: 'Landscaping & Tree Park', icon: Sprout },
+    { label: 'Mini Theatre', icon: Clapperboard },
+    { label: 'Fire Fighting System', icon: ShowerHead }
   ];
 
   const toggleAmenity = (amenity: string) => {
