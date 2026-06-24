@@ -101,7 +101,7 @@ const Navbar: React.FC = () => {
       setShowLoginModal(true);
       return;
     }
-    navigate('/post-property-options');
+    navigate('/post-property');
     window.setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }, 0);

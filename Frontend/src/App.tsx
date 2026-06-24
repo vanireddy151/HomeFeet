@@ -891,7 +891,7 @@ function HomePage() {
       setShowLoginModal(true);
       return;
     }
-    navigate('/post-property-options');
+    navigate('/post-property');
   };
 
   useEffect(() => {
@@ -1741,7 +1741,7 @@ function SellPlotLandComingSoon() {
                 A dedicated selling experience for plots and land is being prepared with simpler submissions, better buyer matching, and clear owner controls.
               </p>
             </div>
-              <Link to="/post-property-options" className="ld-btn-primary w-fit">
+              <Link to="/post-property" className="ld-btn-primary w-fit">
               Post Property <ArrowRight className="h-5 w-5" />
             </Link>
           </div>

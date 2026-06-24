@@ -138,7 +138,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
 
   const handleTabClick = (index: number) => {
     if (SEARCH_TABS[index].label === 'Post Property') {
-      navigate('/post-property-options');
+      navigate('/post-property');
       return;
     }
     setActiveTab(index);

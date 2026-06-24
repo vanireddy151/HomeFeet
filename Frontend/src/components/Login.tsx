@@ -51,7 +51,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
     if (!stayOnPage) {
       if (localStorage.getItem('redirectToPost')) {
         localStorage.removeItem('redirectToPost');
-        navigate('/post-property-options');
+        navigate('/post-property');
       } else {
         navigate('/profile');
       }
@@ -212,7 +212,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
         if (!stayOnPage) {
           if (localStorage.getItem('redirectToPost')) {
             localStorage.removeItem('redirectToPost');
-            navigate('/post-property-options');
+            navigate('/post-property');
           } else {
             navigate("/profile");
           }
@@ -267,7 +267,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
       if (!stayOnPage) {
         if (localStorage.getItem('redirectToPost')) {
           localStorage.removeItem('redirectToPost');
-          navigate('/post-property-options');
+          navigate('/post-property');
         } else {
           navigate('/');
         }
