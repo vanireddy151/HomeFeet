@@ -437,13 +437,14 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
     const {
       listingIntent = 'development',
       projectName, companyName,
-      developmentType, totalArea, areaUnit, flatSize, flatFacing,
+      developmentType, totalArea, areaUnit, flatSize, flatSizeMin, flatSizeMax, flatFacing, projectTotalUnits,
       northSideLength, southSideLength, eastSideLength, westSideLength,
       facing, roadFacingDirection, roadSize, frontageWidth, pincode, zoningClassification,
       developerRatio, partlySale, partlySaleUnit, partlySaleValue, partlySalePrice,
       state, city, locality, societyName, landmark, map, goodwill, advance,
       squareYardPrice, squareFeetPrice, totalBudget, purchaseTimeline, description, address, selectedAmenities, coordinates,
-      bedrooms, bathrooms, floorNumber, totalFloors, furnishingStatus, possessionStatus
+      bedrooms, bathrooms, floorNumber, totalFloors, furnishingStatus, possessionStatus,
+      possessionDate, reraId, localityHighlights, projectHighlights
     } = req.body;
 
     // Get user details from token
@@ -503,7 +504,10 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       totalArea: normalizedArea.totalArea,
       areaUnit: normalizedArea.areaUnit,
       flatSize: flatSize || '',
+      flatSizeMin: flatSizeMin || '',
+      flatSizeMax: flatSizeMax || '',
       flatFacing: flatFacing || '',
+      projectTotalUnits: projectTotalUnits || '',
       northSideLength,
       southSideLength,
       eastSideLength,
@@ -520,6 +524,10 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
       totalFloors: totalFloors || '',
       furnishingStatus: furnishingStatus || '',
       possessionStatus: possessionStatus || '',
+      possessionDate: possessionDate || '',
+      reraId: reraId || '',
+      localityHighlights: localityHighlights || '',
+      projectHighlights: projectHighlights || '',
       developerRatio: listingIntent === 'development' ? developerRatio : '',
       partlySale: listingIntent === 'development' ? (partlySale || '') : '',
       partlySaleUnit: listingIntent === 'development' ? (partlySaleUnit || 'Square Yard') : '',

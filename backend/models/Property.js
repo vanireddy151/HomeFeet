@@ -31,7 +31,19 @@ const propertySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  flatSizeMin: {
+    type: String,
+    default: ''
+  },
+  flatSizeMax: {
+    type: String,
+    default: ''
+  },
   flatFacing: {
+    type: String,
+    default: ''
+  },
+  projectTotalUnits: {
     type: String,
     default: ''
   },
@@ -175,6 +187,22 @@ const propertySchema = new mongoose.Schema({
   possessionStatus: {
     type: String,
     enum: ['', 'Ready to Move', 'Under Construction'],
+    default: ''
+  },
+  possessionDate: {
+    type: String,
+    default: ''
+  },
+  reraId: {
+    type: String,
+    default: ''
+  },
+  localityHighlights: {
+    type: String,
+    default: ''
+  },
+  projectHighlights: {
+    type: String,
     default: ''
   },
   map: { 

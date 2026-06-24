@@ -220,8 +220,11 @@ const PostProperty = () => {
     totalArea: '',
     areaUnit: 'Sq Yards',
     flatSize: '',
+    flatSizeMin: '',
+    flatSizeMax: '',
     projectName: '',
     companyName: '',
+    projectTotalUnits: '',
     northSideLength: '',
     southSideLength: '',
     eastSideLength: '',
@@ -239,6 +242,10 @@ const PostProperty = () => {
     totalFloors: '',
     furnishingStatus: '',
     possessionStatus: '',
+    possessionDate: '',
+    reraId: '',
+    localityHighlights: '',
+    projectHighlights: '',
     developerRatio: '',
     partlySale: '',
     partlySaleUnit: 'Square Yard',
@@ -344,6 +351,7 @@ const PostProperty = () => {
       flatSize: prefill.flatSize || prev.flatSize,
       projectName: prefill.projectName || prev.projectName,
       companyName: prefill.companyName || prev.companyName,
+      projectTotalUnits: prefill.projectTotalUnits || prev.projectTotalUnits,
       northSideLength: prefill.northSideLength || prev.northSideLength,
       southSideLength: prefill.southSideLength || prev.southSideLength,
       eastSideLength: prefill.eastSideLength || prev.eastSideLength,
@@ -361,6 +369,7 @@ const PostProperty = () => {
       totalFloors: prefill.totalFloors || prev.totalFloors,
       furnishingStatus: prefill.furnishingStatus || prev.furnishingStatus,
       possessionStatus: prefill.possessionStatus || prev.possessionStatus,
+      reraId: prefill.reraId || prev.reraId,
       developerRatio: prefill.developerRatio || prev.developerRatio,
       state: prefill.state || prev.state,
       city: prefill.city || prev.city,
@@ -560,8 +569,11 @@ const PostProperty = () => {
           totalArea: property.totalArea || '',
           areaUnit: property.areaUnit || 'Sq Yards',
           flatSize: property.flatSize || '',
+          flatSizeMin: property.flatSizeMin || '',
+          flatSizeMax: property.flatSizeMax || '',
           projectName: property.projectName || '',
           companyName: property.companyName || '',
+          projectTotalUnits: property.projectTotalUnits || '',
           northSideLength: property.northSideLength || '',
           southSideLength: property.southSideLength || '',
           eastSideLength: property.eastSideLength || '',
@@ -579,6 +591,10 @@ const PostProperty = () => {
           totalFloors: property.totalFloors || '',
           furnishingStatus: property.furnishingStatus || '',
           possessionStatus: property.possessionStatus || '',
+          possessionDate: property.possessionDate || '',
+          reraId: property.reraId || '',
+          localityHighlights: property.localityHighlights || '',
+          projectHighlights: property.projectHighlights || '',
           developerRatio: property.developerRatio || '',
           partlySale: property.partlySale || '',
           partlySaleUnit: property.partlySaleUnit || 'Square Yard',
@@ -1957,8 +1973,11 @@ const PostProperty = () => {
     data.append('totalArea', formData.totalArea);
     data.append('areaUnit', formData.areaUnit);
     data.append('flatSize', formData.flatSize);
+    data.append('flatSizeMin', formData.flatSizeMin);
+    data.append('flatSizeMax', formData.flatSizeMax);
     data.append('projectName', formData.projectName);
     data.append('companyName', formData.companyName);
+    data.append('projectTotalUnits', formData.projectTotalUnits);
     data.append('northSideLength', formData.northSideLength);
     data.append('southSideLength', formData.southSideLength);
     data.append('eastSideLength', formData.eastSideLength);
@@ -1976,6 +1995,10 @@ const PostProperty = () => {
     data.append('totalFloors', formData.totalFloors);
     data.append('furnishingStatus', formData.furnishingStatus);
     data.append('possessionStatus', formData.possessionStatus);
+    data.append('possessionDate', formData.possessionDate);
+    data.append('reraId', formData.reraId);
+    data.append('localityHighlights', formData.localityHighlights);
+    data.append('projectHighlights', formData.projectHighlights);
     data.append('developerRatio', formData.listingIntent === 'development' ? formData.developerRatio : '');
     data.append('partlySale', formData.listingIntent === 'development' ? formData.partlySale : '');
     data.append('partlySaleUnit', formData.listingIntent === 'development' ? formData.partlySaleUnit : '');
@@ -2095,6 +2118,16 @@ const PostProperty = () => {
   const zoningOptions = ['Residential', 'Commercial', 'Mixed Use', 'Agricultural', 'Industrial'];
   const plotBoundaryTypes = ['standalone', 'high-rise', 'group-house'];
   const bedroomOptions = ['1 BHK', '2 BHK', '2.5 BHK', '3 BHK', '4 BHK', '4+ BHK'];
+  const selectedBedroomOptions = formData.bedrooms ? formData.bedrooms.split(',').map(b => b.trim()).filter(Boolean) : [];
+  const toggleBedroomOption = (option: string) => {
+    setFormData(prev => {
+      const current = prev.bedrooms ? prev.bedrooms.split(',').map(b => b.trim()).filter(Boolean) : [];
+      const next = current.includes(option)
+        ? current.filter(o => o !== option)
+        : [...current, option].sort((a, b) => bedroomOptions.indexOf(a) - bedroomOptions.indexOf(b));
+      return { ...prev, bedrooms: next.join(', ') };
+    });
+  };
   const bathroomOptions = ['1', '2', '3', '4', '4+'];
   const furnishingOptions = ['Unfurnished', 'Semi-Furnished', 'Fully-Furnished'];
   const possessionOptions = ['Ready to Move', 'Under Construction'];
@@ -2597,6 +2630,16 @@ const PostProperty = () => {
               type="text"
             />
             <input
+              name="projectTotalUnits"
+              value={formData.projectTotalUnits}
+              onChange={handleChange}
+              placeholder="Project Total Units"
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+              type="number"
+              min="0"
+              step="1"
+            />
+            <input
               name="flatSize"
               value={formData.flatSize}
               onChange={handleChange}
@@ -2615,16 +2658,44 @@ const PostProperty = () => {
               <option value="">Flat Facing</option>
               {flatFacingOptions.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
-            <select
-              name="bedrooms"
-              value={formData.bedrooms}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-              required
-            >
-              <option value="">Bedrooms (BHK) *</option>
-              {bedroomOptions.map(option => <option key={option} value={option}>{option}</option>)}
-            </select>
+            <div className="grid grid-cols-2 gap-4 md:col-span-2">
+              <input
+                name="flatSizeMin"
+                value={formData.flatSizeMin}
+                onChange={handleChange}
+                placeholder="Min Flat Size (Sq Ft) - if range"
+                className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+                type="number"
+                min="0"
+                step="any"
+              />
+              <input
+                name="flatSizeMax"
+                value={formData.flatSizeMax}
+                onChange={handleChange}
+                placeholder="Max Flat Size (Sq Ft) - if range"
+                className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+                type="number"
+                min="0"
+                step="any"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <p className="mb-2 text-sm font-semibold text-slate-700">Bedrooms (BHK) *</p>
+              <div className="flex flex-wrap gap-3">
+                {bedroomOptions.map(option => (
+                  <label key={option} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={selectedBedroomOptions.includes(option)}
+                      onChange={() => toggleBedroomOption(option)}
+                      className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
+            </div>
             <select
               name="bathrooms"
               value={formData.bathrooms}
@@ -2968,6 +3039,53 @@ const PostProperty = () => {
             <input type="file" onChange={handlePropertyFormChange} className="w-full rounded bg-white p-2" accept="image/*,.pdf" />
             {formData.propertyForm && <p className="mt-2 text-sm font-semibold text-teal-700">Selected: {formData.propertyForm.name}</p>}
           </label>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-800">Possession Date</label>
+            <input
+              name="possessionDate"
+              value={formData.possessionDate}
+              onChange={handleChange}
+              type="date"
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-800">RERA ID</label>
+            <input
+              name="reraId"
+              value={formData.reraId}
+              onChange={handleChange}
+              type="text"
+              placeholder="RERA registration ID (if applicable)"
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-800">Locality Top Highlights</label>
+            <textarea
+              name="localityHighlights"
+              value={formData.localityHighlights}
+              onChange={handleChange}
+              placeholder="e.g. Close to metro, schools, hospitals, IT parks"
+              rows={3}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-800">Project Highlights</label>
+            <textarea
+              name="projectHighlights"
+              value={formData.projectHighlights}
+              onChange={handleChange}
+              placeholder="e.g. Clubhouse, swimming pool, gated community, power backup"
+              rows={3}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
         </div>
       </section>
       )}

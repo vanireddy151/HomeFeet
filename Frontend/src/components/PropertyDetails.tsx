@@ -214,6 +214,7 @@ const PropertyDetails: React.FC = () => {
   const details = property ? [
     { label: 'Project Name', value: property.projectName },
     { label: 'Company Name', value: property.companyName },
+    { label: 'Project Total Units', value: property.projectTotalUnits },
     { label: 'Total Area', value: isApartmentLikeListing ? '' : (property.totalArea ? `${property.totalArea} ${property.areaUnit || ''}` : '') },
     { label: 'Square Feet Price', value: formatMoney(property.squareFeetPrice) },
     { label: 'Total Budget', value: formatMoney(property.totalBudget) },
@@ -222,10 +223,13 @@ const PropertyDetails: React.FC = () => {
     { label: developerRatioLabel, value: isApartmentListing ? '' : property.developerRatio },
     { label: 'Facing', value: isApartmentLikeListing ? '' : property.facing },
     { label: 'Flat Size', value: property.flatSize ? `${property.flatSize} Sq Ft` : '' },
+    { label: 'Flat Size Range', value: property.flatSizeMin || property.flatSizeMax ? `${property.flatSizeMin || '-'} to ${property.flatSizeMax || '-'} Sq Ft` : '' },
     { label: 'Flat Facing', value: property.flatFacing },
     { label: 'Floor', value: property.floorNumber ? `${property.floorNumber}${property.totalFloors ? ` of ${property.totalFloors}` : ''}` : '' },
     { label: 'Furnishing', value: property.furnishingStatus },
     { label: 'Possession Status', value: property.possessionStatus },
+    { label: 'Possession Date', value: property.possessionDate },
+    { label: 'RERA ID', value: property.reraId },
     { label: 'Road Size', value: property.roadSize ? `${property.roadSize} ft` : '' },
     { label: 'Frontage', value: property.frontageWidth ? `${property.frontageWidth} ft` : '' },
     { label: 'Road Facing Direction', value: property.roadFacingDirection },
@@ -233,6 +237,8 @@ const PropertyDetails: React.FC = () => {
   ].filter((item) => item.value) : [];
 
   const amenities: string[] = Array.isArray(property?.selectedAmenities) ? property.selectedAmenities : [];
+  const localityHighlights = property?.localityHighlights || '';
+  const projectHighlights = property?.projectHighlights || '';
 
   const handleShowContact = async () => {
     const builderStatus = localStorage.getItem('builderVerificationStatus');
@@ -527,6 +533,26 @@ const PropertyDetails: React.FC = () => {
                       {amenity}
                     </span>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {(projectHighlights || localityHighlights) && (
+              <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-black text-slate-950">Highlights</h2>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  {projectHighlights && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project Highlights</p>
+                      <p className="mt-1 whitespace-pre-line text-sm leading-6 text-slate-700">{projectHighlights}</p>
+                    </div>
+                  )}
+                  {localityHighlights && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Locality Top Highlights</p>
+                      <p className="mt-1 whitespace-pre-line text-sm leading-6 text-slate-700">{localityHighlights}</p>
+                    </div>
+                  )}
                 </div>
               </section>
             )}
