@@ -302,6 +302,11 @@ const propertySchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  expiresAt: {  // Set from the listing owner's active subscription plan validity (Basic/Premium+/Assist/Super Assist). Null means no expiry.
+    type: Date,
+    default: null,
+    index: true
+  },
   contactRevealRule: {
     type: String,
     enum: ['mutual_interest'],

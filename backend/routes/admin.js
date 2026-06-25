@@ -14,6 +14,7 @@ const { createPendingPropertyFromIntake } = require('../lib/whatsappIntake');
 const { sendTodayBuilderDigest, getMissingWhatsAppConfig } = require('../lib/builderDigest');
 const hyderabadBuilderContacts = require('../data/hyderabadBuilderContacts');
 const mumbaiBuilderContacts = require('../data/mumbaiBuilderContacts');
+const { OWNER_PLAN_TIERS } = require('../config/ownerPlans');
 
 const router = express.Router();
 
@@ -68,18 +69,36 @@ router.get('/properties', isAdmin, async (req, res) => {
   }
 });
 
+const computePropertyExpiry = async (property, approvedAt) => {
+  if (!property.userId) return null;
+  const owner = await User.findById(property.userId).select('ownerPlanTier ownerPlanExpiresAt');
+  if (!owner || owner.ownerPlanTier === 'none' || !owner.ownerPlanTier) return null;
+  if (!owner.ownerPlanExpiresAt || new Date(owner.ownerPlanExpiresAt) <= new Date()) return null;
+
+  const planConfig = OWNER_PLAN_TIERS[owner.ownerPlanTier];
+  if (!planConfig) return null;
+
+  const expiresAt = new Date(approvedAt);
+  expiresAt.setDate(expiresAt.getDate() + planConfig.validityDays);
+  return expiresAt;
+};
+
 // PATCH approve property
 router.patch('/properties/:id/approve', isAdmin, async (req, res) => {
   try {
-    const property = await Property.findByIdAndUpdate(
-      req.params.id,
-      { status: 'approved', rejectionReason: '', approvedAt: new Date() },
-      { new: true }
-    );
-
-    if (!property) {
+    const existing = await Property.findById(req.params.id);
+    if (!existing) {
       return res.status(404).json({ error: 'Property not found' });
     }
+
+    const approvedAt = new Date();
+    const expiresAt = await computePropertyExpiry(existing, approvedAt);
+
+    const property = await Property.findByIdAndUpdate(
+      req.params.id,
+      { status: 'approved', rejectionReason: '', approvedAt, expiresAt },
+      { new: true }
+    );
 
     res.json({ success: true, property });
   } catch (error) {

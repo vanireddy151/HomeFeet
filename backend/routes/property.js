@@ -87,6 +87,10 @@ const isAllowedGoogleMapHost = (hostname = '') =>
 const escapeRegex = (value = '') =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// Excludes properties whose subscription-plan-based validity window has passed.
+// expiresAt is null for listings with no plan-based expiry (unaffected).
+const notExpiredCondition = () => ({ $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] });
+
 const findUserByPhone = (value) => {
   const phone = normalizePhone(value);
   if (!/^\d{10}$/.test(phone)) return null;
@@ -631,7 +635,7 @@ router.post('/add', handlePropertyUpload, async (req, res) => {
 // GET /api/all - Get all APPROVED properties only
 router.get('/all', async (req, res) => {
   try {
-    const properties = await Property.find({ status: 'approved' });
+    const properties = await Property.find({ status: 'approved', ...notExpiredCondition() });
     res.json(properties.map(stripOwnerContact));
   } catch (err) {
     console.error(err);
@@ -662,7 +666,7 @@ router.get('/marketplace-stats', async (_req, res) => {
       User.countDocuments({ accountType: 'builder' }),
       User.countDocuments({ accountType: 'owner' }),
       User.countDocuments({ accountType: 'mediator' }),
-      Property.countDocuments({ status: 'approved' })
+      Property.countDocuments({ status: 'approved', ...notExpiredCondition() })
     ]);
 
     res.json({
@@ -790,7 +794,7 @@ router.get('/agents', async (req, res) => {
     const propertiesCounts = await Promise.all(agents.map((agent) => {
       const ownerMatch = [{ userId: agent._id.toString() }];
       if (agent.phone) ownerMatch.push({ phone: agent.phone });
-      return Property.countDocuments({ $or: ownerMatch, status: 'approved' });
+      return Property.countDocuments({ status: 'approved', $and: [{ $or: ownerMatch }, notExpiredCondition()] });
     }));
 
     res.json(agents.map((agent, index) => ({
@@ -842,7 +846,7 @@ router.get('/agents/:id', async (req, res) => {
 
     const ownerMatch = [{ userId: agent._id.toString() }];
     if (agent.phone) ownerMatch.push({ phone: agent.phone });
-    const properties = await Property.find({ $or: ownerMatch, status: 'approved' }).sort({ createdAt: -1 });
+    const properties = await Property.find({ status: 'approved', $and: [{ $or: ownerMatch }, notExpiredCondition()] }).sort({ createdAt: -1 });
 
     res.json({
       id: agent._id.toString(),
@@ -1250,6 +1254,10 @@ router.get('/search', async (req, res) => {
     const regex = new RegExp(escapeRegex(queryText), 'i');
 
     const match = { status: 'approved' };  // Only show approved properties
+    match.$and = [
+      ...(match.$and || []),
+      notExpiredCondition()
+    ];
     if (listingIntent && listingIntent !== 'All') {
       match.listingIntent = new RegExp(`^${escapeRegex(String(listingIntent))}$`, 'i');
     }

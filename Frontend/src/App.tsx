@@ -1225,7 +1225,7 @@ function HomePage() {
       <section className="bg-slate-50 py-16">
         <div className="ld-container">
           <div className="rounded-lg border border-slate-200 bg-white p-6 pt-[1.425rem] shadow-xl shadow-slate-200/70 md:p-8 md:pt-[1.9rem]">
-            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Top Developers in {selectedCity}</h2>
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Top <span className="text-[#0AA6A6]">Developers</span> in {selectedCity}</h2>
             <p className="mt-3 w-full text-sm leading-6 text-slate-600">
               These top developers in {selectedCity} have proven track records and a history of satisfied customers. Whether it's gated villas, high-rise apartments, or township living, they build with integrity and care. Choose a name that enhances the value of your property.
             </p>
@@ -1434,12 +1434,12 @@ function HomePage() {
       <section className="bg-white py-16">
         <div className="ld-container">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70 md:p-8">
-            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Hot Selling Real Estate Projects in {selectedCity}</h2>
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Hot Selling <span className="text-[#0077CC]">Real Estate</span> Projects in {selectedCity}</h2>
             <p className="mt-3 w-full text-sm leading-6 text-slate-600">
               In search of the most talked-about homes? Our list of hot-selling projects in {selectedCity} features properties with modern architecture, future-ready features, and exceptional ROI potential. All of them are known to be located in rapidly developing areas; these homes are selling out quickly.
             </p>
 
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="mt-12 flex flex-wrap gap-2">
               {hotSellingZones.map((zone) => (
                 <button
                   key={zone}
@@ -1501,7 +1501,7 @@ function HomePage() {
       <section className="bg-white pb-16 pt-[3.8rem]">
         <div className="ld-container">
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Newly Launched Projects</h2>
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Newly <span className="text-[#0AA6A6]">Launched</span> Projects</h2>
             <Link
               to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
               className="inline-flex items-center gap-1 text-sm font-bold text-[#0077CC] hover:text-teal-700"

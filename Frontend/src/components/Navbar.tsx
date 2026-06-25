@@ -60,9 +60,6 @@ const Navbar: React.FC = () => {
   const accountLinks = [
     ['Dashboard', '/dashboard'],
     ['My Profile', '/profile'],
-    ['My Listings', '/user-posted-properties'],
-    ['Owners Contacted', '/interest-shown'],
-    ['Contact Requests', '/interested-in-your-properties'],
   ];
 
   const isNavLinkActive = (link: { to: string; intent?: string; propertyType?: string }) => {
