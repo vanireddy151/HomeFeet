@@ -1500,7 +1500,7 @@ function HomePage() {
 
       <section className="bg-white pb-16 pt-[3.8rem]">
         <div className="ld-container">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-12 flex items-center justify-between">
             <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Newly <span className="text-[#0AA6A6]">Launched</span> Projects</h2>
             <Link
               to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
