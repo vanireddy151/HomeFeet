@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, Briefcase, Building2, ChevronDown, Home, IndianRupee, Layers, MapPin, Mic, Search, Tag } from 'lucide-react';
+import { BarChart3, Briefcase, Building2, ChevronDown, Home, IndianRupee, Landmark, Layers, MapPin, Mic, Search, Tag } from 'lucide-react';
 import { API_BASE } from '../lib/api';
 
 interface SearchBarProps {
@@ -11,8 +11,8 @@ interface SearchBarProps {
 const fallbackPopularLocations = ['Kokapet', 'Gachibowli', 'Kondapur', 'Financial District', 'Madhapur', 'Narsingi'];
 
 const metroCities = [
-  'Hyderabad', 'Bengaluru', 'Chennai', 'Mumbai', 'Delhi', 'Kolkata',
-  'Pune', 'Ahmedabad', 'Jaipur', 'Kochi', 'Lucknow', 'Chandigarh'
+  'Bangalore', 'Delhi', 'Faridabad', 'Ghaziabad', 'Greater Noida', 'Gurgaon',
+  'Hyderabad', 'Indore', 'Jaipur', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'
 ];
 
 const SEARCH_TABS = [
@@ -212,24 +212,31 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
                 </button>
               </div>
               {showCityDropdown && (
-                <div className="absolute left-0 top-full z-40 mt-1 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl">
-                  <p className="px-4 pt-2 text-xs font-bold uppercase tracking-wide text-teal-700">
+                <div className="absolute left-0 top-full z-40 mt-1 w-[92vw] max-w-md overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl sm:w-[480px]">
+                  <p className="px-4 pt-3 text-xs font-bold uppercase tracking-wide text-teal-700">
                     {cityQuery && cityQuery !== city ? 'Matching Cities' : 'Top Cities'}
                   </p>
-                  <div className="max-h-56 overflow-y-auto py-1">
-                    {filteredCities.length ? filteredCities.map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => selectCity(option)}
-                        className={`block w-full px-4 py-2 text-left text-sm font-semibold hover:bg-slate-50 ${
-                          city === option ? 'text-teal-700' : 'text-slate-700'
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    )) : (
-                      <p className="px-4 py-2 text-sm text-slate-500">No cities found</p>
+                  <div className="max-h-72 overflow-y-auto px-2 py-3">
+                    {filteredCities.length ? (
+                      <div className="grid grid-cols-4 gap-1">
+                        {filteredCities.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => selectCity(option)}
+                            className={`flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition hover:bg-teal-50 ${
+                              city === option ? 'bg-teal-50' : ''
+                            }`}
+                          >
+                            <Landmark className={`h-7 w-7 ${city === option ? 'text-teal-700' : 'text-slate-500'}`} />
+                            <span className={`text-[11px] font-semibold leading-tight ${city === option ? 'text-teal-700' : 'text-slate-700'}`}>
+                              {option}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="px-2 py-2 text-sm text-slate-500">No cities found</p>
                     )}
                   </div>
                 </div>
