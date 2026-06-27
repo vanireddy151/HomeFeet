@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, Briefcase, Building2, ChevronDown, Home, IndianRupee, Landmark, Layers, MapPin, Mic, Search, Tag } from 'lucide-react';
+import { BarChart3, Briefcase, Building2, ChevronDown, Home, IndianRupee, Layers, MapPin, Mic, Search, Tag } from 'lucide-react';
 import { API_BASE } from '../lib/api';
+import { CITY_ICONS, GenericCityIcon } from '../lib/cityIcons';
 
 interface SearchBarProps {
   compact?: boolean;
@@ -219,21 +220,24 @@ const SearchBar: React.FC<SearchBarProps> = ({ compact = false, popularLocations
                   <div className="max-h-72 overflow-y-auto px-2 py-3">
                     {filteredCities.length ? (
                       <div className="grid grid-cols-4 gap-1">
-                        {filteredCities.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => selectCity(option)}
-                            className={`flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition hover:bg-teal-50 ${
-                              city === option ? 'bg-teal-50' : ''
-                            }`}
-                          >
-                            <Landmark className={`h-7 w-7 ${city === option ? 'text-teal-700' : 'text-slate-500'}`} />
-                            <span className={`text-[11px] font-semibold leading-tight ${city === option ? 'text-teal-700' : 'text-slate-700'}`}>
-                              {option}
-                            </span>
-                          </button>
-                        ))}
+                        {filteredCities.map((option) => {
+                          const CityIcon = CITY_ICONS[option] || GenericCityIcon;
+                          return (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => selectCity(option)}
+                              className={`flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition hover:bg-teal-50 ${
+                                city === option ? 'bg-teal-50' : ''
+                              }`}
+                            >
+                              <CityIcon className={`h-7 w-7 ${city === option ? 'text-teal-700' : 'text-slate-500'}`} />
+                              <span className={`text-[11px] font-semibold leading-tight ${city === option ? 'text-teal-700' : 'text-slate-700'}`}>
+                                {option}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="px-2 py-2 text-sm text-slate-500">No cities found</p>
