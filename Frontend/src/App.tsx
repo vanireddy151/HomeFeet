@@ -841,6 +841,7 @@ function HomePage() {
   const [exclusiveProjects, setExclusiveProjects] = useState<any[]>([]);
   const [exclusiveIndex, setExclusiveIndex] = useState(0);
   const [exclusiveImageIndex, setExclusiveImageIndex] = useState(0);
+  const [propertyCategoryCounts, setPropertyCategoryCounts] = useState({ newLaunches: 0, readyToMove: 0, underConstruction: 0 });
   const [selectedHotSellingZone, setSelectedHotSellingZone] = useState('All');
   const hotSellingScrollRef = useRef<HTMLDivElement>(null);
   const newlyLaunchedScrollRef = useRef<HTMLDivElement>(null);
@@ -1033,6 +1034,35 @@ function HomePage() {
     };
 
     loadExclusiveProjects();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCity]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPropertyCategoryCounts = async () => {
+      try {
+        const cityParam = `city=${encodeURIComponent(selectedCity)}`;
+        const [allRes, readyRes, underConstructionRes] = await Promise.all([
+          fetch(`${API_BASE}/search?${cityParam}`),
+          fetch(`${API_BASE}/search?${cityParam}&possessionStatus=${encodeURIComponent('Ready to Move')}`),
+          fetch(`${API_BASE}/search?${cityParam}&possessionStatus=${encodeURIComponent('Under Construction')}`)
+        ]);
+        const [all, ready, underConstruction] = await Promise.all([allRes.json(), readyRes.json(), underConstructionRes.json()]);
+        if (cancelled) return;
+        setPropertyCategoryCounts({
+          newLaunches: Array.isArray(all) ? all.length : 0,
+          readyToMove: Array.isArray(ready) ? ready.length : 0,
+          underConstruction: Array.isArray(underConstruction) ? underConstruction.length : 0
+        });
+      } catch {
+        if (!cancelled) setPropertyCategoryCounts({ newLaunches: 0, readyToMove: 0, underConstruction: 0 });
+      }
+    };
+
+    loadPropertyCategoryCounts();
     return () => {
       cancelled = true;
     };
@@ -1426,6 +1456,53 @@ function HomePage() {
           </div>
         </section>
       )}
+
+      <section className="bg-white py-16">
+        <div className="ld-container">
+          <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Properties Categories</h2>
+          <p className="mt-1 text-sm text-[#0077CC]">Explore Properties Tailored to Your Needs</p>
+
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                label: 'New Launches',
+                count: propertyCategoryCounts.newLaunches,
+                image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+                to: `/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`
+              },
+              {
+                label: 'Ready To Move',
+                count: propertyCategoryCounts.readyToMove,
+                image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+                to: `/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}&possessionStatus=${encodeURIComponent('Ready to Move')}`
+              },
+              {
+                label: 'Under Construction',
+                count: propertyCategoryCounts.underConstruction,
+                image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
+                to: `/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}&possessionStatus=${encodeURIComponent('Under Construction')}`
+              }
+            ].map((category) => (
+              <Link
+                key={category.label}
+                to={category.to}
+                className="group relative block h-64 overflow-hidden rounded-xl shadow-sm transition hover:shadow-xl"
+              >
+                <img src={category.image} alt={category.label} className="h-full w-full object-cover transition group-hover:scale-105" />
+                <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-lg bg-white px-4 py-3 shadow-lg">
+                  <div>
+                    <p className="font-black text-slate-950">{category.label}</p>
+                    <p className="text-xs text-slate-500">{category.count} Available Properties</p>
+                  </div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-red-200 text-red-600 transition group-hover:bg-red-600 group-hover:text-white">
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="bg-white py-16">
         <div className="ld-container">
