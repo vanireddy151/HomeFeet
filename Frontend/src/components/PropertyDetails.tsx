@@ -21,6 +21,7 @@ import {
   Droplet,
   Dumbbell,
   Flower2,
+  Heart,
   IndianRupee,
   Lock,
   Mail,
@@ -137,6 +138,8 @@ const PropertyDetails: React.FC = () => {
   const [showComparison, setShowComparison] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [activeBhkGroupIndex, setActiveBhkGroupIndex] = useState(0);
+  const [isShortlisted, setIsShortlisted] = useState(false);
+  const [shortlistLoading, setShortlistLoading] = useState(false);
   const [activeFloorPlanUnitIndex, setActiveFloorPlanUnitIndex] = useState(0);
   const [floorPlanView, setFloorPlanView] = useState<'3D' | '2D'>('3D');
   const floorPlanSizeTabsRef = useRef<HTMLDivElement | null>(null);
@@ -234,6 +237,50 @@ const PropertyDetails: React.FC = () => {
     };
     fetchProperty();
   }, [id, token]);
+
+  useEffect(() => {
+    if (!token || !id) {
+      setIsShortlisted(false);
+      return;
+    }
+    let cancelled = false;
+    fetch(`${API_BASE}/my-shortlist`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((entries) => {
+        if (cancelled || !Array.isArray(entries)) return;
+        setIsShortlisted(entries.some((entry: any) => entry.property?._id === id));
+      })
+      .catch(() => { if (!cancelled) setIsShortlisted(false); });
+    return () => { cancelled = true; };
+  }, [id, token]);
+
+  const toggleShortlist = async () => {
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
+    setShortlistLoading(true);
+    try {
+      if (isShortlisted) {
+        await fetch(`${API_BASE}/shortlist/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setIsShortlisted(false);
+      } else {
+        await fetch(`${API_BASE}/shortlist`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ propertyId: id })
+        });
+        setIsShortlisted(true);
+      }
+    } catch (err) {
+      console.error('Unable to update shortlist:', err);
+    } finally {
+      setShortlistLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!property?.locality) {
@@ -609,6 +656,17 @@ const PropertyDetails: React.FC = () => {
                     Share on WhatsApp
                   </a>
                 )}
+                <button
+                  type="button"
+                  onClick={toggleShortlist}
+                  disabled={shortlistLoading}
+                  className={`inline-flex items-center gap-1 font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    isShortlisted ? 'text-rose-600 hover:text-rose-700' : 'text-slate-500 hover:text-rose-600'
+                  }`}
+                >
+                  <Heart className={`h-4 w-4 ${isShortlisted ? 'fill-rose-600' : ''}`} />
+                  {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+                </button>
               </div>
               {property.landmark && <p className="mt-2 text-sm text-slate-500">Near {property.landmark}</p>}
 

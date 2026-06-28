@@ -6,6 +6,7 @@ const axios = require('axios');
 const Property = require('../models/Property');
 const User = require('../models/User');
 const Interest = require('../models/Interest');
+const Shortlist = require('../models/Shortlist');
 const Message = require('../models/Message');
 const ContactInquiry = require('../models/ContactInquiry');
 
@@ -1066,6 +1067,80 @@ router.put('/properties/:id', handlePropertyUpload, async (req, res) => {
   } catch (err) {
     console.error('Update error:', err);
     res.status(500).json({ error: 'Failed to update property' });
+  }
+});
+
+// POST /api/shortlist - Save a property to the current user's shortlist
+router.post('/shortlist', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const { propertyId } = req.body;
+    const property = await Property.findById(propertyId);
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+
+    await Shortlist.findOneAndUpdate(
+      { userId: user._id.toString(), propertyId },
+      { userId: user._id.toString(), propertyId },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ success: true, shortlisted: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save shortlist' });
+  }
+});
+
+// DELETE /api/shortlist/:propertyId - Remove a property from the current user's shortlist
+router.delete('/shortlist/:propertyId', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    await Shortlist.deleteOne({ userId: user._id.toString(), propertyId: req.params.propertyId });
+    res.status(200).json({ success: true, shortlisted: false });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove shortlist' });
+  }
+});
+
+// GET /api/my-shortlist - List the current user's shortlisted properties
+router.get('/my-shortlist', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const entries = await Shortlist.find({ userId: user._id.toString() })
+      .populate('propertyId')
+      .sort({ createdAt: -1 });
+
+    const results = await Promise.all(entries.map(async (entry) => {
+      const property = entry.propertyId;
+      if (!property) return null;
+      const canSeeContact = await canSeePropertyOwnerContact(user, property);
+      return {
+        _id: entry._id,
+        createdAt: entry.createdAt,
+        property: canSeeContact ? property : stripOwnerContact(property)
+      };
+    }));
+
+    res.json(results.filter(Boolean));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch shortlist' });
   }
 });
 

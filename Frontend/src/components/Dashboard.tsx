@@ -191,7 +191,8 @@ const Dashboard: React.FC = () => {
   const paymentInProgressRef = useRef(false);
   const isAdmin = isAdminUser(localStorage.getItem('phone'), localStorage.getItem('accountType'), localStorage.getItem('email'));
 
-  const [activeTab, setActiveTab] = useState<'posted' | 'subscription'>('posted');
+  const [activeTab, setActiveTab] = useState<'posted' | 'subscription' | 'shortlisted' | 'contacted'>('posted');
+  const [defaultTabApplied, setDefaultTabApplied] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [accountType, setAccountType] = useState('owner');
   const [currentTier, setCurrentTier] = useState('none');
@@ -214,6 +215,10 @@ const Dashboard: React.FC = () => {
   const [loadingPack, setLoadingPack] = useState(0);
   const [buyerPlanMessage, setBuyerPlanMessage] = useState('');
   const buyerPaymentInProgressRef = useRef(false);
+  const [shortlistEntries, setShortlistEntries] = useState<any[]>([]);
+  const [loadingShortlist, setLoadingShortlist] = useState(true);
+  const [contactedEntries, setContactedEntries] = useState<any[]>([]);
+  const [loadingContacted, setLoadingContacted] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -221,12 +226,17 @@ const Dashboard: React.FC = () => {
       navigate('/');
       return;
     }
-    setAccountType(localStorage.getItem('accountType') || 'owner');
+    const storedAccountType = localStorage.getItem('accountType') || 'owner';
+    setAccountType(storedAccountType);
     setCurrentTier(localStorage.getItem('ownerPlanTier') || 'none');
     setCurrentExpiresAt(localStorage.getItem('ownerPlanExpiresAt') || '');
     setBuyerFreeContactUsed(localStorage.getItem('buyerFreeContactUsed') === 'true');
     setBuyerContactCredits(Number(localStorage.getItem('buyerContactCredits') || 0));
-  }, [navigate]);
+    if (!defaultTabApplied) {
+      setDefaultTabApplied(true);
+      if (storedAccountType === 'buyer') setActiveTab('shortlisted');
+    }
+  }, [navigate, defaultTabApplied]);
 
   const fetchProperties = async () => {
     try {
@@ -288,9 +298,59 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const fetchShortlist = async () => {
+    try {
+      setLoadingShortlist(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${API_BASE}/my-shortlist`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      setShortlistEntries(await res.json());
+    } catch (err) {
+      console.error('Error fetching shortlist:', err);
+    } finally {
+      setLoadingShortlist(false);
+    }
+  };
+
+  const removeFromShortlist = async (propertyId: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      await fetch(`${API_BASE}/shortlist/${propertyId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setShortlistEntries((prev) => prev.filter((entry) => entry.property?._id !== propertyId));
+    } catch (err) {
+      console.error('Error removing shortlist entry:', err);
+    }
+  };
+
+  const fetchContacted = async () => {
+    try {
+      setLoadingContacted(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${API_BASE}/my-interests?as=buyer`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      setContactedEntries(await res.json());
+    } catch (err) {
+      console.error('Error fetching contacted properties:', err);
+    } finally {
+      setLoadingContacted(false);
+    }
+  };
+
   useEffect(() => {
     fetchProperties();
     fetchInterestCounts();
+    fetchShortlist();
+    fetchContacted();
   }, []);
 
   const handleCloseDeal = async (id: string) => {
@@ -612,15 +672,38 @@ const Dashboard: React.FC = () => {
         <ListingsSidebar activePage="dashboard" />
         <main className="min-w-0 flex-1">
           <div className="mb-6 flex gap-2 border-b border-slate-200">
-            <button
-              type="button"
-              onClick={() => setActiveTab('posted')}
-              className={`px-4 py-2 text-sm font-bold transition ${
-                activeTab === 'posted' ? 'border-b-2 border-[#0AA6A6] text-[#0AA6A6]' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Posted Properties
-            </button>
+            {accountType === 'buyer' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('shortlisted')}
+                  className={`px-4 py-2 text-sm font-bold transition ${
+                    activeTab === 'shortlisted' ? 'border-b-2 border-[#0AA6A6] text-[#0AA6A6]' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Shortlisted Properties
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('contacted')}
+                  className={`px-4 py-2 text-sm font-bold transition ${
+                    activeTab === 'contacted' ? 'border-b-2 border-[#0AA6A6] text-[#0AA6A6]' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Contacted Properties
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveTab('posted')}
+                className={`px-4 py-2 text-sm font-bold transition ${
+                  activeTab === 'posted' ? 'border-b-2 border-[#0AA6A6] text-[#0AA6A6]' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Posted Properties
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setActiveTab('subscription')}
@@ -879,6 +962,137 @@ const Dashboard: React.FC = () => {
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'shortlisted' && (
+            <div>
+              <div className="mb-6 flex flex-col justify-between gap-4 rounded-lg bg-slate-950 p-6 text-white shadow-xl md:flex-row md:items-center">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-wide text-amber-300">Buyer Desk</p>
+                  <h1 className="mt-1 text-2xl font-black">Shortlisted Properties</h1>
+                  <p className="mt-2 text-slate-300">Properties you've saved for later. Use the heart icon on any property page to add more.</p>
+                </div>
+              </div>
+
+              {loadingShortlist ? (
+                <div className="flex h-64 items-center justify-center">
+                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-teal-600" />
+                </div>
+              ) : shortlistEntries.length === 0 ? (
+                <div className="rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm">
+                  <p className="text-lg text-gray-600">You haven't shortlisted any properties yet.</p>
+                  <button onClick={() => navigate('/properties')} className="ld-btn-primary mt-4">
+                    Browse Properties
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {shortlistEntries.map((entry) => {
+                    const property = entry.property || {};
+                    return (
+                      <div key={entry._id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <div className="relative h-40 w-full overflow-hidden bg-slate-100">
+                          <img
+                            src={getCardImageUrl(property) ? `${API_ORIGIN}${getCardImageUrl(property)}` : fallbackImage}
+                            alt={property.projectName || 'Property'}
+                            className={`h-full w-full ${isGeneratedDiagramPreview(property) ? 'bg-white object-contain p-2' : 'object-cover'}`}
+                            onError={(e) => { e.currentTarget.src = fallbackImage; e.currentTarget.className = 'h-full w-full object-cover'; }}
+                          />
+                        </div>
+                        <div className="p-4">
+                          <h3 className="text-base font-bold text-slate-950">{property.projectName || 'Untitled Property'}</h3>
+                          <p className="mt-1 flex items-center gap-1 text-sm text-slate-500">
+                            <MapPin className="h-3.5 w-3.5 shrink-0" /> {property.locality}, {property.city}
+                          </p>
+                          <p className="mt-2 text-base font-black text-[#0AA6A6]">{getDisplayPrice(property)}</p>
+                          <div className="mt-3 flex gap-2">
+                            <Link to={`/property/${property._id}`} className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                              View Details
+                            </Link>
+                            <button
+                              onClick={() => removeFromShortlist(property._id)}
+                              className="rounded-lg bg-slate-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'contacted' && (
+            <div>
+              <div className="mb-6 flex flex-col justify-between gap-4 rounded-lg bg-slate-950 p-6 text-white shadow-xl md:flex-row md:items-center">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-wide text-amber-300">Buyer Desk</p>
+                  <h1 className="mt-1 text-2xl font-black">Contacted Properties</h1>
+                  <p className="mt-2 text-slate-300">Owners you've requested contact for, and the status of each request.</p>
+                </div>
+              </div>
+
+              {loadingContacted ? (
+                <div className="flex h-64 items-center justify-center">
+                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-teal-600" />
+                </div>
+              ) : contactedEntries.length === 0 ? (
+                <div className="rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm">
+                  <p className="text-lg text-gray-600">You haven't requested owner contact for any property yet.</p>
+                  <button onClick={() => navigate('/properties')} className="ld-btn-primary mt-4">
+                    Browse Properties
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {contactedEntries.map((entry) => {
+                    const property = entry.propertyId || {};
+                    const statusStyles: Record<string, string> = {
+                      requested: 'bg-amber-100 text-amber-700',
+                      accepted: 'bg-emerald-100 text-emerald-700',
+                      rejected: 'bg-red-100 text-red-700'
+                    };
+                    return (
+                      <div key={entry._id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <div className="relative h-40 w-full overflow-hidden bg-slate-100">
+                          <img
+                            src={getCardImageUrl(property) ? `${API_ORIGIN}${getCardImageUrl(property)}` : fallbackImage}
+                            alt={property.projectName || 'Property'}
+                            className={`h-full w-full ${isGeneratedDiagramPreview(property) ? 'bg-white object-contain p-2' : 'object-cover'}`}
+                            onError={(e) => { e.currentTarget.src = fallbackImage; e.currentTarget.className = 'h-full w-full object-cover'; }}
+                          />
+                          <span className={`absolute left-2 top-2 rounded-full px-2.5 py-1 text-xs font-bold ${statusStyles[entry.status] || 'bg-slate-200 text-slate-600'}`}>
+                            {entry.status}
+                          </span>
+                        </div>
+                        <div className="p-4">
+                          <h3 className="text-base font-bold text-slate-950">{property.projectName || 'Untitled Property'}</h3>
+                          <p className="mt-1 flex items-center gap-1 text-sm text-slate-500">
+                            <MapPin className="h-3.5 w-3.5 shrink-0" /> {property.locality}, {property.city}
+                          </p>
+                          {entry.contact?.phone && (
+                            <p className="mt-2 text-sm font-bold text-teal-700">{entry.contact.phone}</p>
+                          )}
+                          <div className="mt-3 flex gap-2">
+                            <Link to={`/property/${property._id}`} className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                              View Details
+                            </Link>
+                            {entry.contactUnlocked && (
+                              <Link to={`/chat/${entry._id}`} className="rounded-lg bg-slate-950 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800">
+                                Chat
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
