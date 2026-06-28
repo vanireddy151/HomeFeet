@@ -77,7 +77,6 @@ export default function Footer() {
           <div>
             <p className="mb-4 text-xs font-black uppercase tracking-wider text-teal-300">Explore</p>
             <div className="space-y-3.5 text-sm text-slate-300">
-              <Link className="block transition hover:translate-x-0.5 hover:text-white" to="/properties">Properties</Link>
               <Link className="block transition hover:translate-x-0.5 hover:text-white" to="/post-property">Post Property</Link>
               <Link className="block transition hover:translate-x-0.5 hover:text-white" to="/about">About</Link>
               <Link className="block transition hover:translate-x-0.5 hover:text-white" to="/subscription-plans">Subscription Plans</Link>
