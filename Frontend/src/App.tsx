@@ -1055,11 +1055,20 @@ function HomePage() {
         const [all, ready, underConstruction] = await Promise.all([allRes.json(), readyRes.json(), underConstructionRes.json()]);
         if (cancelled) return;
 
-        const mostRecentImage = (list: any) => {
-          if (!Array.isArray(list) || !list.length) return '';
-          const sorted = [...list].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-          return getProjectImage(sorted[0]);
-        };
+        const sortByRecent = (list: any) =>
+          Array.isArray(list)
+            ? [...list].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+            : [];
+
+        const sortedReady = sortByRecent(ready);
+        const sortedUnderConstruction = sortByRecent(underConstruction);
+        const sortedAll = sortByRecent(all);
+
+        const readyImage = sortedReady.length ? getProjectImage(sortedReady[0]) : '';
+        const underConstructionImage = sortedUnderConstruction.length ? getProjectImage(sortedUnderConstruction[0]) : '';
+        const usedIds = new Set([sortedReady[0]?._id, sortedUnderConstruction[0]?._id].filter(Boolean));
+        const newLaunchPick = sortedAll.find((property) => !usedIds.has(property._id)) || sortedAll[0];
+        const newLaunchesImage = newLaunchPick ? getProjectImage(newLaunchPick) : '';
 
         setPropertyCategoryCounts({
           newLaunches: Array.isArray(all) ? all.length : 0,
@@ -1067,9 +1076,9 @@ function HomePage() {
           underConstruction: Array.isArray(underConstruction) ? underConstruction.length : 0
         });
         setPropertyCategoryImages({
-          newLaunches: mostRecentImage(all),
-          readyToMove: mostRecentImage(ready),
-          underConstruction: mostRecentImage(underConstruction)
+          newLaunches: newLaunchesImage,
+          readyToMove: readyImage,
+          underConstruction: underConstructionImage
         });
       } catch {
         if (!cancelled) setPropertyCategoryCounts({ newLaunches: 0, readyToMove: 0, underConstruction: 0 });
