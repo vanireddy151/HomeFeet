@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AlertCircle, Check, MapPin, Pencil, X } from 'lucide-react';
+import { AlertCircle, Check, KeyRound, MapPin, Pencil, X } from 'lucide-react';
 import ListingsSidebar from './ListingsSidebar';
 import LoginModal from './LoginModal';
 import { API_BASE, API_ORIGIN } from '../lib/api';
@@ -103,6 +103,12 @@ const PLAN_TIERS: PlanTier[] = [
   }
 ];
 
+const BUYER_CONTACT_PACKS = [
+  { packSize: 1, price: 199, label: '1 Property' },
+  { packSize: 5, price: 1000, label: '5 Properties' },
+  { packSize: 10, price: 2000, label: '10 Properties' }
+];
+
 const FEATURE_ROWS: Array<{
   label: string;
   render: (tier: PlanTier) => React.ReactNode;
@@ -203,6 +209,11 @@ const Dashboard: React.FC = () => {
   const [localityFilter, setLocalityFilter] = useState('All');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('All');
   const [bhkFilter, setBhkFilter] = useState('All');
+  const [buyerFreeContactUsed, setBuyerFreeContactUsed] = useState(false);
+  const [buyerContactCredits, setBuyerContactCredits] = useState(0);
+  const [loadingPack, setLoadingPack] = useState(0);
+  const [buyerPlanMessage, setBuyerPlanMessage] = useState('');
+  const buyerPaymentInProgressRef = useRef(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -213,6 +224,8 @@ const Dashboard: React.FC = () => {
     setAccountType(localStorage.getItem('accountType') || 'owner');
     setCurrentTier(localStorage.getItem('ownerPlanTier') || 'none');
     setCurrentExpiresAt(localStorage.getItem('ownerPlanExpiresAt') || '');
+    setBuyerFreeContactUsed(localStorage.getItem('buyerFreeContactUsed') === 'true');
+    setBuyerContactCredits(Number(localStorage.getItem('buyerContactCredits') || 0));
   }, [navigate]);
 
   const fetchProperties = async () => {
@@ -513,6 +526,86 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleBuyPack = async (pack: { packSize: number; price: number; label: string }) => {
+    if (buyerPaymentInProgressRef.current) return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    buyerPaymentInProgressRef.current = true;
+    setLoadingPack(pack.packSize);
+    setBuyerPlanMessage('');
+
+    try {
+      await loadRazorpayCheckout();
+
+      const orderResponse = await fetch(`${API_BASE}/buyer-contact-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ packSize: pack.packSize })
+      });
+      const orderData = await orderResponse.json();
+      if (!orderResponse.ok) throw new Error(orderData.message || 'Failed to create Razorpay order');
+      if (!window.Razorpay) throw new Error('Razorpay Checkout is not available');
+
+      const checkout = new window.Razorpay({
+        key: orderData.keyId || razorpayConfig.keyId,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency || 'INR',
+        name: razorpayConfig.businessName,
+        description: `Contact Access - ${pack.label}`,
+        image: `${window.location.origin}${razorpayConfig.logoPath}`,
+        order_id: orderData.order.id,
+        prefill: {
+          name: localStorage.getItem('name') || 'HomeFeet User',
+          email: localStorage.getItem('email') || '',
+          contact: localStorage.getItem('phone') ? `+91${localStorage.getItem('phone')}` : ''
+        },
+        notes: {
+          packSize: String(pack.packSize),
+          address: razorpayConfig.notesAddress
+        },
+        theme: { color: razorpayConfig.themeColor },
+        handler: async (response) => {
+          try {
+            const verifyResponse = await fetch(`${API_BASE}/buyer-contact-payment/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+              body: JSON.stringify(response)
+            });
+            const verifyData = await verifyResponse.json();
+            if (!verifyResponse.ok) throw new Error(verifyData.message || 'Payment verification failed');
+
+            localStorage.setItem('buyerContactCredits', String(verifyData.user.buyerContactCredits || 0));
+            localStorage.setItem('buyerFreeContactUsed', String(Boolean(verifyData.user.buyerFreeContactUsed)));
+            setBuyerContactCredits(verifyData.user.buyerContactCredits || 0);
+            setBuyerFreeContactUsed(Boolean(verifyData.user.buyerFreeContactUsed));
+            setBuyerPlanMessage(`Payment successful. You now have ${verifyData.user.buyerContactCredits || 0} contact-reveal credit(s).`);
+          } catch (error) {
+            setBuyerPlanMessage(error instanceof Error ? error.message : 'Payment verification failed');
+          } finally {
+            buyerPaymentInProgressRef.current = false;
+            setLoadingPack(0);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            buyerPaymentInProgressRef.current = false;
+            setLoadingPack(0);
+          }
+        }
+      });
+
+      checkout.open();
+    } catch (error) {
+      buyerPaymentInProgressRef.current = false;
+      setLoadingPack(0);
+      setBuyerPlanMessage(error instanceof Error ? error.message : 'Unable to start Razorpay payment');
+    }
+  };
+
   return (
     <div className="bg-slate-50">
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-8">
@@ -791,7 +884,51 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
-          {!isAdmin && activeTab === 'subscription' && (
+          {!isAdmin && activeTab === 'subscription' && ['owner', 'mediator', 'buyer'].includes(accountType) && (
+            <div>
+              <h1 className="text-2xl font-black text-slate-950">Owner Contact Access</h1>
+              <p className="mt-1 text-sm text-slate-600">
+                Your first property's owner contact number is free. After that, send a request and wait for the owner
+                to approve it, or buy a contact-reveal pack below for instant access without waiting.
+              </p>
+
+              <div className="mt-4 rounded-lg bg-teal-50 p-4 text-sm font-semibold text-teal-800">
+                {buyerFreeContactUsed
+                  ? 'Your free reveal has been used.'
+                  : 'Your free reveal is available for your next property.'}
+                {' '}You have {buyerContactCredits} paid credit{buyerContactCredits === 1 ? '' : 's'} remaining.
+              </div>
+
+              {buyerPlanMessage && (
+                <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm font-semibold text-teal-800">
+                  {buyerPlanMessage}
+                </div>
+              )}
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                {BUYER_CONTACT_PACKS.map((pack) => (
+                  <div key={pack.packSize} className="flex flex-col rounded-lg border border-slate-200 bg-white p-5 text-center shadow-sm">
+                    <KeyRound className="mx-auto h-6 w-6 text-teal-700" />
+                    <p className="mt-3 text-sm font-bold uppercase tracking-wide text-slate-500">{pack.label}</p>
+                    <p className="mt-2 text-2xl font-black text-slate-950">Rs. {pack.price.toLocaleString('en-IN')}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Rs. {Math.round(pack.price / pack.packSize).toLocaleString('en-IN')} per property
+                    </p>
+                    <button
+                      type="button"
+                      disabled={loadingPack === pack.packSize}
+                      onClick={() => handleBuyPack(pack)}
+                      className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#0AA6A6] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#088f8f] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {loadingPack === pack.packSize ? 'Processing...' : <><Check className="h-4 w-4" /> Buy</>}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!isAdmin && activeTab === 'subscription' && !['owner', 'mediator', 'buyer'].includes(accountType) && (
             <div>
               <h1 className="text-2xl font-black text-slate-950">Subscription Plans</h1>
               <div className="mt-6 rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm">
