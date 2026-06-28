@@ -1247,7 +1247,9 @@ function HomePage() {
                       Contact
                     </Link>
                   </div>
-                  <img src={getProjectImage(pick)} alt={pick.projectName} className="h-full w-full object-cover" />
+                  <div className="flex h-full w-full items-center justify-center bg-slate-100">
+                    <img src={getProjectImage(pick)} alt={pick.projectName} className="h-full w-full object-contain" />
+                  </div>
                 </div>
               ))}
             </div>

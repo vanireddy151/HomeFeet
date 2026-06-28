@@ -1641,7 +1641,9 @@ const PropertiesListingPage: React.FC = () => {
                       key={pick._id}
                       className="grid h-44 w-[calc(50%-0.375rem)] shrink-0 snap-start grid-cols-[140px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 shadow-sm"
                     >
-                      <img src={getProjectImage(pick)} alt={pick.projectName} className="h-full w-full object-cover" />
+                      <div className="flex h-full w-full items-center justify-center bg-slate-100">
+                        <img src={getProjectImage(pick)} alt={pick.projectName} className="h-full w-full object-contain" />
+                      </div>
                       <div className="flex flex-col justify-between p-3">
                         <div>
                           <div className="flex items-center gap-1.5">
