@@ -13,6 +13,11 @@ const propertySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  propertyShareOption: {  // Who is listing this property: the builder, or the owner/landlord
+    type: String,
+    enum: ['', 'builder', 'owner'],
+    default: ''
+  },
   listingIntent: {
     type: String,
     enum: ['development', 'buy', 'sell'],

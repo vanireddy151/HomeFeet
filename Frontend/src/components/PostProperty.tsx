@@ -234,6 +234,7 @@ const PostProperty = () => {
     flatSizeMax: '',
     projectName: '',
     companyName: '',
+    propertyShareOption: '',
     projectTotalUnits: '',
     northSideLength: '',
     southSideLength: '',
@@ -604,6 +605,7 @@ const PostProperty = () => {
           flatSizeMax: property.flatSizeMax || '',
           projectName: property.projectName || '',
           companyName: property.companyName || '',
+          propertyShareOption: property.propertyShareOption || '',
           projectTotalUnits: property.projectTotalUnits || '',
           northSideLength: property.northSideLength || '',
           southSideLength: property.southSideLength || '',
@@ -2079,6 +2081,7 @@ const PostProperty = () => {
     data.append('flatSizeMax', formData.flatSizeMax);
     data.append('projectName', formData.projectName);
     data.append('companyName', formData.companyName);
+    data.append('propertyShareOption', formData.propertyShareOption);
     data.append('projectTotalUnits', formData.projectTotalUnits);
     data.append('northSideLength', formData.northSideLength);
     data.append('southSideLength', formData.southSideLength);
@@ -2815,6 +2818,16 @@ const PostProperty = () => {
               className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
               type="text"
             />
+            <select
+              name="propertyShareOption"
+              value={formData.propertyShareOption}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+            >
+              <option value="">Property Share Options</option>
+              <option value="builder">Builder</option>
+              <option value="owner">Owner (Land Lord)</option>
+            </select>
             <label className="block rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 md:col-span-2">
               <span className="mb-1 flex items-center gap-2 font-semibold text-slate-800">
                 <Image className="h-5 w-5 text-teal-700" />Company Logo
