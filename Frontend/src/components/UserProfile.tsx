@@ -257,7 +257,9 @@ const UserProfile: React.FC = () => {
                 ? `Builder verification status: ${builderStatus}. Plan: ${builderPlan === 'none' ? `Free access (${freeRemaining} owner contacts left)` : builderPlan.replace('_', ' ')}.`
                 : accountType === 'mediator'
                   ? `Agent (Mediator) plan: ${builderPlan === 'none' ? 'Free summary access. Paid membership unlocks other complete listings.' : builderPlan.replace('_', ' ')}.`
-                  : `Owner plan: ${builderPlan === 'none' ? 'Free summary access and your own listing details. Paid membership unlocks other complete listings.' : builderPlan.replace('_', ' ')}.`}
+                  : accountType === 'buyer'
+                    ? 'Buyer account: your first owner-contact reveal is free. See Owner Contact Access below for request and credit-pack options.'
+                    : `Owner plan: ${builderPlan === 'none' ? 'Free summary access and your own listing details. Paid membership unlocks other complete listings.' : builderPlan.replace('_', ' ')}.`}
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
@@ -356,7 +358,7 @@ const UserProfile: React.FC = () => {
           </section>
         )}
 
-        {['owner', 'mediator'].includes(accountType) && (
+        {['owner', 'mediator', 'buyer'].includes(accountType) && (
           <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
               <KeyRound className="h-6 w-6" />

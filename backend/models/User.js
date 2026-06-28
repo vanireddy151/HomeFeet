@@ -67,7 +67,7 @@ const userSchema = new mongoose.Schema({
   },
   accountType: {
     type: String,
-    enum: ['owner', 'mediator', 'builder', 'admin'],
+    enum: ['owner', 'mediator', 'builder', 'buyer', 'admin'],
     required: true,
     default: 'owner',
     index: true

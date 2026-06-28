@@ -143,7 +143,7 @@ const PropertyDetails: React.FC = () => {
 
   const token = localStorage.getItem('token');
   const accountType = localStorage.getItem('accountType') || 'owner';
-  const isOwnerOrMediator = accountType === 'owner' || accountType === 'mediator';
+  const isOwnerOrMediator = ['owner', 'mediator', 'buyer'].includes(accountType);
   const buyerFreeContactUsed = localStorage.getItem('buyerFreeContactUsed') === 'true';
   const buyerContactCredits = Number(localStorage.getItem('buyerContactCredits') || 0);
   const buyerHasInstantAccess = !buyerFreeContactUsed || buyerContactCredits > 0;
@@ -471,7 +471,7 @@ const PropertyDetails: React.FC = () => {
     );
   }
 
-  const membershipAccessRequired = accessRequired === 'marketplace_subscription' || accessRequired === 'mediator_subscription' || accessRequired === 'owner_subscription';
+  const membershipAccessRequired = accessRequired === 'marketplace_subscription' || accessRequired === 'mediator_subscription' || accessRequired === 'owner_subscription' || accessRequired === 'buyer_subscription';
 
   if (membershipAccessRequired && !property) {
     return (

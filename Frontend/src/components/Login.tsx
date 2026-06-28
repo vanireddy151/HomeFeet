@@ -1,7 +1,7 @@
 // src/components/Login.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, User, Mail, Building2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Phone, User, Mail, Building2, Search, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { API_BASE } from '../lib/api';
 
 interface LoginProps {
@@ -22,7 +22,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [accountType, setAccountType] = useState<'owner' | 'mediator' | 'builder'>('owner');
+  const [accountType, setAccountType] = useState<'owner' | 'mediator' | 'builder' | 'buyer'>('owner');
   const [builderCompanyName, setBuilderCompanyName] = useState('');
   const [builderReraId, setBuilderReraId] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -435,8 +435,9 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
 
           {emailMode === 'register' && (
             <>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
+                  { value: 'buyer', label: 'Buyer', icon: Search },
                   { value: 'owner', label: 'Owner', icon: User },
                   { value: 'mediator', label: 'Agent (Mediator)', icon: User },
                   { value: 'builder', label: 'Builder', icon: Building2 }
@@ -447,7 +448,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
                     <button
                       type="button"
                       key={option.value}
-                      onClick={() => setAccountType(option.value as 'owner' | 'mediator' | 'builder')}
+                      onClick={() => setAccountType(option.value as 'owner' | 'mediator' | 'builder' | 'buyer')}
                       className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-3 font-semibold transition ${
                         active ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 text-gray-700 hover:border-teal-300'
                       }`}
@@ -633,8 +634,9 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
+              { value: 'buyer', label: 'Buyer', icon: Search },
               { value: 'owner', label: 'Owner', icon: User },
               { value: 'mediator', label: 'Agent (Mediator)', icon: User },
               { value: 'builder', label: 'Builder', icon: Building2 }
@@ -646,7 +648,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
                   type="button"
                   key={option.value}
                   onClick={() => {
-                    setAccountType(option.value as 'owner' | 'mediator' | 'builder');
+                    setAccountType(option.value as 'owner' | 'mediator' | 'builder' | 'buyer');
                   }}
                   className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-3 font-semibold transition ${
                     active ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 text-gray-700 hover:border-teal-300'
@@ -667,7 +669,9 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
                   ? 'Builder accounts are reviewed before owner contact and chat access are enabled.'
                   : accountType === 'mediator'
                     ? 'Agent (Mediator) accounts can browse listing summaries and post property information.'
-                    : 'Owner accounts can browse listing summaries, post property information, and open their own listing details.'}
+                    : accountType === 'buyer'
+                      ? 'Buyer accounts can browse listings and contact owners directly: your first contact reveal is free, then send a request or buy a contact pack.'
+                      : 'Owner accounts can browse listing summaries, post property information, and open their own listing details.'}
               </span>
             </div>
             {accountType === 'builder' && (

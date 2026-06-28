@@ -256,7 +256,7 @@ const canSeePropertyOwnerContact = async (user, property) => {
   if (!user) return false;
   if (isOwnerOrAdmin(user, property)) return true;
 
-  if (['owner', 'mediator'].includes(user.accountType)) {
+  if (['owner', 'mediator', 'buyer'].includes(user.accountType)) {
     if (hasActiveMarketplaceSubscription(user)) return true;
 
     const buyerInterest = await Interest.findOne({
@@ -770,7 +770,7 @@ router.get('/properties/:id', async (req, res) => {
       if (!hasActiveMarketplaceSubscription(user)) {
         return res.status(403).json({
           error: 'Paid membership required to view complete property details.',
-          accessRequired: ['owner', 'mediator'].includes(user.accountType)
+          accessRequired: ['owner', 'mediator', 'buyer'].includes(user.accountType)
             ? `${user.accountType}_subscription`
             : 'marketplace_subscription',
           listingIntent: project.listingIntent || 'development',
@@ -1079,7 +1079,7 @@ router.post('/interests', async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
     const isBuilder = user.accountType === 'builder';
-    const isBuyer = ['owner', 'mediator'].includes(user.accountType);
+    const isBuyer = ['owner', 'mediator', 'buyer'].includes(user.accountType);
     if (!isBuilder && !isBuyer) {
       return res.status(403).json({ error: 'Only builders, owners, or agents can request owner contact' });
     }
@@ -1231,7 +1231,7 @@ router.patch('/interests/:id/respond', async (req, res) => {
     if (status === 'accepted') {
       const requester = await User.findById(interest.userId);
       if (requester) {
-        unlock = ['owner', 'mediator'].includes(requester.accountType)
+        unlock = ['owner', 'mediator', 'buyer'].includes(requester.accountType)
           ? await unlockBuyerContact(requester, interest)
           : await unlockBuilderContact(requester, interest);
         await interest.populate('propertyId');

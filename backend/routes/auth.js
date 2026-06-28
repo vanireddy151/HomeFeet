@@ -69,12 +69,12 @@ const ownerMediatorSubscriptionPrices = {
 };
 
 const subscriptionPricesForAccount = (accountType) =>
-  ['owner', 'mediator'].includes(accountType)
+  ['owner', 'mediator', 'buyer'].includes(accountType)
     ? ownerMediatorSubscriptionPrices
     : builderSubscriptionPrices;
 
 const subscriptionAudienceForAccount = (accountType) =>
-  ['owner', 'mediator'].includes(accountType) ? 'owner_mediator' : 'builder';
+  ['owner', 'mediator', 'buyer'].includes(accountType) ? 'owner_mediator' : 'builder';
 
 const subscriptionExpiry = (plan) => {
   const months = subscriptionMonths[plan];
@@ -325,7 +325,7 @@ router.post('/complete-signup', async (req, res) => {
   try {
     const { phone, firstName, lastName, email, accountType, builderCompanyName, builderReraId, builderSubscriptionPlan } = req.body;
 
-    if (!phone || !firstName || !['owner', 'mediator', 'builder'].includes(accountType)) {
+    if (!phone || !firstName || !['owner', 'mediator', 'builder', 'buyer'].includes(accountType)) {
       return res.status(400).json({ message: 'Phone, first name, and account type are required' });
     }
 
@@ -393,7 +393,7 @@ router.post('/register-email', async (req, res) => {
     if (!password || password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
-    if (!firstName || !['owner', 'mediator', 'builder'].includes(accountType)) {
+    if (!firstName || !['owner', 'mediator', 'builder', 'buyer'].includes(accountType)) {
       return res.status(400).json({ message: 'First name and account type are required' });
     }
 
@@ -563,8 +563,8 @@ router.post('/membership-order', async (req, res) => {
     const user = await requireUser(req, res);
     if (!user) return;
 
-    if (!['owner', 'builder', 'mediator'].includes(user.accountType)) {
-      return res.status(403).json({ message: 'Only owner, builder, and mediator accounts can subscribe' });
+    if (!['owner', 'builder', 'mediator', 'buyer'].includes(user.accountType)) {
+      return res.status(403).json({ message: 'Only owner, builder, mediator, and buyer accounts can subscribe' });
     }
 
     const { plan, membershipAudience } = req.body;
@@ -810,6 +810,10 @@ router.post('/buyer-contact-order', async (req, res) => {
   try {
     const user = await requireUser(req, res);
     if (!user) return;
+
+    if (!['owner', 'mediator', 'buyer'].includes(user.accountType)) {
+      return res.status(403).json({ message: 'Only owner, agent (mediator), and buyer accounts can buy contact-reveal packs' });
+    }
 
     const { packSize } = req.body;
     const packConfig = BUYER_CONTACT_PACKS[packSize];

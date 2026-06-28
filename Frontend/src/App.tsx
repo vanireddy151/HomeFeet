@@ -3185,7 +3185,7 @@ function MembershipPage({ audience }: { audience?: 'builder' | 'owner_mediator' 
   const membershipUseCase = searchParams.get('useCase');
   const redirectTo = redirectParam && redirectParam.startsWith('/') ? redirectParam : '/properties';
   const accountType = localStorage.getItem('accountType') || 'owner';
-  const selectedAudience = audience || (accountType === 'owner' || accountType === 'mediator' ? 'owner_mediator' : 'builder');
+  const selectedAudience = audience || (['owner', 'mediator', 'buyer'].includes(accountType) ? 'owner_mediator' : 'builder');
   const isOwnerMediatorPlan = selectedAudience === 'owner_mediator';
   const isBuyerAccessPlan = isOwnerMediatorPlan && membershipUseCase === 'buyer';
   const isBuyerInfoAccessPlan = isOwnerMediatorPlan && membershipUseCase === 'buyer-info';
