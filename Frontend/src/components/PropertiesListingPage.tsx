@@ -14,7 +14,9 @@ import {
   Layers,
   List,
   Lock,
+  Mail,
   MapPin,
+  Phone,
   Search,
   ShoppingBag,
   SlidersHorizontal,
@@ -189,6 +191,10 @@ const PropertiesListingPage: React.FC = () => {
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [pendingPropertyId, setPendingPropertyId] = useState('');
   const [detailLoadingId, setDetailLoadingId] = useState('');
+  const [pendingContactId, setPendingContactId] = useState('');
+  const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
+  const [contactModalLoading, setContactModalLoading] = useState(false);
+  const [contactModalResult, setContactModalResult] = useState<{ contactUnlocked: boolean; phone?: string; email?: string; message: string } | null>(null);
   const [mapLoadError, setMapLoadError] = useState('');
 
   // Filter options
@@ -711,6 +717,46 @@ const PropertiesListingPage: React.FC = () => {
       navigate(`/property/${property._id}`);
     } finally {
       setDetailLoadingId('');
+    }
+  };
+
+  const handleCardContact = async (property: Property) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setPendingContactId(property._id);
+      setShowLoginModal(true);
+      return;
+    }
+
+    setContactModalProperty(property);
+    setContactModalLoading(true);
+    setContactModalResult(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/interests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          propertyId: property._id,
+          message: `I am interested in ${property.locality || 'this property'}`
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Unable to request contact');
+
+      setContactModalResult({
+        contactUnlocked: Boolean(data.contactUnlocked),
+        phone: data.contact?.phone,
+        email: data.contact?.email,
+        message: data.message || ''
+      });
+    } catch (error) {
+      setContactModalResult({
+        contactUnlocked: false,
+        message: error instanceof Error ? error.message : 'Unable to request contact'
+      });
+    } finally {
+      setContactModalLoading(false);
     }
   };
 
@@ -1888,13 +1934,21 @@ const PropertiesListingPage: React.FC = () => {
                               {property.description}
                             </p>
                           )}
-                          <button
-                            onClick={() => requireLoginForDetails(property)}
-                            disabled={detailLoadingId === property._id}
-                            className="mt-2 h-7 w-fit min-w-[112px] self-start rounded-md bg-slate-950 px-4 text-[12px] font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
-                          >
-                            {detailLoadingId === property._id ? 'Opening...' : 'View Details'}
-                          </button>
+                          <div className="mt-2 flex gap-1.5">
+                            <button
+                              onClick={() => requireLoginForDetails(property)}
+                              disabled={detailLoadingId === property._id}
+                              className="h-7 w-fit min-w-[112px] self-start rounded-md bg-slate-950 px-4 text-[12px] font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
+                            >
+                              {detailLoadingId === property._id ? 'Opening...' : 'View Details'}
+                            </button>
+                            <button
+                              onClick={() => handleCardContact(property)}
+                              className="h-7 w-fit min-w-[90px] self-start rounded-md border border-teal-600 bg-white px-4 text-[12px] font-semibold text-teal-700 hover:bg-teal-50"
+                            >
+                              Contact
+                            </button>
+                          </div>
                           {property.projectHighlights && (
                             <div className="mt-1.5 rounded-md bg-amber-50 px-2 py-1.5 text-[12px] leading-5 text-slate-700">
                               <span className="font-semibold text-amber-800">Project Highlights: </span>
@@ -1918,6 +1972,8 @@ const PropertiesListingPage: React.FC = () => {
               setShowLoginModal(false);
               const pendingProperty = properties.find((property) => property._id === pendingPropertyId);
               if (pendingProperty) requireLoginForDetails(pendingProperty);
+              const pendingContactProperty = properties.find((property) => property._id === pendingContactId);
+              if (pendingContactProperty) handleCardContact(pendingContactProperty);
             }}
           />
         )}
@@ -1936,6 +1992,46 @@ const PropertiesListingPage: React.FC = () => {
                   Continue Browsing
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+        {contactModalProperty && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+            <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-lg font-black text-slate-950">{contactModalProperty.projectName || 'Property'} Contact</h3>
+                <button type="button" onClick={() => setContactModalProperty(null)} aria-label="Close">
+                  <X className="h-5 w-5 text-slate-500" />
+                </button>
+              </div>
+              {contactModalLoading ? (
+                <div className="mt-6 flex justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-teal-600" />
+                </div>
+              ) : contactModalResult?.contactUnlocked ? (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-4 font-bold text-slate-950">
+                    <Phone className="h-5 w-5 text-teal-700" /> {contactModalResult.phone || 'Not available'}
+                  </div>
+                  {contactModalResult.email && (
+                    <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-4 font-bold text-slate-950">
+                      <Mail className="h-5 w-5 text-teal-700" /> {contactModalResult.email}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <p className="text-sm text-slate-600">{contactModalResult?.message || 'Unable to fetch contact.'}</p>
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <Link to="/dashboard" onClick={() => setContactModalProperty(null)} className="ld-btn-primary flex-1 justify-center">
+                      Buy Contact Pack
+                    </Link>
+                    <button type="button" onClick={() => setContactModalProperty(null)} className="ld-btn-ghost flex-1">
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2396,14 +2492,23 @@ const PropertiesListingPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => requireLoginForDetails(property)}
-                          disabled={detailLoadingId === property._id}
-                          className="block w-full rounded-lg bg-slate-950 py-3 text-center font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {detailLoadingId === property._id ? 'Opening...' : 'View Details'}
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => requireLoginForDetails(property)}
+                            disabled={detailLoadingId === property._id}
+                            className="flex-1 rounded-lg bg-slate-950 py-3 text-center font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
+                          >
+                            {detailLoadingId === property._id ? 'Opening...' : 'View Details'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCardContact(property)}
+                            className="flex-1 rounded-lg border border-teal-600 bg-white py-3 text-center font-semibold text-teal-700 transition-colors hover:bg-teal-50"
+                          >
+                            Contact
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2420,6 +2525,8 @@ const PropertiesListingPage: React.FC = () => {
             setShowLoginModal(false);
             const pendingProperty = properties.find((property) => property._id === pendingPropertyId);
             if (pendingProperty) requireLoginForDetails(pendingProperty);
+            const pendingContactProperty = properties.find((property) => property._id === pendingContactId);
+            if (pendingContactProperty) handleCardContact(pendingContactProperty);
           }}
         />
       )}
@@ -2438,6 +2545,46 @@ const PropertiesListingPage: React.FC = () => {
                 Continue Browsing
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {contactModalProperty && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-lg font-black text-slate-950">{contactModalProperty.projectName || 'Property'} Contact</h3>
+              <button type="button" onClick={() => setContactModalProperty(null)} aria-label="Close">
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            {contactModalLoading ? (
+              <div className="mt-6 flex justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-teal-600" />
+              </div>
+            ) : contactModalResult?.contactUnlocked ? (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-4 font-bold text-slate-950">
+                  <Phone className="h-5 w-5 text-teal-700" /> {contactModalResult.phone || 'Not available'}
+                </div>
+                {contactModalResult.email && (
+                  <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-4 font-bold text-slate-950">
+                    <Mail className="h-5 w-5 text-teal-700" /> {contactModalResult.email}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-4">
+                <p className="text-sm text-slate-600">{contactModalResult?.message || 'Unable to fetch contact.'}</p>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <Link to="/dashboard" onClick={() => setContactModalProperty(null)} className="ld-btn-primary flex-1 justify-center">
+                    Buy Contact Pack
+                  </Link>
+                  <button type="button" onClick={() => setContactModalProperty(null)} className="ld-btn-ghost flex-1">
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
