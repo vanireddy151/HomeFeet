@@ -15,7 +15,7 @@ const interestSchema = new mongoose.Schema({
   contactUnlocked: { type: Boolean, default: false },
   unlockedVia: {
     type: String,
-    enum: ['none', 'free_credit', 'subscription'],
+    enum: ['none', 'free_credit', 'subscription', 'buyer_free', 'buyer_credit'],
     default: 'none'
   },
   timestamp: { type: Date, default: Date.now },

@@ -13,7 +13,7 @@ const InterestShown: React.FC = () => {
       if (!token) return;
 
       try {
-        const res = await fetch(`${API_BASE}/my-interests`, {
+        const res = await fetch(`${API_BASE}/my-interests?as=buyer`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();

@@ -135,6 +135,14 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  buyerFreeContactUsed: {  // Buyers get one free owner-contact reveal across the platform; this flips true after it's used.
+    type: Boolean,
+    default: false
+  },
+  buyerContactCredits: {  // Paid contact-reveal credits purchased via the buyer contact packs (1/5/10 properties).
+    type: Number,
+    default: 0
+  },
   responseScore: {
     type: Number,
     default: 0

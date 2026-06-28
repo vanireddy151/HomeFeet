@@ -258,7 +258,7 @@ const Dashboard: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const res = await fetch(`${API_BASE}/my-interests`, {
+      const res = await fetch(`${API_BASE}/my-interests?as=owner`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;

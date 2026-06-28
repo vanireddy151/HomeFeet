@@ -10,7 +10,7 @@ const InterestedInYourProperties = () => {
   const fetchData = async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await fetch(`${API_BASE}/my-interests`, {
+    const res = await fetch(`${API_BASE}/my-interests?as=owner`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();

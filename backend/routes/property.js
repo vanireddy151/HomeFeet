@@ -213,6 +213,37 @@ const unlockBuilderContact = async (user, interest) => {
   return { unlocked: false, paymentRequired: true };
 };
 
+const unlockBuyerContact = async (user, interest) => {
+  if (interest.contactUnlocked) {
+    return { unlocked: true, via: interest.unlockedVia };
+  }
+
+  if (hasActiveMarketplaceSubscription(user)) {
+    interest.contactUnlocked = true;
+    interest.unlockedVia = 'subscription';
+    await interest.save();
+    return { unlocked: true, via: 'subscription' };
+  }
+
+  if (!user.buyerFreeContactUsed) {
+    user.buyerFreeContactUsed = true;
+    interest.contactUnlocked = true;
+    interest.unlockedVia = 'buyer_free';
+    await Promise.all([user.save(), interest.save()]);
+    return { unlocked: true, via: 'buyer_free' };
+  }
+
+  if ((user.buyerContactCredits || 0) > 0) {
+    user.buyerContactCredits -= 1;
+    interest.contactUnlocked = true;
+    interest.unlockedVia = 'buyer_credit';
+    await Promise.all([user.save(), interest.save()]);
+    return { unlocked: true, via: 'buyer_credit' };
+  }
+
+  return { unlocked: false, paymentRequired: true };
+};
+
 const stripOwnerContact = (property) => {
   const safe = typeof property.toObject === 'function' ? property.toObject() : { ...property };
   delete safe.contactPhone;
@@ -226,7 +257,14 @@ const canSeePropertyOwnerContact = async (user, property) => {
   if (isOwnerOrAdmin(user, property)) return true;
 
   if (['owner', 'mediator'].includes(user.accountType)) {
-    return hasActiveMarketplaceSubscription(user);
+    if (hasActiveMarketplaceSubscription(user)) return true;
+
+    const buyerInterest = await Interest.findOne({
+      userId: user._id.toString(),
+      propertyId: property._id,
+      contactUnlocked: true
+    });
+    return Boolean(buyerInterest);
   }
 
   if (user.accountType !== 'builder') return false;
@@ -245,12 +283,13 @@ const canSeePropertyOwnerContact = async (user, property) => {
 const serializeInterestForUser = (interest, user) => {
   const record = typeof interest.toObject === 'function' ? interest.toObject() : { ...interest };
   const property = record.propertyId;
+  const isRequester = record.userId === user._id.toString();
 
-  if (property && user.accountType === 'builder' && !record.contactUnlocked) {
+  if (property && isRequester && !record.contactUnlocked) {
     record.propertyId = stripOwnerContact(property);
   }
 
-  if (property && user.accountType === 'builder' && record.contactUnlocked) {
+  if (property && isRequester && record.contactUnlocked) {
     record.contact = {
       phone: property.contactPhone || property.phone,
       email: property.contactEmail
@@ -1039,10 +1078,12 @@ router.post('/interests', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    if (user.accountType !== 'builder') {
-      return res.status(403).json({ error: 'Only builders can request owner contact' });
+    const isBuilder = user.accountType === 'builder';
+    const isBuyer = ['owner', 'mediator'].includes(user.accountType);
+    if (!isBuilder && !isBuyer) {
+      return res.status(403).json({ error: 'Only builders, owners, or agents can request owner contact' });
     }
-    if (user.builderVerificationStatus !== 'approved') {
+    if (isBuilder && user.builderVerificationStatus !== 'approved') {
       return res.status(403).json({ error: 'Builder verification must be approved before contacting owners' });
     }
 
@@ -1055,7 +1096,12 @@ router.post('/interests', async (req, res) => {
       return res.status(400).json({ error: 'You cannot request contact for your own listing' });
     }
 
-    const paidBuilder = hasActiveBuilderSubscription(user);
+    const paidBuilder = isBuilder && hasActiveBuilderSubscription(user);
+    const buyerInstantEligible = isBuyer && (
+      hasActiveMarketplaceSubscription(user) || !user.buyerFreeContactUsed || (user.buyerContactCredits || 0) > 0
+    );
+    const instantUnlockEligible = paidBuilder || buyerInstantEligible;
+
     let interest = await Interest.findOne({ userId: user._id.toString(), propertyId });
     if (!interest) {
       interest = await Interest.create({
@@ -1063,10 +1109,10 @@ router.post('/interests', async (req, res) => {
         ownerId: property.userId,
         propertyId,
         message: message || '',
-        status: paidBuilder ? 'accepted' : 'requested',
-        respondedAt: paidBuilder ? new Date() : null
+        status: instantUnlockEligible ? 'accepted' : 'requested',
+        respondedAt: instantUnlockEligible ? new Date() : null
       });
-    } else if (paidBuilder && (!interest.contactUnlocked || interest.status !== 'accepted')) {
+    } else if (instantUnlockEligible && (!interest.contactUnlocked || interest.status !== 'accepted')) {
       interest.status = 'accepted';
       interest.respondedAt = interest.respondedAt || new Date();
       if (message) interest.message = message;
@@ -1075,23 +1121,37 @@ router.post('/interests', async (req, res) => {
 
     let unlock = { unlocked: false };
     if (interest.status === 'accepted') {
-      unlock = await unlockBuilderContact(user, interest);
+      unlock = isBuyer ? await unlockBuyerContact(user, interest) : await unlockBuilderContact(user, interest);
     }
 
-    const freeRemaining = Math.max((user.freeContactCredits || 2) - (user.contactUnlocksUsed || 0), 0);
+    const freeRemaining = isBuyer
+      ? (user.buyerFreeContactUsed ? 0 : 1)
+      : Math.max((user.freeContactCredits || 2) - (user.contactUnlocksUsed || 0), 0);
 
     res.status(200).json({
       message: interest.status === 'accepted'
         ? unlock.unlocked
-          ? paidBuilder
-            ? 'Paid builder membership active. Owner contact details are available without owner approval.'
-            : 'Owner approved your request. Contact details are available.'
-          : 'Your free owner-contact credits are used. Please choose a builder plan to unlock more contacts.'
+          ? isBuyer
+            ? unlock.via === 'subscription'
+              ? 'Marketplace subscription active. Owner contact details are available without owner approval.'
+              : unlock.via === 'buyer_free'
+                ? 'Your free contact reveal has been used for this property. Contact details are available.'
+                : 'A contact-reveal credit was used. Contact details are available.'
+            : paidBuilder
+              ? 'Paid builder membership active. Owner contact details are available without owner approval.'
+              : 'Owner approved your request. Contact details are available.'
+          : isBuyer
+            ? 'Your free reveal and purchased credits are used. Buy a contact pack to unlock more contacts, or wait for the owner to respond.'
+            : 'Your free owner-contact credits are used. Please choose a builder plan to unlock more contacts.'
         : 'Interest sent to owner. Contact details unlock after owner accepts.',
       interest,
       contactUnlocked: interest.status === 'accepted' && unlock.unlocked,
       paymentRequired: interest.status === 'accepted' && Boolean(unlock.paymentRequired),
-      subscription: {
+      subscription: isBuyer ? {
+        buyerFreeContactUsed: user.buyerFreeContactUsed,
+        buyerContactCredits: user.buyerContactCredits || 0,
+        freeRemaining
+      } : {
         plan: user.builderSubscriptionPlan,
         expiresAt: user.builderSubscriptionExpiresAt,
         freeRemaining
@@ -1129,9 +1189,14 @@ router.get('/my-interests', async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const query = ['owner', 'mediator'].includes(user.accountType)
-      ? { ownerId: user._id.toString() }
-      : { userId: user._id.toString() };
+    const direction = String(req.query.as || '').toLowerCase();
+    const query = direction === 'buyer'
+      ? { userId: user._id.toString() }
+      : direction === 'owner'
+        ? { ownerId: user._id.toString() }
+        : ['owner', 'mediator'].includes(user.accountType)
+          ? { ownerId: user._id.toString() }
+          : { userId: user._id.toString() };
     const interests = await Interest.find(query)
       .populate('propertyId')
       .sort({ timestamp: -1 });
@@ -1164,9 +1229,11 @@ router.patch('/interests/:id/respond', async (req, res) => {
 
     let unlock = { unlocked: false };
     if (status === 'accepted') {
-      const builder = await User.findById(interest.userId);
-      if (builder) {
-        unlock = await unlockBuilderContact(builder, interest);
+      const requester = await User.findById(interest.userId);
+      if (requester) {
+        unlock = ['owner', 'mediator'].includes(requester.accountType)
+          ? await unlockBuyerContact(requester, interest)
+          : await unlockBuilderContact(requester, interest);
         await interest.populate('propertyId');
       }
     }

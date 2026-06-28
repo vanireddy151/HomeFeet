@@ -47,6 +47,8 @@ const Login: React.FC<LoginProps> = ({ onSuccess, stayOnPage = false }) => {
     localStorage.setItem('agentSpecializations', JSON.stringify(user.agentSpecializations || []));
     localStorage.setItem('freeContactCredits', String(user.freeContactCredits ?? 2));
     localStorage.setItem('contactUnlocksUsed', String(user.contactUnlocksUsed ?? 0));
+    localStorage.setItem('buyerFreeContactUsed', String(Boolean(user.buyerFreeContactUsed)));
+    localStorage.setItem('buyerContactCredits', String(user.buyerContactCredits ?? 0));
     if (user.email) localStorage.setItem('email', user.email);
     localStorage.setItem('city', user.city || '');
     localStorage.setItem('state', user.state || '');

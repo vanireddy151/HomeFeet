@@ -144,6 +144,9 @@ const PropertyDetails: React.FC = () => {
   const token = localStorage.getItem('token');
   const accountType = localStorage.getItem('accountType') || 'owner';
   const isOwnerOrMediator = accountType === 'owner' || accountType === 'mediator';
+  const buyerFreeContactUsed = localStorage.getItem('buyerFreeContactUsed') === 'true';
+  const buyerContactCredits = Number(localStorage.getItem('buyerContactCredits') || 0);
+  const buyerHasInstantAccess = !buyerFreeContactUsed || buyerContactCredits > 0;
   const detailListingIntent = String(property?.listingIntent || accessListingIntent || '').toLowerCase();
   const detailPropertyType = String(property?.developmentType || accessPropertyType || '').toLowerCase();
   const isBuyerRequirementListing = detailListingIntent === 'buy';
@@ -388,19 +391,15 @@ const PropertyDetails: React.FC = () => {
       setShowLoginModal(true);
       return;
     }
-    if (isOwnerOrMediator) {
-      if (contact || isOwnListing) {
-        setShowContact(true);
-        return;
-      }
-      navigate(membershipUrl);
+    if (isOwnerOrMediator && (contact || isOwnListing)) {
+      setShowContact(true);
       return;
     }
-    if (accountType !== 'builder') {
-      alert('Only verified builders can request owner contact. Owners, mediators, buyers, and land seekers can unlock complete listings with a paid membership.');
+    if (!isOwnerOrMediator && accountType !== 'builder') {
+      alert('Only builders, owners, and agents can request owner contact.');
       return;
     }
-    if (builderStatus !== 'approved') {
+    if (accountType === 'builder' && builderStatus !== 'approved') {
       alert('Your builder verification must be approved before owner contact access is enabled.');
       return;
     }
@@ -422,11 +421,16 @@ const PropertyDetails: React.FC = () => {
       setContact(data.contact);
       setShowContact(Boolean(data.contactUnlocked));
       if (data.subscription) {
-        localStorage.setItem('builderSubscriptionPlan', data.subscription.plan || 'none');
-        localStorage.setItem('builderSubscriptionExpiresAt', data.subscription.expiresAt || '');
-        localStorage.setItem('contactUnlocksUsed', String((2 - Number(data.subscription.freeRemaining || 0))));
+        if (isOwnerOrMediator) {
+          localStorage.setItem('buyerFreeContactUsed', String(Boolean(data.subscription.buyerFreeContactUsed)));
+          localStorage.setItem('buyerContactCredits', String(data.subscription.buyerContactCredits || 0));
+        } else {
+          localStorage.setItem('builderSubscriptionPlan', data.subscription.plan || 'none');
+          localStorage.setItem('builderSubscriptionExpiresAt', data.subscription.expiresAt || '');
+          localStorage.setItem('contactUnlocksUsed', String((2 - Number(data.subscription.freeRemaining || 0))));
+        }
       }
-      if (data.paymentRequired) {
+      if (data.paymentRequired && !isOwnerOrMediator) {
         setShowSubscriptionModal(true);
       }
       if (!data.contactUnlocked) alert(data.message);
@@ -1028,17 +1032,34 @@ const PropertyDetails: React.FC = () => {
                 <div className="mb-4 flex gap-3">
                   <Lock className="mt-1 h-5 w-5 shrink-0 text-teal-700" />
                   <div>
-                    <h3 className="font-black text-slate-950">{isOwnerOrMediator ? 'Paid membership required' : `${contactPartyLabel} approval required for free access`}</h3>
+                    <h3 className="font-black text-slate-950">
+                      {isOwnerOrMediator
+                        ? buyerHasInstantAccess
+                          ? buyerFreeContactUsed ? 'Use a contact-reveal credit' : 'Your free contact reveal is available'
+                          : `${contactPartyLabel} approval required, or buy a contact pack`
+                        : `${contactPartyLabel} approval required for free access`}
+                    </h3>
                     <p className="text-sm text-slate-600">
                       {isOwnerOrMediator
-                        ? marketplaceAccessCopy
+                        ? buyerHasInstantAccess
+                          ? buyerFreeContactUsed
+                            ? `You have ${buyerContactCredits} contact-reveal credit(s). Using one unlocks this owner's contact instantly.`
+                            : 'Your first owner-contact reveal on the platform is free. Unlock this one now at no cost.'
+                          : `${marketplaceAccessCopy} Or send a request and wait for the ${contactPartyLabel.toLowerCase()} to approve it for free.`
                         : `Paid builder members unlock contact immediately. Free builders send a request for ${contactPartyLabel.toLowerCase()} approval.`}
                     </p>
                   </div>
                 </div>
                 <button onClick={handleShowContact} className="ld-btn-primary w-full bg-[#0AA6A6] hover:bg-[#088f8f]">
-                  {isOwnerOrMediator ? 'Unlock With Membership' : `Request / Unlock ${contactPartyLabel} Contact`}
+                  {isOwnerOrMediator
+                    ? buyerHasInstantAccess ? 'Unlock Contact Now' : `Send Request to ${contactPartyLabel}`
+                    : `Request / Unlock ${contactPartyLabel} Contact`}
                 </button>
+                {isOwnerOrMediator && !buyerHasInstantAccess && (
+                  <Link to="/profile" className="mt-3 block text-center text-sm font-bold text-teal-700 underline">
+                    Buy a contact-reveal pack for instant access
+                  </Link>
+                )}
                 {interestStatus && <p className="mt-3 text-sm font-bold text-amber-700">Request status: {interestStatus}</p>}
               </div>
             ) : (

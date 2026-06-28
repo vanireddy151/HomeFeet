@@ -12,7 +12,9 @@ const User = require('../models/User');
 const OTP = require('../models/OTP');
 const MembershipPayment = require('../models/MembershipPayment');
 const OwnerPlanPayment = require('../models/OwnerPlanPayment');
+const BuyerContactPayment = require('../models/BuyerContactPayment');
 const { OWNER_PLAN_TIERS } = require('../config/ownerPlans');
+const { BUYER_CONTACT_PACKS } = require('../config/buyerContactPacks');
 const speechUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 }
@@ -43,7 +45,9 @@ const publicUser = (user) => ({
   agentLanguages: user.agentLanguages,
   agentSpecializations: user.agentSpecializations,
   freeContactCredits: user.freeContactCredits,
-  contactUnlocksUsed: user.contactUnlocksUsed
+  contactUnlocksUsed: user.contactUnlocksUsed,
+  buyerFreeContactUsed: user.buyerFreeContactUsed,
+  buyerContactCredits: user.buyerContactCredits
 });
 
 const subscriptionMonths = {
@@ -798,6 +802,120 @@ router.post('/owner-plan-payment/verify', async (req, res) => {
     res.json({ success: true, user: publicUser(user) });
   } catch (err) {
     console.error('Owner plan payment verify error:', err);
+    res.status(500).json({ message: 'Failed to verify Razorpay payment' });
+  }
+});
+
+router.post('/buyer-contact-order', async (req, res) => {
+  try {
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    const { packSize } = req.body;
+    const packConfig = BUYER_CONTACT_PACKS[packSize];
+    if (!packConfig) {
+      return res.status(400).json({ message: 'Please select a valid contact pack' });
+    }
+
+    if (!isRazorpayConfigured()) {
+      return res.status(500).json({ message: 'Razorpay credentials are not configured' });
+    }
+
+    const amount = packConfig.price * 100;
+    const receipt = `buyerpack_${packConfig.count}_${user._id}_${Date.now()}`.slice(0, 40);
+    const response = await razorpayApi.post('/orders', {
+      amount,
+      currency: 'INR',
+      receipt,
+      notes: {
+        packSize: String(packConfig.count),
+        accountType: user.accountType,
+        userId: String(user._id),
+        phone: user.phone || ''
+      }
+    });
+
+    await BuyerContactPayment.create({
+      user: user._id,
+      packSize: packConfig.count,
+      amount,
+      currency: 'INR',
+      razorpayOrderId: response.data.id,
+      status: 'created'
+    });
+
+    res.json({
+      success: true,
+      keyId,
+      order: response.data,
+      packSize: packConfig.count,
+      amount
+    });
+  } catch (err) {
+    const razorpayError = err.response?.data?.error;
+    console.error('Buyer contact pack order error:', razorpayError || err.message || err);
+
+    if (err.name === 'MongooseError' || err.name === 'MongoServerSelectionError') {
+      return res.status(503).json({ message: 'Database connection is not ready. Please try again in a moment.' });
+    }
+
+    if (razorpayError?.description === 'Authentication failed') {
+      return res.status(err.response?.status || 502).json({
+        message: 'Razorpay authentication failed. Please use a matching Razorpay key id and secret, then restart the backend server.'
+      });
+    }
+
+    if (razorpayError?.description) {
+      return res.status(err.response?.status || 502).json({ message: razorpayError.description });
+    }
+
+    res.status(500).json({ message: 'Failed to create Razorpay order' });
+  }
+});
+
+router.post('/buyer-contact-payment/verify', async (req, res) => {
+  try {
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: 'Missing Razorpay payment verification data' });
+    }
+
+    if (!keySecret) {
+      return res.status(500).json({ message: 'Razorpay credentials are not configured' });
+    }
+
+    const expectedSignature = crypto
+      .createHmac('sha256', keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ message: 'Razorpay payment verification failed' });
+    }
+
+    const payment = await BuyerContactPayment.findOne({
+      razorpayOrderId: razorpay_order_id,
+      user: user._id,
+      status: 'created'
+    });
+    if (!payment) {
+      return res.status(400).json({ message: 'Matching pending order was not found' });
+    }
+
+    payment.razorpayPaymentId = razorpay_payment_id;
+    payment.status = 'paid';
+    payment.paidAt = new Date();
+    await payment.save();
+
+    user.buyerContactCredits = (user.buyerContactCredits || 0) + payment.packSize;
+    await user.save();
+
+    res.json({ success: true, user: publicUser(user) });
+  } catch (err) {
+    console.error('Buyer contact payment verify error:', err);
     res.status(500).json({ message: 'Failed to verify Razorpay payment' });
   }
 });
