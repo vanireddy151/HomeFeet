@@ -842,6 +842,7 @@ function HomePage() {
   const [exclusiveIndex, setExclusiveIndex] = useState(0);
   const [exclusiveImageIndex, setExclusiveImageIndex] = useState(0);
   const [propertyCategoryCounts, setPropertyCategoryCounts] = useState({ newLaunches: 0, readyToMove: 0, underConstruction: 0 });
+  const [propertyCategoryImages, setPropertyCategoryImages] = useState({ newLaunches: '', readyToMove: '', underConstruction: '' });
   const [happeningProjects, setHappeningProjects] = useState<any[]>([]);
   const [selectedHotSellingZone, setSelectedHotSellingZone] = useState('All');
   const hotSellingScrollRef = useRef<HTMLDivElement>(null);
@@ -1053,10 +1054,22 @@ function HomePage() {
         ]);
         const [all, ready, underConstruction] = await Promise.all([allRes.json(), readyRes.json(), underConstructionRes.json()]);
         if (cancelled) return;
+
+        const mostRecentImage = (list: any) => {
+          if (!Array.isArray(list) || !list.length) return '';
+          const sorted = [...list].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+          return getProjectImage(sorted[0]);
+        };
+
         setPropertyCategoryCounts({
           newLaunches: Array.isArray(all) ? all.length : 0,
           readyToMove: Array.isArray(ready) ? ready.length : 0,
           underConstruction: Array.isArray(underConstruction) ? underConstruction.length : 0
+        });
+        setPropertyCategoryImages({
+          newLaunches: mostRecentImage(all),
+          readyToMove: mostRecentImage(ready),
+          underConstruction: mostRecentImage(underConstruction)
         });
       } catch {
         if (!cancelled) setPropertyCategoryCounts({ newLaunches: 0, readyToMove: 0, underConstruction: 0 });
@@ -1499,19 +1512,19 @@ function HomePage() {
               {
                 label: 'New Launches',
                 count: propertyCategoryCounts.newLaunches,
-                image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+                image: propertyCategoryImages.newLaunches,
                 to: `/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`
               },
               {
                 label: 'Ready To Move',
                 count: propertyCategoryCounts.readyToMove,
-                image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+                image: propertyCategoryImages.readyToMove,
                 to: `/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}&possessionStatus=${encodeURIComponent('Ready to Move')}`
               },
               {
                 label: 'Under Construction',
                 count: propertyCategoryCounts.underConstruction,
-                image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
+                image: propertyCategoryImages.underConstruction,
                 to: `/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}&possessionStatus=${encodeURIComponent('Under Construction')}`
               }
             ].map((category) => (
@@ -1520,7 +1533,13 @@ function HomePage() {
                 to={category.to}
                 className="group relative block h-64 overflow-hidden rounded-xl shadow-sm transition hover:shadow-xl"
               >
-                <img src={category.image} alt={category.label} className="h-full w-full object-cover transition group-hover:scale-105" />
+                {category.image ? (
+                  <img src={category.image} alt={category.label} className="h-full w-full object-cover transition group-hover:scale-105" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-slate-100 text-sm font-semibold text-slate-400">
+                    No listings yet
+                  </div>
+                )}
                 <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-lg bg-white px-4 py-3 shadow-lg">
                   <div>
                     <p className="font-black text-slate-950">{category.label}</p>
