@@ -760,24 +760,11 @@ router.get('/properties/:id', async (req, res) => {
       }
     }
 
-    if (!isOwnerOrAdmin(user, project)) {
-      if (!user) {
-        return res.status(401).json({
-          error: 'Login required to view complete property details.',
-          accessRequired: 'login_required'
-        });
-      }
-
-      if (!hasActiveMarketplaceSubscription(user)) {
-        return res.status(403).json({
-          error: 'Paid membership required to view complete property details.',
-          accessRequired: ['owner', 'mediator', 'buyer'].includes(user.accountType)
-            ? `${user.accountType}_subscription`
-            : 'marketplace_subscription',
-          listingIntent: project.listingIntent || 'development',
-          propertyType: project.developmentType || ''
-        });
-      }
+    if (!isOwnerOrAdmin(user, project) && !user) {
+      return res.status(401).json({
+        error: 'Login required to view complete property details.',
+        accessRequired: 'login_required'
+      });
     }
 
     const canSeeContact = await canSeePropertyOwnerContact(user, project);

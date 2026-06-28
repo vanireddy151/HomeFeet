@@ -27,6 +27,13 @@ import {
 import { API_BASE, API_ORIGIN } from '../lib/api';
 import { fetchHappeningProjects, getBuilderInitial, getBuilderLabel, getBuilderLogo, getProjectConfiguration, getProjectImage, getProjectPriceRange } from '../lib/happeningProjects';
 import LoginModal from './LoginModal';
+import { RAZORPAY_CHECKOUT_URL, razorpayConfig } from '../config/razorpay.config';
+
+const BUYER_CONTACT_PACKS = [
+  { packSize: 1, price: 199, label: '1 Property' },
+  { packSize: 5, price: 1000, label: '5 Properties' },
+  { packSize: 10, price: 2000, label: '10 Properties' }
+];
 
 declare global {
   interface Window {
@@ -195,6 +202,8 @@ const PropertiesListingPage: React.FC = () => {
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
   const [contactModalLoading, setContactModalLoading] = useState(false);
   const [contactModalResult, setContactModalResult] = useState<{ contactUnlocked: boolean; phone?: string; email?: string; message: string } | null>(null);
+  const [loadingPack, setLoadingPack] = useState(0);
+  const [packPurchaseMessage, setPackPurchaseMessage] = useState('');
   const [mapLoadError, setMapLoadError] = useState('');
 
   // Filter options
@@ -731,6 +740,7 @@ const PropertiesListingPage: React.FC = () => {
     setContactModalProperty(property);
     setContactModalLoading(true);
     setContactModalResult(null);
+    setPackPurchaseMessage('');
 
     try {
       const res = await fetch(`${API_BASE}/interests`, {
@@ -757,6 +767,96 @@ const PropertiesListingPage: React.FC = () => {
       });
     } finally {
       setContactModalLoading(false);
+    }
+  };
+
+  const loadRazorpayCheckout = () =>
+    new Promise<void>((resolve, reject) => {
+      if (window.Razorpay) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = RAZORPAY_CHECKOUT_URL;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Unable to load Razorpay Checkout'));
+      document.body.appendChild(script);
+    });
+
+  const handleBuyPack = async (pack: { packSize: number; price: number; label: string }) => {
+    if (loadingPack) return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    setLoadingPack(pack.packSize);
+    setPackPurchaseMessage('');
+
+    try {
+      await loadRazorpayCheckout();
+
+      const orderResponse = await fetch(`${API_BASE}/buyer-contact-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ packSize: pack.packSize })
+      });
+      const orderData = await orderResponse.json();
+      if (!orderResponse.ok) throw new Error(orderData.message || 'Failed to create Razorpay order');
+      if (!window.Razorpay) throw new Error('Razorpay Checkout is not available');
+
+      const checkout = new window.Razorpay({
+        key: orderData.keyId || razorpayConfig.keyId,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency || 'INR',
+        name: razorpayConfig.businessName,
+        description: `Contact Access - ${pack.label}`,
+        image: `${window.location.origin}${razorpayConfig.logoPath}`,
+        order_id: orderData.order.id,
+        prefill: {
+          name: localStorage.getItem('name') || 'HomeFeet User',
+          email: localStorage.getItem('email') || '',
+          contact: localStorage.getItem('phone') ? `+91${localStorage.getItem('phone')}` : ''
+        },
+        notes: {
+          packSize: String(pack.packSize),
+          address: razorpayConfig.notesAddress
+        },
+        theme: { color: razorpayConfig.themeColor },
+        handler: async (response) => {
+          try {
+            const verifyResponse = await fetch(`${API_BASE}/buyer-contact-payment/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+              body: JSON.stringify(response)
+            });
+            const verifyData = await verifyResponse.json();
+            if (!verifyResponse.ok) throw new Error(verifyData.message || 'Payment verification failed');
+
+            localStorage.setItem('buyerContactCredits', String(verifyData.user.buyerContactCredits || 0));
+            localStorage.setItem('buyerFreeContactUsed', String(Boolean(verifyData.user.buyerFreeContactUsed)));
+            setPackPurchaseMessage(`Payment successful. You now have ${verifyData.user.buyerContactCredits || 0} contact-reveal credit(s).`);
+            if (contactModalProperty) {
+              await handleCardContact(contactModalProperty);
+            }
+          } catch (error) {
+            setPackPurchaseMessage(error instanceof Error ? error.message : 'Payment verification failed');
+          } finally {
+            setLoadingPack(0);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setLoadingPack(0);
+          }
+        }
+      });
+
+      checkout.open();
+    } catch (error) {
+      setLoadingPack(0);
+      setPackPurchaseMessage(error instanceof Error ? error.message : 'Unable to start Razorpay payment');
     }
   };
 
@@ -1997,7 +2097,7 @@ const PropertiesListingPage: React.FC = () => {
         )}
         {contactModalProperty && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-            <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
+            <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="text-lg font-black text-slate-950">{contactModalProperty.projectName || 'Property'} Contact</h3>
                 <button type="button" onClick={() => setContactModalProperty(null)} aria-label="Close">
@@ -2022,14 +2122,34 @@ const PropertiesListingPage: React.FC = () => {
               ) : (
                 <div className="mt-4">
                   <p className="text-sm text-slate-600">{contactModalResult?.message || 'Unable to fetch contact.'}</p>
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <Link to="/dashboard" onClick={() => setContactModalProperty(null)} className="ld-btn-primary flex-1 justify-center">
-                      Buy Contact Pack
-                    </Link>
-                    <button type="button" onClick={() => setContactModalProperty(null)} className="ld-btn-ghost flex-1">
-                      Close
-                    </button>
+
+                  {packPurchaseMessage && (
+                    <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm font-semibold text-teal-800">
+                      {packPurchaseMessage}
+                    </div>
+                  )}
+
+                  <p className="mt-4 text-sm font-black text-slate-900">Buy a contact-reveal pack for instant access</p>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {BUYER_CONTACT_PACKS.map((pack) => (
+                      <div key={pack.packSize} className="flex flex-col rounded-lg border border-slate-200 p-3 text-center">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{pack.label}</p>
+                        <p className="mt-1 text-base font-black text-slate-950">Rs. {pack.price.toLocaleString('en-IN')}</p>
+                        <button
+                          type="button"
+                          disabled={loadingPack === pack.packSize}
+                          onClick={() => handleBuyPack(pack)}
+                          className="mt-2 rounded-md bg-[#0AA6A6] px-2 py-1.5 text-xs font-bold text-white hover:bg-[#088f8f] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {loadingPack === pack.packSize ? '...' : 'Buy'}
+                        </button>
+                      </div>
+                    ))}
                   </div>
+
+                  <button type="button" onClick={() => setContactModalProperty(null)} className="ld-btn-ghost mt-4 w-full">
+                    Close
+                  </button>
                 </div>
               )}
             </div>
@@ -2550,7 +2670,7 @@ const PropertiesListingPage: React.FC = () => {
       )}
       {contactModalProperty && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-lg font-black text-slate-950">{contactModalProperty.projectName || 'Property'} Contact</h3>
               <button type="button" onClick={() => setContactModalProperty(null)} aria-label="Close">
@@ -2575,14 +2695,34 @@ const PropertiesListingPage: React.FC = () => {
             ) : (
               <div className="mt-4">
                 <p className="text-sm text-slate-600">{contactModalResult?.message || 'Unable to fetch contact.'}</p>
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <Link to="/dashboard" onClick={() => setContactModalProperty(null)} className="ld-btn-primary flex-1 justify-center">
-                    Buy Contact Pack
-                  </Link>
-                  <button type="button" onClick={() => setContactModalProperty(null)} className="ld-btn-ghost flex-1">
-                    Close
-                  </button>
+
+                {packPurchaseMessage && (
+                  <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm font-semibold text-teal-800">
+                    {packPurchaseMessage}
+                  </div>
+                )}
+
+                <p className="mt-4 text-sm font-black text-slate-900">Buy a contact-reveal pack for instant access</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {BUYER_CONTACT_PACKS.map((pack) => (
+                    <div key={pack.packSize} className="flex flex-col rounded-lg border border-slate-200 p-3 text-center">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{pack.label}</p>
+                      <p className="mt-1 text-base font-black text-slate-950">Rs. {pack.price.toLocaleString('en-IN')}</p>
+                      <button
+                        type="button"
+                        disabled={loadingPack === pack.packSize}
+                        onClick={() => handleBuyPack(pack)}
+                        className="mt-2 rounded-md bg-[#0AA6A6] px-2 py-1.5 text-xs font-bold text-white hover:bg-[#088f8f] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {loadingPack === pack.packSize ? '...' : 'Buy'}
+                      </button>
+                    </div>
+                  ))}
                 </div>
+
+                <button type="button" onClick={() => setContactModalProperty(null)} className="ld-btn-ghost mt-4 w-full">
+                  Close
+                </button>
               </div>
             )}
           </div>
