@@ -29,10 +29,10 @@ const bhkOptions = ['1 BHK', '2 BHK', '2.5 BHK', '3 BHK', '4 BHK', '4+ BHK'];
 
 const landTypeOptions = [
   { label: 'Apartment', value: 'apartment', areaMode: 'sqft' as const, category: 'apartment' as const },
-  { label: 'Plot', value: 'open-plot', areaMode: 'sqYards' as const, category: 'plot' as const },
+  { label: 'High Rise', value: 'high-rise', areaMode: 'sqft' as const, category: 'apartment' as const },
+  { label: 'Gated Community', value: 'gated-community', areaMode: 'sqft' as const, category: 'apartment' as const },
   { label: 'Villa', value: 'villa', areaMode: 'sqYards' as const, category: 'plot' as const },
   { label: 'Commercial', value: 'commercial-plot', areaMode: 'sqft' as const, category: 'commercial' as const },
-  { label: 'Acre', value: 'land', areaMode: 'acres' as const, category: 'land' as const },
   { label: 'FarmVilla', value: 'farm-villa', areaMode: 'acres' as const, category: 'land' as const }
 ];
 
@@ -48,11 +48,11 @@ const BuyerExpectedPropertyForm: React.FC = () => {
   const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [areaMode, setAreaMode] = useState<'sqYards' | 'acres' | 'sqft'>('sqYards');
+  const [areaMode, setAreaMode] = useState<'sqYards' | 'acres' | 'sqft'>('sqft');
   const [formData, setFormData] = useState({
-    landType: 'open-plot',
-    minArea: areaPresets.sqYards.min,
-    maxArea: areaPresets.sqYards.max,
+    landType: 'apartment',
+    minArea: areaPresets.sqft.min,
+    maxArea: areaPresets.sqft.max,
     bedrooms: '',
     location: '',
     city: localStorage.getItem('selectedCity') || 'Hyderabad',
@@ -208,9 +208,9 @@ const BuyerExpectedPropertyForm: React.FC = () => {
           <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="ld-eyebrow">Buyer Expected Property Form</p>
-              <h1 className="mt-2 text-3xl font-black text-slate-950">Share land requirement</h1>
+              <h1 className="mt-2 text-3xl font-black text-slate-950">Share Dream Property Requirement</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Add expected area, location, city, avatar, total budget, and square yard price range for owners and mediators to review.
+                Add expected area, location, city, avatar, total budget, and price range for owners and mediators to review.
               </p>
             </div>
             <Search className="h-10 w-10 text-teal-700" />
@@ -218,7 +218,7 @@ const BuyerExpectedPropertyForm: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="mt-6 grid gap-5">
             <div>
-              <p className="mb-2 text-sm font-black text-slate-900">Land Type</p>
+              <p className="mb-2 text-sm font-black text-slate-900">Property Type</p>
               <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 {landTypeOptions.map(option => (
                   <button
