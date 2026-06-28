@@ -1637,7 +1637,7 @@ const PropertiesListingPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#eef4fb] p-1.5 sm:p-3">
         <div className={`mx-auto grid max-w-[1580px] gap-2.5 lg:gap-4 ${
-          isDeveloperView ? 'lg:grid-cols-[3fr_2fr]' : 'lg:grid-cols-[minmax(0,1fr)]'
+          isDeveloperView ? 'lg:grid-cols-[58fr_42fr]' : 'lg:grid-cols-[minmax(0,1fr)]'
         }`}>
           <div className={`grid grid-cols-2 gap-1.5 sm:gap-4 ${
             isDeveloperView ? 'lg:col-span-2' : ''
