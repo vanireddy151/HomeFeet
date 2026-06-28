@@ -44,7 +44,7 @@ import AdminPanel from './components/AdminPanel';
 import AdminChatbot from './components/AdminChatbot';
 import PropertiesListingPage from './components/PropertiesListingPage';
 import Dashboard from './components/Dashboard';
-import { housingTopPicks } from './lib/housingTopPicks';
+import { fetchHappeningProjects, getBuilderInitial, getBuilderLabel, getProjectConfiguration, getProjectImage, getProjectPriceRange } from './lib/happeningProjects';
 import ContactPage from './components/ContactPage';
 import ChatPage from './components/ChatPage';
 import LoginModal from './components/LoginModal';
@@ -842,6 +842,7 @@ function HomePage() {
   const [exclusiveIndex, setExclusiveIndex] = useState(0);
   const [exclusiveImageIndex, setExclusiveImageIndex] = useState(0);
   const [propertyCategoryCounts, setPropertyCategoryCounts] = useState({ newLaunches: 0, readyToMove: 0, underConstruction: 0 });
+  const [happeningProjects, setHappeningProjects] = useState<any[]>([]);
   const [selectedHotSellingZone, setSelectedHotSellingZone] = useState('All');
   const hotSellingScrollRef = useRef<HTMLDivElement>(null);
   const newlyLaunchedScrollRef = useRef<HTMLDivElement>(null);
@@ -1069,6 +1070,16 @@ function HomePage() {
   }, [selectedCity]);
 
   useEffect(() => {
+    let cancelled = false;
+    fetchHappeningProjects(selectedCity)
+      .then((projects) => { if (!cancelled) setHappeningProjects(projects); })
+      .catch(() => { if (!cancelled) setHappeningProjects([]); });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCity]);
+
+  useEffect(() => {
     const bannerTimer = window.setTimeout(() => {
       setActiveBanner((current) => (current + 1) % homeBannerSlides.length);
     }, 5000);
@@ -1184,54 +1195,59 @@ function HomePage() {
               <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">HomeFeet's <span className="text-[#0AA6A6]">Happening</span> Projects</h2>
               <p className="mt-1 text-slate-600">Explore top living options with us</p>
             </div>
-            {housingTopPicks[0] && (
+            {happeningProjects[0] && (
               <div className="hidden text-center sm:block">
                 <img
-                  src={housingTopPicks[0].image}
-                  alt={housingTopPicks[0].projectName}
+                  src={getProjectImage(happeningProjects[0])}
+                  alt={happeningProjects[0].projectName}
                   className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
                 />
-                <p className="mt-1 max-w-[6rem] truncate text-xs font-semibold text-slate-700">{housingTopPicks[0].projectName}</p>
+                <p className="mt-1 max-w-[6rem] truncate text-xs font-semibold text-slate-700">{happeningProjects[0].projectName}</p>
               </div>
             )}
           </div>
 
+          {happeningProjects.length === 0 ? (
+            <div className="rounded-lg border border-slate-200 bg-white p-10 text-center text-sm font-semibold text-slate-500">
+              No active listings in {selectedCity} yet.
+            </div>
+          ) : (
           <div className="relative">
             <div
               ref={housingPicksScrollRef}
               className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [-webkit-mask-image:linear-gradient(to_right,black_82%,transparent_100%)] [mask-image:linear-gradient(to_right,black_82%,transparent_100%)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {housingTopPicks.map((pick) => (
+              {happeningProjects.map((pick) => (
                 <div
-                  key={pick.projectName}
+                  key={pick._id}
                   className="grid w-[min(90vw,820px)] shrink-0 grid-cols-[280px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 shadow-sm"
                 >
                   <div className="flex flex-col justify-between p-5">
                     <div>
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm">
-                        <img src={pick.logo} alt={pick.builder} className="h-full w-full object-contain p-1.5" />
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-[#0AA6A6] text-lg font-black text-white shadow-sm">
+                        {getBuilderInitial(pick)}
                       </div>
-                      <p className="mt-3 text-sm font-black leading-snug text-slate-950">{pick.builder}</p>
+                      <p className="mt-3 text-sm font-black leading-snug text-slate-950">{getBuilderLabel(pick)}</p>
                       <Link to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`} className="text-xs font-bold text-indigo-700 underline">
                         View Projects
                       </Link>
                     </div>
                     <div className="mt-4">
-                      <p className="font-black text-slate-950">{pick.projectName}</p>
-                      <p className="text-sm text-slate-600">{pick.location}</p>
+                      <p className="font-black text-slate-950">{pick.projectName || cleanDevelopmentType(pick.developmentType)}</p>
+                      <p className="text-sm text-slate-600">{pick.locality}, {pick.city}</p>
                     </div>
                     <div className="mt-4">
-                      <p className="font-black text-slate-950">{pick.priceRange}</p>
-                      <p className="text-sm text-slate-600">{pick.configuration}</p>
+                      <p className="font-black text-slate-950">{getProjectPriceRange(pick)}</p>
+                      <p className="text-sm text-slate-600">{getProjectConfiguration(pick)}</p>
                     </div>
                     <Link
-                      to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+                      to={`/property/${pick._id}`}
                       className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#088f8f]"
                     >
                       Contact
                     </Link>
                   </div>
-                  <img src={pick.image} alt={pick.projectName} className="h-full w-full object-cover" />
+                  <img src={getProjectImage(pick)} alt={pick.projectName} className="h-full w-full object-cover" />
                 </div>
               ))}
             </div>
@@ -1253,6 +1269,7 @@ function HomePage() {
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
+          )}
         </div>
       </section>
 

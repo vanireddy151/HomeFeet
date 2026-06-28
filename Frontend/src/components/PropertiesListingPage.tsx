@@ -23,7 +23,7 @@ import {
   X
 } from 'lucide-react';
 import { API_BASE, API_ORIGIN } from '../lib/api';
-import { housingTopPicks } from '../lib/housingTopPicks';
+import { fetchHappeningProjects, getBuilderInitial, getBuilderLabel, getProjectConfiguration, getProjectImage, getProjectPriceRange } from '../lib/happeningProjects';
 import LoginModal from './LoginModal';
 
 declare global {
@@ -156,6 +156,7 @@ const PropertiesListingPage: React.FC = () => {
   const pendingGeocodeCallbacksRef = React.useRef<Record<string, Array<(coords: { lat: number; lng: number }) => void>>>({});
   const fetchRequestRef = React.useRef(0);
   const housingPicksScrollRef = React.useRef<HTMLDivElement>(null);
+  const [happeningProjects, setHappeningProjects] = useState<any[]>([]);
   const [selectedCity, setSelectedCity] = useState(() => searchParams.get('city') || getStoredSelectedCity());
   const [focusedPropertyId, setFocusedPropertyId] = useState('');
   const [geocodeTick, setGeocodeTick] = useState(0);
@@ -640,6 +641,16 @@ const PropertiesListingPage: React.FC = () => {
     const gap = parseFloat(getComputedStyle(container).columnGap || '0') || 16;
     container.scrollBy({ left: direction * (card.offsetWidth + gap), behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchHappeningProjects(selectedCity)
+      .then((projects) => { if (!cancelled) setHappeningProjects(projects); })
+      .catch(() => { if (!cancelled) setHappeningProjects([]); });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCity]);
 
   const formatPrice = (price: string) => {
     if (!price) return 'Price on request';
@@ -1623,26 +1634,30 @@ const PropertiesListingPage: React.FC = () => {
                   ref={housingPicksScrollRef}
                   className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
-                  {housingTopPicks.map((pick) => (
+                  {happeningProjects.length === 0 ? (
+                    <p className="px-2 py-4 text-xs font-semibold text-slate-500">No active listings in {selectedCity} yet.</p>
+                  ) : happeningProjects.map((pick) => (
                     <div
-                      key={pick.projectName}
+                      key={pick._id}
                       className="grid w-[calc(50%-0.375rem)] shrink-0 snap-start grid-cols-[140px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 shadow-sm"
                     >
-                      <img src={pick.image} alt={pick.projectName} className="h-full w-full object-cover" />
+                      <img src={getProjectImage(pick)} alt={pick.projectName} className="h-full w-full object-cover" />
                       <div className="flex flex-col justify-between p-3">
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <img src={pick.logo} alt={pick.builder} className="h-5 w-5 shrink-0 rounded bg-white object-contain" />
-                            <p className="line-clamp-1 text-[11px] font-bold leading-tight text-slate-950">{pick.builder}</p>
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#0AA6A6] text-[10px] font-black text-white">
+                              {getBuilderInitial(pick)}
+                            </span>
+                            <p className="line-clamp-1 text-[11px] font-bold leading-tight text-slate-950">{getBuilderLabel(pick)}</p>
                           </div>
-                          <p className="mt-1.5 text-sm font-black leading-tight text-slate-950">{pick.projectName}</p>
-                          <p className="text-xs text-slate-600">{pick.location}</p>
+                          <p className="mt-1.5 text-sm font-black leading-tight text-slate-950">{pick.projectName || pick.developmentType}</p>
+                          <p className="text-xs text-slate-600">{pick.locality}, {pick.city}</p>
                         </div>
                         <div>
-                          <p className="text-xs font-black text-slate-950">{pick.priceRange}</p>
-                          <p className="text-[11px] text-slate-600">{pick.configuration}</p>
+                          <p className="text-xs font-black text-slate-950">{getProjectPriceRange(pick)}</p>
+                          <p className="text-[11px] text-slate-600">{getProjectConfiguration(pick)}</p>
                           <Link
-                            to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+                            to={`/property/${pick._id}`}
                             className="mt-1.5 inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#088f8f]"
                           >
                             View Projects
