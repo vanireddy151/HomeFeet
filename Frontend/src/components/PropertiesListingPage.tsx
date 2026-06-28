@@ -1938,13 +1938,13 @@ const PropertiesListingPage: React.FC = () => {
                             <button
                               onClick={() => requireLoginForDetails(property)}
                               disabled={detailLoadingId === property._id}
-                              className="h-7 w-fit min-w-[112px] self-start rounded-md bg-slate-950 px-4 text-[12px] font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
+                              className="h-7 flex-1 min-w-[112px] self-start rounded-md bg-slate-950 px-4 text-[12px] font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
                             >
                               {detailLoadingId === property._id ? 'Opening...' : 'View Details'}
                             </button>
                             <button
                               onClick={() => handleCardContact(property)}
-                              className="h-7 w-fit min-w-[90px] self-start rounded-md border border-teal-600 bg-white px-4 text-[12px] font-semibold text-teal-700 hover:bg-teal-50"
+                              className="h-7 flex-1 min-w-[112px] self-start rounded-md border border-teal-600 bg-white px-4 text-[12px] font-semibold text-teal-700 hover:bg-teal-50"
                             >
                               Contact
                             </button>
