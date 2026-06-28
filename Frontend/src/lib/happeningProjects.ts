@@ -51,7 +51,7 @@ export const getProjectConfiguration = (property: any) => {
   return property.developmentType || 'Property';
 };
 
-const SALE_FLAT_TYPES = ['apartment', 'standalone', 'high-rise', 'group-house'];
+const SALE_FLAT_TYPES = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
 
 export const fetchHappeningProjects = async (city: string, limit = 8) => {
   const response = await fetch(`${API_BASE}/search?listingIntent=sell&city=${encodeURIComponent(city)}`);

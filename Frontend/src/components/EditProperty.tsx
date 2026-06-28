@@ -473,6 +473,7 @@ const EditProperty: React.FC = () => {
         <option value="villa">Villa</option>
         <option value="standalone">Standalone</option>
         <option value="high-rise">High-rise</option>
+        <option value="gated-community">Gated Residential Community</option>
         <option value="plotted">Plotted</option>
         <option value="mixed">Mixed</option>
       </select>

@@ -26,6 +26,7 @@ const SEARCH_TABS = [
 const RESIDENTIAL_PROPERTY_TYPES = [
   { label: 'Standalone', value: 'standalone' },
   { label: 'High-rise', value: 'high-rise' },
+  { label: 'Gated Residential Community', value: 'gated-community' },
   { label: 'Group House', value: 'group-house' },
   { label: 'Residential House', value: 'residential-house' },
   { label: 'Villa', value: 'villa' },

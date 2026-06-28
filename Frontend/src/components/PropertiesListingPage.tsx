@@ -109,7 +109,7 @@ const CITY_CENTERS: Record<string, { lat: number; lng: number; zoom: number }> =
 const getStoredSelectedCity = () => localStorage.getItem('selectedCity') || DEFAULT_CITY;
 const getCityCenter = (city?: string) => CITY_CENTERS[city || DEFAULT_CITY] || CITY_CENTERS[DEFAULT_CITY];
 const commercialDevelopmentTypes = ['commercial-plot', 'office-space', 'retail', 'hospitality', 'industrial'];
-const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
+const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
 const getPropertyNumberPrefix = (property: Pick<Property, 'listingIntent' | 'developmentType'>, fallbackIntent = 'development') => {
   const intent = String(property.listingIntent || fallbackIntent || 'development').toLowerCase();
   const type = String(property.developmentType || '').toLowerCase();
@@ -1373,6 +1373,7 @@ const PropertiesListingPage: React.FC = () => {
   const plotTypeFilters = [
     { label: 'Standalone', value: 'standalone', icon: Building },
     { label: 'High-rise', value: 'high-rise', icon: Building2 },
+    { label: 'Gated Residential Community', value: 'gated-community', icon: Building2 },
     { label: 'Group House', value: 'group-house', icon: Users },
     { label: 'Residential House', value: 'residential-house', icon: Home },
     { label: 'Villa', value: 'villa', icon: Layers },
@@ -1381,6 +1382,7 @@ const PropertiesListingPage: React.FC = () => {
   const developmentOnlyTypeFilters = [
     { label: 'Standalone', value: 'standalone', icon: Building },
     { label: 'High-Rise', value: 'high-rise', icon: Building2 },
+    { label: 'Gated Residential Community', value: 'gated-community', icon: Building2 },
     { label: 'Group House', value: 'group-house', icon: Users },
     { label: 'Villa', value: 'villa', icon: Layers },
     { label: 'Plotted', value: 'plotted', icon: Grid },
@@ -1396,7 +1398,7 @@ const PropertiesListingPage: React.FC = () => {
     { label: 'Industrial', value: 'industrial', icon: Factory },
   ];
   const visibleDeveloperTypeFilters = developerTypeFilters.filter((filter) =>
-    ['standalone', 'high-rise', 'villa', 'plotted'].includes(filter.value)
+    ['standalone', 'high-rise', 'gated-community', 'villa', 'plotted'].includes(filter.value)
   );
   const isCommercialPropertyView = currentPropertyType === 'commercial-plot';
   const activeTypeFilters = isCommercialPropertyView ? commercialTypeFilters : isPlotDealView ? plotTypeFilters : visibleDeveloperTypeFilters;
@@ -1410,6 +1412,7 @@ const PropertiesListingPage: React.FC = () => {
   const developmentTypeListingLabels: Record<string, string> = {
     standalone: 'Standalone Flats Listings',
     'high-rise': 'High-Rise Flats Listings',
+    'gated-community': 'Gated Residential Community Flats Listings',
     'group-house': 'Group House Flats Listings',
     villa: 'Villa Flats Listings',
     plotted: 'Plotted Listings',

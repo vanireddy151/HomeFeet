@@ -60,7 +60,7 @@ const cleanType = (value?: string) =>
   value ? value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Development';
 
 const commercialDevelopmentTypes = ['commercial-plot', 'office-space', 'retail', 'hospitality', 'industrial'];
-const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
+const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
 
 const propertyNumberPrefix = (property: any) => {
   const intent = String(property?.listingIntent || 'development').toLowerCase();
@@ -311,7 +311,7 @@ const PropertyDetails: React.FC = () => {
   const developerRatioLabel = isKarnatakaListing ? 'JV Ratio (Owner:Builder)' : 'Development Ratio (Owner : Builder)';
 
   const isApartmentListing = String(property?.developmentType || '').toLowerCase() === 'apartment';
-  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
+  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
   const isApartmentLikeListing = apartmentLikeTypes.includes(String(property?.developmentType || '').toLowerCase());
 
   const categoryDetails = property ? [

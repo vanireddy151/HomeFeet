@@ -1011,7 +1011,7 @@ function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
+    const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
 
     const loadExclusiveProjects = async () => {
       try {

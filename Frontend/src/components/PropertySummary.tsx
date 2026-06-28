@@ -1024,6 +1024,8 @@ const parseSummary = (summary: string) => {
             ? 'farm-house'
           : /group\s*house(?:s|ing)?\b/i.test(normalizedSummary)
             ? 'group-house'
+          : /gated\s*(?:residential\s*)?communit(?:y|ies)/i.test(normalizedSummary)
+            ? 'gated-community'
           : /high[- ]?rise|hi[- ]?rise|sky\s*rise/i.test(normalizedSummary)
             ? 'high-rise'
           : /residential\s*house\b|independent\s*house\b/i.test(normalizedSummary)
@@ -1038,8 +1040,8 @@ const parseSummary = (summary: string) => {
           ? 'land'
         : /commercial\s+(?:plot|land)|plot\s+for\s+sale|land\s+for\s+sale/i.test(normalizedSummary)
           ? 'open-plot'
-          : extractChoice(text, ['apartment', 'standalone', 'high-rise', 'group-house', 'residential-house', 'villa', 'farm-house', 'plotted', 'open-plot', 'land', 'hmda-layout', 'gp-layout', 'dtcp-layout']) || 'standalone';
-  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
+          : extractChoice(text, ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house', 'residential-house', 'villa', 'farm-house', 'plotted', 'open-plot', 'land', 'hmda-layout', 'gp-layout', 'dtcp-layout']) || 'standalone';
+  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
   const isApartmentLikeSummary = apartmentLikeTypes.includes(developmentType);
   const areaUnit = usesAcreArea ? 'Acres' : usesSqFtArea ? 'Sq Ft' : 'Sq Yards';
   const locationFields = extractLocationFields(normalizedSummary);
@@ -1544,7 +1546,7 @@ const resolveLocationDetailsWithGoogle = async (
   return resolved;
 };
 
-const APARTMENT_LIKE_TYPES = ['apartment', 'standalone', 'high-rise', 'group-house'];
+const APARTMENT_LIKE_TYPES = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
 
 const getMissingPropertyFormFields = (details: ReturnType<typeof parseSummary>, hasPlotDiagram: boolean) => {
   const missing: string[] = [];

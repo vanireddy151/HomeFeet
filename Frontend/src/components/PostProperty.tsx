@@ -2032,7 +2032,7 @@ const PostProperty = () => {
       setIsSubmitting(false);
       return;
     }
-    const isApartmentListing = ['apartment', 'standalone', 'high-rise', 'group-house'].includes(formData.developmentType.trim().toLowerCase());
+    const isApartmentListing = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'].includes(formData.developmentType.trim().toLowerCase());
     if (!isApartmentListing && !formData.roadFacingDirection) {
       alert('Please select the road facing direction');
       setIsSubmitting(false);
@@ -2233,7 +2233,7 @@ const PostProperty = () => {
   const roadFacingDirections = ['North', 'South', 'East', 'West'];
   const ratios = ['50:50', '60:40', '70:30', '80:20'];
   const zoningOptions = ['Residential', 'Commercial', 'Mixed Use', 'Agricultural', 'Industrial'];
-  const plotBoundaryTypes = ['standalone', 'high-rise', 'group-house'];
+  const plotBoundaryTypes = ['standalone', 'high-rise', 'gated-community', 'group-house'];
   const bedroomOptions = ['1 BHK', '2 BHK', '2.5 BHK', '3 BHK', '4 BHK', '4+ BHK'];
   const selectedBedroomOptions = formData.bedrooms ? formData.bedrooms.split(',').map(b => b.trim()).filter(Boolean) : [];
   const toggleBedroomOption = (option: string) => {
@@ -2252,7 +2252,7 @@ const PostProperty = () => {
   const furnishingOptions = ['Unfurnished', 'Semi-Furnished', 'Fully-Furnished'];
   const possessionOptions = ['Ready to Move', 'Under Construction'];
   const normalizedDevelopmentType = formData.developmentType.trim().toLowerCase();
-  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'group-house'];
+  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
   const isApartment = apartmentLikeTypes.includes(normalizedDevelopmentType);
 
   useEffect(() => {
@@ -2618,6 +2618,7 @@ const PostProperty = () => {
             <option value="villa">Villa</option>
             <option value="standalone">Standalone</option>
             <option value="high-rise">High-rise</option>
+            <option value="gated-community">Gated Residential Community</option>
             <option value="plotted">Plotted</option>
             {formData.developmentType === 'apartment' && <option value="apartment">Apartment</option>}
             <option value="mixed">Mixed</option>
@@ -2633,6 +2634,7 @@ const PostProperty = () => {
           <>
             <option value="standalone">Standalone</option>
             <option value="high-rise">High-rise</option>
+            <option value="gated-community">Gated Residential Community</option>
             <option value="group-house">Group House</option>
             <option value="residential-house">Residential House</option>
             <option value="villa">Villa</option>
