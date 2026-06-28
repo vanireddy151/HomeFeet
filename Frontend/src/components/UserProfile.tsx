@@ -262,9 +262,11 @@ const UserProfile: React.FC = () => {
                 <p className="mt-1 text-sm leading-6 text-slate-600">Keep contact details updated so property requests and approvals move smoothly.</p>
               </div>
             </div>
-            <button type="button" onClick={() => navigate('/user-posted-properties')} className="inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#088f8f]">
-              View My Listings
-            </button>
+            {accountType !== 'buyer' && (
+              <button type="button" onClick={() => navigate('/user-posted-properties')} className="inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#088f8f]">
+                View My Listings
+              </button>
+            )}
           </div>
         </section>
       </main>
