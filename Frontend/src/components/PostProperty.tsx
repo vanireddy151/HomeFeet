@@ -39,6 +39,7 @@ declare global {
   interface Window {
     google: any;
     initMap: () => void;
+    gm_authFailure?: () => void;
   }
 }
 
@@ -301,6 +302,7 @@ const PostProperty = () => {
   });
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [mapLoadError, setMapLoadError] = useState('');
   const [useMapLink, setUseMapLink] = useState(false);
   const [mapLinkInput, setMapLinkInput] = useState('');
   const [highlightedLocation, setHighlightedLocation] = useState<'map' | 'link' | 'address' | null>(null);
@@ -697,14 +699,16 @@ const PostProperty = () => {
       const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
       if (!apiKey) {
         console.error('Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY to enable maps.');
+        setMapLoadError('Map unavailable: Google Maps API key is not configured.');
         return;
       }
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
       script.async = true;
       script.defer = true;
-      
+
       window.initMap = () => {
         console.log('Google Maps API loaded successfully');
+        setMapLoadError('');
         setIsMapLoaded(true);
         initializeMap();
         setTimeout(() => {
@@ -712,12 +716,17 @@ const PostProperty = () => {
           initializeSocietyAutocomplete();
         }, 100);
       };
-      
+
       script.onerror = () => {
         console.error('Failed to load Google Maps API');
-        alert('Failed to load Google Maps. Please check your API key and internet connection.');
+        setMapLoadError('Failed to load Google Maps. Please check your internet connection and try again.');
       };
-      
+
+      window.gm_authFailure = () => {
+        console.error('Google Maps authentication failed (invalid/restricted API key or billing disabled).');
+        setMapLoadError('Google Maps failed to authenticate. The API key may be invalid, restricted, or have billing disabled.');
+      };
+
       document.head.appendChild(script);
     } else {
       setIsMapLoaded(true);
@@ -1259,6 +1268,7 @@ const PostProperty = () => {
 
   useEffect(() => {
     if (!isMapLoaded || !mapLinkInput.trim()) return;
+    if (extractCoordinatesFromMapLink(mapLinkInput.trim())) return;
     if (preservedSummaryMapLinkRef.current === mapLinkInput.trim()) return;
     if (preserveSummaryLocationRef.current) {
       preserveSummaryLocationRef.current = false;
@@ -2017,8 +2027,8 @@ const PostProperty = () => {
       setIsSubmitting(false);
       return;
     }
-    if (!formData.pincode || !/^\d{6}$/.test(formData.pincode)) {
-      alert('Please enter a valid 6-digit pincode');
+    if (formData.pincode && !/^\d{6}$/.test(formData.pincode)) {
+      alert('Please enter a valid 6-digit pincode, or leave it blank');
       setIsSubmitting(false);
       return;
     }
@@ -3464,14 +3474,13 @@ const PostProperty = () => {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
             <input
               name="pincode"
               value={formData.pincode}
               onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
               className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
               placeholder="Pincode auto-fills from locality when available"
-              required
             />
           </div>
 
@@ -3525,11 +3534,21 @@ const PostProperty = () => {
         <p className="text-xs text-gray-500 mb-2">
           Click on the map or drag the marker to mark the exact property location
         </p>
-        <div
-          id="map"
-          className={`w-full h-80 rounded-lg border bg-gray-100 ${highlightedLocation === 'map' ? 'border-teal-600 ring-2 ring-teal-200' : 'border-gray-200'}`}
-          style={{ minHeight: '320px' }}
-        ></div>
+        <div className="relative">
+          <div
+            id="map"
+            className={`w-full h-80 rounded-lg border bg-gray-100 ${highlightedLocation === 'map' ? 'border-teal-600 ring-2 ring-teal-200' : 'border-gray-200'}`}
+            style={{ minHeight: '320px' }}
+          ></div>
+          {mapLoadError && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-gray-100/95 p-6 text-center">
+              <div>
+                <p className="text-sm font-semibold text-red-700">{mapLoadError}</p>
+                <p className="mt-1 text-xs text-gray-500">You can still continue using the Colony/Locality fields above to describe the location.</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       </section>
       )}
