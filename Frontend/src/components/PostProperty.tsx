@@ -473,7 +473,7 @@ const PostProperty = () => {
         if (!data.exists) {
           setAssistedOwnerLookup({
             status: 'not_found',
-            message: 'No registered owner or mediator found. Fill the details below to create the profile.'
+            message: 'No registered owner, mediator, or builder found. Fill the details below to create the profile.'
           });
           setAssistedOwner(prev => ({
             ...prev,
@@ -487,7 +487,7 @@ const PostProperty = () => {
         if (!data.canAssignProperty) {
           setAssistedOwnerLookup({
             status: 'blocked',
-            message: 'This mobile number belongs to a builder or admin account. Use an owner or mediator mobile number.'
+            message: 'This mobile number belongs to an admin account. Use an owner, mediator, or builder mobile number.'
           });
           return;
         }
@@ -2051,17 +2051,17 @@ const PostProperty = () => {
     if (canUseAssistedUpload) {
       const ownerPhone = normalizeAssistedPhone(assistedOwner.phone);
       if (assistedOwnerLookup.status === 'blocked') {
-        alert('Please use an owner or mediator mobile number for admin-assisted upload');
+        alert('Please use an owner, mediator, or builder mobile number for admin-assisted upload');
         setIsSubmitting(false);
         return;
       }
-      if (!['owner', 'mediator'].includes(assistedOwner.accountType)) {
-        alert('Please select Owner or Agent (Mediator) for admin-assisted upload');
+      if (!['owner', 'mediator', 'builder'].includes(assistedOwner.accountType)) {
+        alert('Please select Owner, Agent (Mediator), or Builder for admin-assisted upload');
         setIsSubmitting(false);
         return;
       }
       if (!/^\d{10}$/.test(ownerPhone)) {
-        alert('Please enter the owner or mediator 10-digit mobile number');
+        alert('Please enter the owner, mediator, or builder 10-digit mobile number');
         setIsSubmitting(false);
         return;
       }
@@ -2388,9 +2388,9 @@ const PostProperty = () => {
         <section className="space-y-4 rounded-lg border border-teal-200 bg-teal-50/60 p-5 shadow-sm sm:p-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Admin-assisted property upload</p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">Owner or mediator registration</h2>
+            <h2 className="mt-1 text-xl font-bold text-slate-900">Owner, mediator, or builder registration</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Use this only when an owner or mediator needs help submitting a listing. The profile will be created or reused, and the property will appear under their My Listings.
+              Use this only when an owner, mediator, or builder needs help submitting a listing. The profile will be created or reused, and the property will appear under their My Listings.
             </p>
           </div>
 
@@ -2406,6 +2406,7 @@ const PostProperty = () => {
               >
                 <option value="owner">Owner</option>
                 <option value="mediator">Agent (Mediator)</option>
+                <option value="builder">Builder</option>
               </select>
             </label>
             <label className="space-y-1 text-sm font-semibold text-slate-700">

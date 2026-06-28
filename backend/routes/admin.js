@@ -318,7 +318,7 @@ router.get('/users/lookup/:phone', isAdmin, async (req, res) => {
       return res.json({ exists: false });
     }
 
-    const canAssignProperty = ['owner', 'mediator'].includes(user.accountType);
+    const canAssignProperty = ['owner', 'mediator', 'builder'].includes(user.accountType);
     res.json({
       exists: true,
       canAssignProperty,

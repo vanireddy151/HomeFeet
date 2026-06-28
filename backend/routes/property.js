@@ -135,16 +135,16 @@ const resolveListingOwnerForAdminUpload = async (req, adminUser) => {
     throw err;
   }
 
-  if (!['owner', 'mediator'].includes(assistedAccountType)) {
-    const err = new Error('Admin-assisted upload can only be assigned to an owner or mediator');
+  if (!['owner', 'mediator', 'builder'].includes(assistedAccountType)) {
+    const err = new Error('Admin-assisted upload can only be assigned to an owner, mediator, or builder');
     err.statusCode = 400;
     throw err;
   }
 
   let listingOwner = await findUserByPhone(req.body.assistedOwnerPhone || assistedPhone);
   if (listingOwner) {
-    if (!['owner', 'mediator'].includes(listingOwner.accountType)) {
-      const err = new Error('This phone number belongs to a builder or admin account');
+    if (!['owner', 'mediator', 'builder'].includes(listingOwner.accountType)) {
+      const err = new Error('This phone number belongs to an admin account');
       err.statusCode = 400;
       throw err;
     }
@@ -159,7 +159,7 @@ const resolveListingOwnerForAdminUpload = async (req, adminUser) => {
     return { listingOwner, createdAssistedUser: false };
   }
 
-  const fallbackFirstName = assistedAccountType === 'mediator' ? 'Mediator' : 'Owner';
+  const fallbackFirstName = assistedAccountType === 'mediator' ? 'Mediator' : assistedAccountType === 'builder' ? 'Builder' : 'Owner';
   const fallbackLastName = assistedPhone.slice(-4);
 
   listingOwner = await User.create({
@@ -168,7 +168,7 @@ const resolveListingOwnerForAdminUpload = async (req, adminUser) => {
     lastName: assistedLastName || fallbackLastName,
     email: assistedEmail || undefined,
     accountType: assistedAccountType,
-    builderVerificationStatus: 'not_required',
+    builderVerificationStatus: assistedAccountType === 'builder' ? 'approved' : 'not_required',
     isVerified: true
   });
 
