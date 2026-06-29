@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Briefcase, Building2, Languages, MapPin, MessageCircle, Phone, Trophy, User } from 'lucide-react';
+import { Briefcase, Building2, Languages, MapPin, Trophy, User } from 'lucide-react';
 import { API_BASE } from '../lib/api';
 
 type Agent = {
@@ -110,23 +110,39 @@ export default function AgentDirectory() {
 
   const filterSelectClass = "rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-teal-600";
 
+  const allCitiesCount = new Set(agents.map((agent) => agent.city).filter(Boolean)).size;
+  const totalListings = agents.reduce((sum, agent) => sum + (agent.propertiesCount || 0), 0);
+  const maxExperience = agents.reduce((max, agent) => Math.max(max, agent.agentExperienceYears || 0), 0);
+  const statCards = [
+    { label: 'Total Agents', value: agents.length },
+    { label: 'Cities Covered', value: allCitiesCount },
+    { label: 'Total Listings', value: totalListings },
+    { label: 'Most Experienced', value: maxExperience ? `${maxExperience} Yrs` : '-' },
+  ];
+
   return (
-    <div className="bg-slate-50">
-      <section className="relative overflow-hidden bg-slate-950 text-white">
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/40" />
-        <div className="ld-container relative py-20">
-          <p className="text-sm font-bold uppercase tracking-wide text-amber-300">Find an Agent</p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
+    <div className="min-h-screen bg-[#eef4fb] p-1.5 sm:p-3">
+      <div className="mx-auto max-w-[1580px]">
+        <div className="rounded-2xl bg-slate-950 p-5 text-white shadow-sm sm:p-6">
+          <p className="text-xs font-bold uppercase tracking-wide text-amber-300">Find an Agent</p>
+          <h1 className="mt-2 text-2xl font-black leading-tight tracking-tight md:text-3xl">
             Connect with verified agents (mediators) across India.
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
             Browse agent profiles and the properties they've listed. Contact details unlock with an active membership.
           </p>
         </div>
-      </section>
 
-      <section className="py-16">
-        <div className="ld-container">
+        <div className="mt-3 grid grid-cols-2 gap-1.5 sm:gap-4 xl:grid-cols-4">
+          {statCards.map((stat) => (
+            <div key={stat.label} className="rounded-lg bg-white px-3 py-1 shadow-sm sm:rounded-xl sm:px-4 sm:py-1.5">
+              <p className="text-[11px] leading-4 text-slate-500 sm:text-xs">{stat.label}</p>
+              <p className="mt-0.5 text-base font-semibold leading-5 text-slate-950 sm:text-xl">{loading ? '-' : stat.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3">
           {loading && <p className="text-center text-slate-500">Loading agents...</p>}
           {!loading && error && (
             <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -140,9 +156,9 @@ export default function AgentDirectory() {
             </div>
           )}
           {!loading && agents.length > 0 && (
-            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+            <div className="grid gap-3 lg:grid-cols-[1fr_320px]">
               <div>
-                <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 shadow-sm">
                   <select value={selectedState} onChange={(e) => { setSelectedState(e.target.value); setSelectedCity('All'); }} className={filterSelectClass}>
                     <option value="All">All States</option>
                     {stateOptions.map((state) => <option key={state} value={state}>{state}</option>)}
@@ -167,38 +183,31 @@ export default function AgentDirectory() {
                       Clear All
                     </button>
                   )}
+                  <span className="ml-auto text-sm font-semibold text-slate-500">{visibleAgents.length} of {agents.length} agents found</span>
                 </div>
 
-                <p className="mb-4 text-sm font-semibold text-slate-500">{visibleAgents.length} of {agents.length} agents found</p>
-
                 {visibleAgents.length === 0 ? (
-                  <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
+                  <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
                     <p className="font-black text-slate-950">No agents found for these filters.</p>
                   </div>
                 ) : (
-                  <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {visibleAgents.map((agent) => (
                       <div
                         key={agent.id}
-                        className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-600 hover:shadow-lg"
+                        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-600 hover:shadow-lg"
                       >
-                        <div className="flex flex-col items-center gap-1.5">
-                          <div
-                            className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full text-4xl font-black text-white"
-                            style={{ backgroundColor: BRAND_TEAL }}
-                          >
-                            {agent.firstName?.charAt(0).toUpperCase() || <User className="h-6 w-6" />}
+                        <div className="flex h-28 w-full items-center justify-center" style={{ backgroundColor: BRAND_TEAL }}>
+                          <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/40 text-3xl font-black text-white">
+                            {agent.firstName?.charAt(0).toUpperCase() || <User className="h-8 w-8" />}
                           </div>
-                          <Link to={`/agent/${agent.id}`} className="text-xs font-bold text-teal-700 hover:underline">
-                            View Profile
-                          </Link>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-lg font-black text-slate-950">
+                        <div className="p-3">
+                          <h3 className="truncate text-base font-black text-slate-950">
                             {agent.firstName} {agent.lastName}
                           </h3>
                           {agent.agentCompanyName && (
-                            <p className="flex items-center gap-1.5 truncate text-xs font-semibold text-slate-500">
+                            <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs font-semibold text-slate-500">
                               <Building2 className="h-3.5 w-3.5 shrink-0" /> {agent.agentCompanyName}
                             </p>
                           )}
@@ -207,34 +216,33 @@ export default function AgentDirectory() {
                             <span className="truncate">{[agent.city, agent.state].filter(Boolean).join(', ') || 'Location not specified'}</span>
                           </p>
                           {(agent.agentExperienceYears || agent.agentLanguages?.length) ? (
-                            <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
+                            <div className="mt-1.5 flex flex-wrap gap-1">
                               {typeof agent.agentExperienceYears === 'number' && (
-                                <span className="flex items-center gap-1"><Briefcase className="h-3.5 w-3.5" /> {agent.agentExperienceYears} Yrs Experience</span>
+                                <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"><Briefcase className="h-3 w-3" /> {agent.agentExperienceYears} Yrs</span>
                               )}
                               {agent.agentLanguages?.length > 0 && (
-                                <span className="flex items-center gap-1"><Languages className="h-3.5 w-3.5" /> {agent.agentLanguages.join(', ')}</span>
+                                <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"><Languages className="h-3 w-3" /> {agent.agentLanguages.join(', ')}</span>
                               )}
                             </div>
                           ) : null}
                           {agent.propertiesCount > 0 && (
-                            <p className="mt-1 text-xs font-semibold text-slate-600">
-                              {agent.propertiesCount} Listing{agent.propertiesCount === 1 ? '' : 's'}{' '}
-                              <Link to={`/agent/${agent.id}`} className="font-bold text-teal-700 underline">View All</Link>
+                            <p className="mt-1.5 rounded-md bg-slate-50 px-1.5 py-1 text-xs font-semibold text-slate-600">
+                              {agent.propertiesCount} Listing{agent.propertiesCount === 1 ? '' : 's'}
                             </p>
                           )}
-                          <div className="mt-3 flex flex-wrap gap-2">
+                          <div className="mt-2 flex flex-wrap gap-1.5">
                             <Link
                               to={`/agent/${agent.id}`}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-green-700"
+                              className="flex-1 rounded-lg bg-slate-950 px-3 py-1.5 text-center text-xs font-bold text-white hover:bg-teal-800"
                             >
-                              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                              View Details
                             </Link>
                             <Link
                               to={`/agent/${agent.id}`}
-                              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-white hover:opacity-90"
-                              style={{ backgroundColor: BRAND_TEAL }}
+                              className="flex-1 rounded-lg border px-3 py-1.5 text-center text-xs font-bold hover:bg-teal-50"
+                              style={{ borderColor: BRAND_TEAL, color: BRAND_TEAL }}
                             >
-                              <Phone className="h-3.5 w-3.5" /> Contact
+                              Contact
                             </Link>
                           </div>
                         </div>
@@ -245,7 +253,7 @@ export default function AgentDirectory() {
               </div>
 
               {leaderboards.length > 0 && currentLeaderboard && (
-                <aside className="h-fit rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   {leaderboards.length > 1 ? (
                     <div className="flex gap-4 border-b border-slate-100 text-sm font-bold">
                       {leaderboards.map((board, index) => (
@@ -298,7 +306,7 @@ export default function AgentDirectory() {
             </div>
           )}
         </div>
-      </section>
+      </div>
     </div>
   );
 }
