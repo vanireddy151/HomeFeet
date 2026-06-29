@@ -1470,15 +1470,22 @@ const PropertiesListingPage: React.FC = () => {
         mapAutoFitDoneRef.current = false;
       }
 
+      // Wait until every property in this view has resolved its coordinates
+      // (cached or geocoded) before locking in the one-time auto-fit. Fitting
+      // as soon as the first marker or two resolved left the map permanently
+      // zoomed into just that handful, never widening once the rest of the
+      // properties' async geocode lookups finished.
+      const stillResolvingCoordinates = mapProperties.some((property) => pendingGeocodePropertyIdsRef.current.has(property._id));
+
       const focusedProperty = visibleProperties.find((property) => property._id === focusedPropertyId);
       const focusedCoords = focusedProperty ? getPropertyMapCoordinates(focusedProperty) : null;
       if (focusedCoords) {
         developerMapInstanceRef.current.setCenter(focusedCoords);
         developerMapInstanceRef.current.setZoom(16);
-      } else if (!mapAutoFitDoneRef.current && markerCount > 1) {
+      } else if (!mapAutoFitDoneRef.current && !stillResolvingCoordinates && markerCount > 1) {
         developerMapInstanceRef.current.fitBounds(bounds, 70);
         mapAutoFitDoneRef.current = true;
-      } else if (!mapAutoFitDoneRef.current && markerCount === 1) {
+      } else if (!mapAutoFitDoneRef.current && !stillResolvingCoordinates && markerCount === 1) {
         developerMapInstanceRef.current.setCenter(bounds.getCenter());
         developerMapInstanceRef.current.setZoom(14);
         mapAutoFitDoneRef.current = true;
@@ -1696,7 +1703,7 @@ const PropertiesListingPage: React.FC = () => {
   if (showDashboardLayout) {
     return (
       <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fb] p-1.5 sm:p-3">
-        <div className={`mx-auto grid max-w-[1580px] gap-2.5 md:gap-4 ${
+        <div className={`mx-auto grid max-w-[1580px] grid-cols-[minmax(0,1fr)] gap-2.5 md:gap-4 ${
           isDeveloperView ? 'md:grid-cols-[minmax(0,60fr)_minmax(0,40fr)]' : 'md:grid-cols-[minmax(0,1fr)]'
         }`}>
           <div className={`grid grid-cols-2 gap-1.5 sm:gap-4 ${
