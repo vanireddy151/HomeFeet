@@ -363,6 +363,7 @@ export default function AgentDirectory() {
           )}
 
           <div className="flex w-full flex-col gap-2.5 md:w-[40%]">
+            <h2 className="text-base font-semibold text-slate-950">Agent Contact Information</h2>
             {loading && <p className="text-center text-slate-500">Loading agents...</p>}
             {!loading && error && (
               <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
