@@ -1123,7 +1123,7 @@ const Dashboard: React.FC = () => {
               )}
 
               <div className="mt-6 overflow-x-auto">
-                <div className="grid min-w-[860px] grid-cols-[220px_repeat(4,1fr)] gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200">
+                <div className="grid min-w-[600px] grid-cols-[220px_repeat(2,1fr)] gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200">
                   <div className="bg-white p-4" />
                   {PLAN_TIERS.map((tier) => (
                     <div
