@@ -1512,32 +1512,45 @@ const PropertiesListingPage: React.FC = () => {
 
   useEffect(() => {
     if (!isDeveloperView || !developerMapRef.current) return;
+    const container = developerMapRef.current;
+    let lastSize = { width: container.clientWidth, height: container.clientHeight };
 
-    const handleContainerResize = () => {
+    // Only re-trigger Maps when the container's size actually changed by a
+    // meaningful amount. ResizeObserver fires on every box-size change,
+    // including sub-pixel layout shifts from unrelated async content
+    // (images, carousels) loading nearby - reacting to those was causing the
+    // map to re-zoom/"expand" on its own a few seconds after a normal load.
+    const SIZE_CHANGE_THRESHOLD = 4;
+
+    const handleContainerResize = (width: number, height: number) => {
       const map = developerMapInstanceRef.current;
       if (!window.google?.maps || !map) return;
       const previousCenter = map.getCenter();
+      const previousZoom = map.getZoom();
       window.google.maps.event.trigger(map, 'resize');
-      if (developerMarkersRef.current.length > 1) {
-        const bounds = new window.google.maps.LatLngBounds();
-        developerMarkersRef.current.forEach((marker) => bounds.extend(marker.getPosition()));
-        map.fitBounds(bounds, 70);
-      } else if (previousCenter) {
-        map.setCenter(previousCenter);
-      }
+      if (previousCenter) map.setCenter(previousCenter);
+      if (previousZoom !== undefined) map.setZoom(previousZoom);
     };
 
-    // Window resize/orientation events only fire for actual viewport changes.
-    // ResizeObserver also catches internal layout shifts (sidebar/content
-    // loading after the map mounts) that leave Maps rendering at a stale size.
-    const observer = new ResizeObserver(() => handleContainerResize());
-    observer.observe(developerMapRef.current);
-    window.addEventListener('resize', handleContainerResize);
-    window.addEventListener('orientationchange', handleContainerResize);
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      if (Math.abs(width - lastSize.width) < SIZE_CHANGE_THRESHOLD && Math.abs(height - lastSize.height) < SIZE_CHANGE_THRESHOLD) {
+        return;
+      }
+      lastSize = { width, height };
+      handleContainerResize(width, height);
+    });
+    observer.observe(container);
+
+    const handleWindowResize = () => handleContainerResize(container.clientWidth, container.clientHeight);
+    window.addEventListener('resize', handleWindowResize);
+    window.addEventListener('orientationchange', handleWindowResize);
     return () => {
       observer.disconnect();
-      window.removeEventListener('resize', handleContainerResize);
-      window.removeEventListener('orientationchange', handleContainerResize);
+      window.removeEventListener('resize', handleWindowResize);
+      window.removeEventListener('orientationchange', handleWindowResize);
     };
   }, [isDeveloperView]);
 
