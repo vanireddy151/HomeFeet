@@ -414,7 +414,7 @@ export default function AgentDirectory() {
                     <p className="font-black text-slate-950">No agents found for these filters.</p>
                   </div>
                 ) : (
-                  <div className="h-[550px] overflow-y-auto rounded-xl sm:h-[700px] lg:h-[800px]">
+                  <div className="h-[800px] overflow-y-auto rounded-xl sm:h-[950px] lg:h-[1050px]">
                   <div className="grid gap-3 sm:grid-cols-2">
                     {visibleAgents.map((agent) => (
                       <div
