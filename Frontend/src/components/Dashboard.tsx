@@ -644,7 +644,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-8">
         <ListingsSidebar activePage="dashboard" />
         <main className="min-w-0 flex-1">
