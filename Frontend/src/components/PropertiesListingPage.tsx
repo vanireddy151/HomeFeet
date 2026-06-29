@@ -1945,11 +1945,7 @@ const PropertiesListingPage: React.FC = () => {
                 )}
               </div>
             </div>
-            <div className={`grid grid-cols-1 gap-3 overflow-y-auto rounded-2xl bg-white p-2.5 shadow-sm sm:grid-cols-2 sm:p-3 ${
-              isDeveloperView
-                ? 'h-[560px] md:h-[calc(100vh-24px)] md:min-h-[560px] md:max-h-none'
-                : 'h-[560px] md:h-[calc(100vh-140px)] md:min-h-[560px] md:max-h-[780px]'
-            }`}>
+            <div className="grid h-[560px] grid-cols-1 gap-3 overflow-y-auto rounded-2xl bg-white p-2.5 shadow-sm sm:grid-cols-2 sm:p-3">
               {loading && Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="h-44 animate-pulse rounded-xl bg-white shadow-sm" />
               ))}
