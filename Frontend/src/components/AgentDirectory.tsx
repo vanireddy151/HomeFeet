@@ -270,18 +270,18 @@ export default function AgentDirectory() {
           </p>
         </div>
 
-        <div className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2.5 md:gap-4 md:grid-cols-[minmax(0,60fr)_minmax(0,40fr)]">
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-4 md:col-span-2 xl:grid-cols-4">
-            {statCards.map((stat) => (
-              <div key={stat.label} className="rounded-lg bg-white px-3 py-1 shadow-sm sm:rounded-xl sm:px-4 sm:py-1.5">
-                <p className="text-[11px] leading-4 text-slate-500 sm:text-xs">{stat.label}</p>
-                <p className="mt-0.5 text-base font-semibold leading-5 text-slate-950 sm:text-xl">{loading ? '-' : stat.value}</p>
-              </div>
-            ))}
-          </div>
+        <div className="mt-3 grid grid-cols-2 gap-1.5 sm:gap-4 xl:grid-cols-4">
+          {statCards.map((stat) => (
+            <div key={stat.label} className="rounded-lg bg-white px-3 py-1 shadow-sm sm:rounded-xl sm:px-4 sm:py-1.5">
+              <p className="text-[11px] leading-4 text-slate-500 sm:text-xs">{stat.label}</p>
+              <p className="mt-0.5 text-base font-semibold leading-5 text-slate-950 sm:text-xl">{loading ? '-' : stat.value}</p>
+            </div>
+          ))}
+        </div>
 
+        <div className="mt-3 flex flex-col gap-2.5 md:flex-row md:gap-4">
           {!loading && visibleAgents.length > 0 && (
-            <div className="order-1 flex flex-col gap-2.5">
+            <div className="flex w-full flex-col gap-2.5 md:w-[60%]">
               <div className="rounded-xl bg-white/40 p-2.5 sm:p-3">
                 <h2 className="text-base font-semibold text-slate-950">Agents Marked on Map</h2>
                 <div className="relative mt-4">
@@ -310,7 +310,7 @@ export default function AgentDirectory() {
             </div>
           )}
 
-          <div className="order-2 flex flex-col gap-2.5">
+          <div className="flex w-full flex-col gap-2.5 md:w-[40%]">
             {loading && <p className="text-center text-slate-500">Loading agents...</p>}
             {!loading && error && (
               <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -364,8 +364,8 @@ export default function AgentDirectory() {
                         key={agent.id}
                         className={`overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-600 hover:shadow-lg ${focusedAgentId === agent.id ? 'border-red-500 ring-2 ring-red-200' : 'border-slate-200'}`}
                       >
-                        <div className="flex h-28 w-full items-center justify-center" style={{ backgroundColor: BRAND_TEAL }}>
-                          <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/40 text-3xl font-black text-white">
+                        <div className="flex h-28 w-full items-center justify-center bg-slate-100">
+                          <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white text-3xl font-black text-slate-700 shadow-sm">
                             {agent.firstName?.charAt(0).toUpperCase() || <User className="h-8 w-8" />}
                           </div>
                         </div>
