@@ -1511,24 +1511,33 @@ const PropertiesListingPage: React.FC = () => {
   }, [activeSearchTerm, currentMapCity, focusedPropertyId, geocodeTick, isDeveloperView, visibleProperties, mapLocationQuery]);
 
   useEffect(() => {
-    if (!isDeveloperView) return;
+    if (!isDeveloperView || !developerMapRef.current) return;
 
-    const handleResize = () => {
+    const handleContainerResize = () => {
       const map = developerMapInstanceRef.current;
       if (!window.google?.maps || !map) return;
+      const previousCenter = map.getCenter();
       window.google.maps.event.trigger(map, 'resize');
       if (developerMarkersRef.current.length > 1) {
         const bounds = new window.google.maps.LatLngBounds();
         developerMarkersRef.current.forEach((marker) => bounds.extend(marker.getPosition()));
         map.fitBounds(bounds, 70);
+      } else if (previousCenter) {
+        map.setCenter(previousCenter);
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
+    // Window resize/orientation events only fire for actual viewport changes.
+    // ResizeObserver also catches internal layout shifts (sidebar/content
+    // loading after the map mounts) that leave Maps rendering at a stale size.
+    const observer = new ResizeObserver(() => handleContainerResize());
+    observer.observe(developerMapRef.current);
+    window.addEventListener('resize', handleContainerResize);
+    window.addEventListener('orientationchange', handleContainerResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
+      observer.disconnect();
+      window.removeEventListener('resize', handleContainerResize);
+      window.removeEventListener('orientationchange', handleContainerResize);
     };
   }, [isDeveloperView]);
 
