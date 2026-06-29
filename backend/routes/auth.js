@@ -25,6 +25,19 @@ const speechUpload = multer({
 const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
+const recordLogin = (user, req, method) => {
+  LoginHistory.create({
+    userId: String(user._id),
+    phone: user.phone || '',
+    email: user.email || '',
+    name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+    accountType: user.accountType || 'owner',
+    method,
+    ip: req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || '',
+    userAgent: req.headers['user-agent'] || ''
+  }).catch((err) => console.error('Login history record error:', err.message || err));
+};
+
 const publicUser = (user) => ({
   id: user._id,
   firstName: user.firstName,
@@ -300,6 +313,8 @@ router.post('/verify-otp', async (req, res) => {
         { expiresIn: '7d' }
       );
 
+      recordLogin(existingUser, req, 'otp');
+
       return res.json({
         success: true,
         userExists: true,
@@ -461,6 +476,8 @@ router.post('/login-email', async (req, res) => {
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '7d' }
     );
+
+    recordLogin(user, req, 'email_password');
 
     res.json({
       success: true,

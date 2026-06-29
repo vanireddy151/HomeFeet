@@ -10,6 +10,7 @@ const ContactInquiry = require('../models/ContactInquiry');
 const WhatsAppIntake = require('../models/WhatsAppIntake');
 const BuilderContact = require('../models/BuilderContact');
 const Testimonial = require('../models/Testimonial');
+const LoginHistory = require('../models/LoginHistory');
 const { createPendingPropertyFromIntake } = require('../lib/whatsappIntake');
 const { sendTodayBuilderDigest, getMissingWhatsAppConfig } = require('../lib/builderDigest');
 const hyderabadBuilderContacts = require('../data/hyderabadBuilderContacts');
@@ -178,6 +179,18 @@ router.get('/users', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// GET recent login history for all users
+router.get('/login-history', isAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 200, 500);
+    const entries = await LoginHistory.find().sort({ loggedInAt: -1 }).limit(limit).lean();
+    res.json(entries);
+  } catch (error) {
+    console.error('Error fetching login history:', error);
+    res.status(500).json({ error: 'Failed to fetch login history' });
   }
 });
 
