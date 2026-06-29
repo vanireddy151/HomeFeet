@@ -1510,6 +1510,28 @@ const PropertiesListingPage: React.FC = () => {
     renderDeveloperMap();
   }, [activeSearchTerm, currentMapCity, focusedPropertyId, geocodeTick, isDeveloperView, visibleProperties, mapLocationQuery]);
 
+  useEffect(() => {
+    if (!isDeveloperView) return;
+
+    const handleResize = () => {
+      const map = developerMapInstanceRef.current;
+      if (!window.google?.maps || !map) return;
+      window.google.maps.event.trigger(map, 'resize');
+      if (developerMarkersRef.current.length > 1) {
+        const bounds = new window.google.maps.LatLngBounds();
+        developerMarkersRef.current.forEach((marker) => bounds.extend(marker.getPosition()));
+        map.fitBounds(bounds, 70);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [isDeveloperView]);
+
   const statCards = [
     { label: 'Total Properties', value: properties.length || 0 },
     { label: 'In Discussion', value: properties.filter((property) => property.dealStatus === 'booked').length || 0 },
@@ -1635,7 +1657,7 @@ const PropertiesListingPage: React.FC = () => {
   const priceRangeMaxPercent = ((priceRangeMaxValue - PRICE_RANGE_MIN) / (PRICE_RANGE_MAX - PRICE_RANGE_MIN)) * 100;
   if (showDashboardLayout) {
     return (
-      <div className="min-h-screen bg-[#eef4fb] p-1.5 sm:p-3">
+      <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fb] p-1.5 sm:p-3">
         <div className={`mx-auto grid max-w-[1580px] gap-2.5 md:gap-4 ${
           isDeveloperView ? 'md:grid-cols-[minmax(0,60fr)_minmax(0,40fr)]' : 'md:grid-cols-[minmax(0,1fr)]'
         }`}>
