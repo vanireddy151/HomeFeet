@@ -1754,7 +1754,7 @@ const PropertiesListingPage: React.FC = () => {
                       key={`${tab.value}-${tab.propertyType}`}
                       type="button"
                       onClick={() => switchDeveloperIntent(tab.value, tab.propertyType)}
-                      className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-semibold leading-tight transition ${
+                      className={`flex-1 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight transition ${
                         active ? 'bg-teal-700 text-white shadow-sm' : 'text-slate-700 hover:bg-teal-50 hover:text-teal-700'
                       }`}
                     >
