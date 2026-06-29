@@ -49,6 +49,7 @@ const ContactPage: React.FC = () => {
         <div className="space-y-4">
           {[
             { icon: Phone, label: 'Phone', value: '+91 80190 08351' },
+            { icon: Phone, label: 'Phone', value: '+91 90140 11885' },
             { icon: Mail, label: 'Email', value: 'contact@homefeet.in' },
             { icon: MapPin, label: 'Market', value: 'Hyderabad apartment & commercial space opportunities' },
             { icon: Building2, label: 'For', value: 'Owners, builders, buyers, partners, admins' }
