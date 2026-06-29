@@ -1945,17 +1945,18 @@ const PropertiesListingPage: React.FC = () => {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-3 rounded-2xl bg-white p-2.5 shadow-sm sm:grid-cols-2 sm:p-3">
+            <div className="h-[700px] overflow-y-auto rounded-2xl bg-white p-2.5 shadow-sm sm:p-3">
+            <div className="flex flex-wrap content-start gap-3">
               {loading && Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="h-44 animate-pulse rounded-xl bg-white shadow-sm" />
+                <div key={index} className="h-44 w-full animate-pulse rounded-xl bg-white shadow-sm sm:w-[calc(50%-6px)]" />
               ))}
               {!loading && properties.length > 0 && visibleProperties.length === 0 && (
-                <div className="rounded-xl border border-slate-200 bg-white p-5 text-center text-sm font-semibold text-slate-500 shadow-sm">
+                <div className="w-full rounded-xl border border-slate-200 bg-white p-5 text-center text-sm font-semibold text-slate-500 shadow-sm">
                   No properties found for this property number.
                 </div>
               )}
               {!loading && visibleProperties.length > 0 && visibleProperties.map((property) => (
-                <article key={property._id} className={`flex flex-col gap-2 overflow-hidden rounded-xl border bg-white p-2 shadow-sm ${
+                <article key={property._id} className={`flex w-full flex-col gap-2 overflow-hidden rounded-xl border bg-white p-2 shadow-sm sm:w-[calc(50%-6px)] ${
                   focusedPropertyId === property._id
                     ? 'border-red-300 ring-2 ring-red-100'
                     : propertyMatchesSearch(property, activeSearchTerm) ? 'border-amber-300 ring-2 ring-amber-100' : 'border-slate-100'
@@ -2124,6 +2125,7 @@ const PropertiesListingPage: React.FC = () => {
                   })()}
                 </article>
               ))}
+            </div>
             </div>
           </aside>
         </div>
