@@ -1812,7 +1812,7 @@ const PropertiesListingPage: React.FC = () => {
                   />
                 </div>
               </div>
-            <main className="relative min-h-[420px] overflow-hidden rounded-2xl bg-white shadow-sm sm:min-h-[560px] lg:min-h-[700px]">
+            <main className="relative min-h-[600px] overflow-hidden rounded-2xl bg-white shadow-sm sm:min-h-[750px] lg:min-h-[850px]">
               <div className="absolute left-2 right-2 top-2 z-10 flex gap-1 overflow-x-auto rounded-xl border border-white/70 bg-white/95 p-1 shadow-lg backdrop-blur [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:hidden">
                 {developerIntentTabs.map((tab) => {
                   const active = listingIntent === tab.value && currentPropertyType === tab.propertyType;
