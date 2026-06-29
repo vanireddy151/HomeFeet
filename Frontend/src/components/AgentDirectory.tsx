@@ -358,7 +358,7 @@ export default function AgentDirectory() {
                     <p className="font-black text-slate-950">No agents found for these filters.</p>
                   </div>
                 ) : (
-                  <div className="grid gap-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {visibleAgents.map((agent) => (
                       <div
                         key={agent.id}
