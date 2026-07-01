@@ -450,6 +450,9 @@ const buildFloorPlanUnits = async (rawUnitsJson, floorPlanFiles = [], uploadNami
       bedrooms: unit.bedrooms || '',
       size: unit.size || '',
       price: unit.price || '',
+      plotSizeSqYd: unit.plotSizeSqYd || '',
+      dimension: unit.dimension || '',
+      unitFacing: unit.unitFacing || '',
       imageUrl: imageUrls[0] || '',
       imageUrls,
       rooms: Array.isArray(unit.rooms)

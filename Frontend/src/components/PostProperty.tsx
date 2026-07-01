@@ -354,6 +354,9 @@ const PostProperty = () => {
     bedrooms: string;
     size: string;
     price: string;
+    plotSizeSqYd: string;
+    dimension: string;
+    unitFacing: string;
     files: File[];
     existingImageUrls: string[];
     rooms: { name: string; dimension: string }[];
@@ -363,6 +366,9 @@ const PostProperty = () => {
     bedrooms: (formData.bedrooms || '').split(',')[0]?.trim() || '',
     size: '',
     price: '',
+    plotSizeSqYd: '',
+    dimension: '',
+    unitFacing: '',
     files: [],
     existingImageUrls: [],
     rooms: []
@@ -713,6 +719,9 @@ const PostProperty = () => {
             bedrooms: unit.bedrooms || '',
             size: unit.size || '',
             price: unit.price || '',
+            plotSizeSqYd: unit.plotSizeSqYd || '',
+            dimension: unit.dimension || '',
+            unitFacing: unit.unitFacing || '',
             files: [],
             existingImageUrls: Array.isArray(unit.imageUrls) && unit.imageUrls.length ? unit.imageUrls : (unit.imageUrl ? [unit.imageUrl] : []),
             rooms: Array.isArray(unit.rooms) ? unit.rooms.map((room: any) => ({ name: room.name || '', dimension: room.dimension || '' })) : []
@@ -2254,6 +2263,9 @@ const PostProperty = () => {
       bedrooms: unit.bedrooms,
       size: unit.size,
       price: unit.price,
+      plotSizeSqYd: unit.plotSizeSqYd,
+      dimension: unit.dimension,
+      unitFacing: unit.unitFacing,
       existingImageUrls: unit.existingImageUrls,
       newFileCount: unit.files.length,
       rooms: unit.rooms.filter((room) => room.name || room.dimension)
@@ -3392,6 +3404,26 @@ const PostProperty = () => {
                     step="any"
                     className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
                   />
+                  <input
+                    value={unit.plotSizeSqYd}
+                    onChange={(e) => updateFloorPlanUnit(unitIndex, { plotSizeSqYd: e.target.value })}
+                    placeholder="Plot Size (Sq Yd)"
+                    className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+                  />
+                  <input
+                    value={unit.dimension}
+                    onChange={(e) => updateFloorPlanUnit(unitIndex, { dimension: e.target.value })}
+                    placeholder="Dimension (e.g. 30×40 ft)"
+                    className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+                  />
+                  <select
+                    value={unit.unitFacing}
+                    onChange={(e) => updateFloorPlanUnit(unitIndex, { unitFacing: e.target.value })}
+                    className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500 sm:col-span-2"
+                  >
+                    <option value="">{isVilla ? 'Villa Facing (this unit)' : 'Unit Facing'}</option>
+                    {flatFacingOptions.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
                 </div>
 
                 <div className="mt-3">

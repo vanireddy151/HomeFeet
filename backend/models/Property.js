@@ -267,6 +267,9 @@ const propertySchema = new mongoose.Schema({
       bedrooms: { type: String, default: '' },
       size: { type: String, default: '' },
       price: { type: String, default: '' },
+      plotSizeSqYd: { type: String, default: '' },
+      dimension: { type: String, default: '' },
+      unitFacing: { type: String, default: '' },
       imageUrl: { type: String, default: '' },
       imageUrls: { type: [String], default: [] },
       rooms: {
