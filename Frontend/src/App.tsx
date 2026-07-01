@@ -1231,7 +1231,7 @@ function HomePage() {
 
           {happeningProjects.length === 0 ? (
             <div className="flex h-[340px] items-center justify-center rounded-lg border border-slate-200 bg-white text-center text-sm font-semibold text-slate-500">
-              No active Sale Flats listings in {selectedCity} yet.
+              No active Sale Property listings in {selectedCity} yet.
             </div>
           ) : (
           <div className="relative">
@@ -3055,7 +3055,7 @@ function PropertiesMapPage() {
               {[
                 { label: 'All', value: 'All' },
                 { label: 'Buyer', value: 'buy' },
-                { label: 'Sale Flats', value: 'sell' },
+                { label: 'Sale Property', value: 'sell' },
                 { label: 'Commercial Space', value: 'commercial' },
               ].map((option) => {
                 const active = activeMapFilters.listingIntent === option.value;

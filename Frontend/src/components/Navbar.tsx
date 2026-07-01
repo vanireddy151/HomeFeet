@@ -52,7 +52,7 @@ const Navbar: React.FC = () => {
   const selectedCityParam = encodeURIComponent(selectedCity);
   const navLinks = [
     { to: `/properties?view=developers&listingIntent=buy&city=${selectedCityParam}`, label: 'Buyer', intent: 'buy' },
-    { to: `/properties?view=developers&listingIntent=sell&city=${selectedCityParam}`, label: 'Sale Flats', intent: 'sell' },
+    { to: `/properties?view=developers&listingIntent=sell&city=${selectedCityParam}`, label: 'Sale Property', intent: 'sell' },
     { to: `/properties?view=developers&listingIntent=sell&propertyType=commercial-plot&city=${selectedCityParam}`, label: 'Commercial Space', intent: 'sell', propertyType: 'commercial-plot' },
     { to: '/find-an-agent', label: 'Find an Agent' },
     { to: '/properties-map', label: 'Properties Map-View' },

@@ -18,7 +18,7 @@ const metroCities = [
 
 const SEARCH_TABS = [
   { label: 'Buyer', icon: Home, listingIntent: 'buy', propertyType: '' },
-  { label: 'Sale Flats', icon: Tag, listingIntent: 'sell', propertyType: '' },
+  { label: 'Sale Property', icon: Tag, listingIntent: 'sell', propertyType: '' },
   { label: 'Commercial Space', icon: Building2, listingIntent: 'sell', propertyType: 'commercial-plot' },
   { label: 'Post Property', icon: Briefcase, listingIntent: 'development', propertyType: '', badge: 'FREE' }
 ];

@@ -1638,11 +1638,11 @@ const PropertiesListingPage: React.FC = () => {
     ? 'Buyer Contact & Requirement Info'
     : listingIntent === 'sell'
       ? (developmentTypeListingLabels[filters.developmentType.toLowerCase()]
-        || (currentPropertyType === 'commercial-plot' ? 'Commercial Space Listings' : 'Sale Flats Listings'))
+        || (currentPropertyType === 'commercial-plot' ? 'Commercial Space Listings' : 'Sale Property Listings'))
       : 'Properties';
   const developerIntentTabs = [
     { label: 'Buyer', value: 'buy', propertyType: '' },
-    { label: 'Sale Flats', value: 'sell', propertyType: '' },
+    { label: 'Sale Property', value: 'sell', propertyType: '' },
     { label: 'Commercial Space', value: 'sell', propertyType: 'commercial-plot' },
   ];
   const switchDeveloperIntent = (intent: string, propertyType = '') => {
@@ -1851,7 +1851,7 @@ const PropertiesListingPage: React.FC = () => {
                   className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
                   {happeningProjects.length === 0 ? (
-                    <p className="flex h-44 w-full items-center justify-center px-2 text-center text-xs font-semibold text-slate-500">No active Sale Flats listings in {selectedCity} yet.</p>
+                    <p className="flex h-44 w-full items-center justify-center px-2 text-center text-xs font-semibold text-slate-500">No active Sale Property listings in {selectedCity} yet.</p>
                   ) : happeningProjects.map((pick) => (
                     <div
                       key={pick._id}
