@@ -2316,7 +2316,7 @@ const PostProperty = () => {
 
   const roadSizes = ['20', '40', '60', '80', '100'];
   const facings = ['North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'];
-  const flatFacingOptions = ['North', 'South', 'East', 'West'];
+  const flatFacingOptions = ['North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'];
   const roadFacingDirections = ['North', 'South', 'East', 'West'];
   const ratios = ['50:50', '60:40', '70:30', '80:20'];
   const zoningOptions = ['Residential', 'Commercial', 'Mixed Use', 'Agricultural', 'Industrial'];
@@ -2950,15 +2950,25 @@ const PostProperty = () => {
               min="0"
               step="any"
             />
-            <select
-              name="flatFacing"
-              onChange={handleChange}
-              value={formData.flatFacing}
-              className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-            >
-              <option value="">{isVilla ? 'Villa Facing' : 'Flat Facing'}</option>
-              {flatFacingOptions.map(f => <option key={f} value={f}>{f}</option>)}
-            </select>
+            <div className="md:col-span-2">
+              <p className="mb-2 text-sm font-semibold text-slate-700">{isVilla ? 'Villa Facing' : 'Flat Facing'}</p>
+              <div className="flex flex-wrap gap-3">
+                {flatFacingOptions.map(f => (
+                  <label
+                    key={f}
+                    className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${formData.flatFacing === f ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-300 text-slate-700 hover:border-teal-300'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.flatFacing === f}
+                      onChange={() => setFormData(prev => ({ ...prev, flatFacing: prev.flatFacing === f ? '' : f }))}
+                      className="h-4 w-4 accent-teal-600"
+                    />
+                    {f}
+                  </label>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-4 md:col-span-2">
               <input
                 name="flatSizeMin"
