@@ -399,7 +399,7 @@ const PropertyDetails: React.FC = () => {
 
   const amenities: string[] = Array.isArray(property?.selectedAmenities) ? property.selectedAmenities : [];
 
-  const floorPlanUnits: Array<{ bedrooms: string; size: string; price: string; imageUrl: string; imageUrls?: string[]; rooms: { name: string; dimension: string }[] }> = property
+  const floorPlanUnits: Array<{ bedrooms: string; size: string; price: string; plotSizeSqYd?: string; dimension?: string; unitFacing?: string; imageUrl: string; imageUrls?: string[]; rooms: { name: string; dimension: string }[] }> = property
     ? (Array.isArray(property.floorPlanUnits) && property.floorPlanUnits.length
       ? property.floorPlanUnits
       : (property.floorPlanUrl
@@ -972,11 +972,12 @@ const PropertyDetails: React.FC = () => {
                     </>
                   )}
 
-                  {(property.bedrooms || property.bathrooms || property.floorNumber || property.furnishingStatus || property.possessionStatus) && (
+                  {(property.bedrooms || property.bathrooms || property.floorNumber || property.furnishingStatus || property.possessionStatus || selectedFloorPlanUnit?.unitFacing || property.flatFacing) && (
                     <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                       {[
                         { label: 'Bedrooms', value: activeFloorPlanGroup?.label || property.bedrooms },
                         { label: 'Bathrooms', value: (property.bhkBathrooms && activeFloorPlanGroup?.label && property.bhkBathrooms[activeFloorPlanGroup.label]) || property.bathrooms },
+                        { label: 'Facing', value: selectedFloorPlanUnit?.unitFacing || property.flatFacing },
                         { label: 'Floor', value: property.floorNumber ? `${property.floorNumber}${property.totalFloors ? ` of ${property.totalFloors}` : ''}` : '' },
                         { label: 'Furnishing', value: property.furnishingStatus },
                         { label: 'Possession', value: property.possessionStatus },
