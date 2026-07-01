@@ -1242,8 +1242,18 @@ function HomePage() {
               {happeningProjects.map((pick) => (
                 <div
                   key={pick._id}
-                  className="w-[min(90vw,820px)] shrink-0 overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-slate-200 sm:grid sm:h-[340px] sm:grid-cols-[260px_1fr]"
+                  className="flex w-[min(90vw,820px)] shrink-0 flex-col overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-slate-200 sm:grid sm:h-[340px] sm:flex-none sm:grid-cols-[260px_1fr]"
                 >
+                  {/* Image — medium strip on mobile (above info), full right panel on sm+ */}
+                  <div className="relative h-36 overflow-hidden bg-slate-100 sm:hidden">
+                    <img
+                      src={getProjectImage(pick)}
+                      alt={pick.projectName}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/30 to-transparent" />
+                  </div>
+
                   {/* Info panel */}
                   <div className="flex flex-col gap-4 p-5 sm:justify-between sm:gap-0">
                     {/* Builder */}
@@ -1292,7 +1302,7 @@ function HomePage() {
                     </Link>
                   </div>
 
-                  {/* Image panel — hidden on mobile, shown on sm+ */}
+                  {/* Image — full right panel on sm+ only */}
                   <div className="relative hidden overflow-hidden bg-slate-100 sm:block">
                     <img
                       src={getProjectImage(pick)}
