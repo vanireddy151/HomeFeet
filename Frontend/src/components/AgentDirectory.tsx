@@ -505,8 +505,8 @@ export default function AgentDirectory() {
                         key={agent.id}
                         className={`flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-600 hover:shadow-lg ${focusedAgentId === agent.id ? 'border-red-500 ring-2 ring-red-200' : 'border-slate-200'}`}
                       >
-                        <div className="flex h-28 w-full shrink-0 items-center justify-center bg-gradient-to-br from-teal-400 to-cyan-600">
-                          <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/30 bg-white/20 text-white shadow-md">
+                        <div className="flex h-28 w-full shrink-0 items-center justify-center bg-gradient-to-br from-teal-100/80 to-sky-200/80">
+                          <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-teal-200/60 bg-white/60 text-teal-500 shadow-md">
                             <User className="h-9 w-9" />
                           </div>
                         </div>
