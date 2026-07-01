@@ -1643,14 +1643,41 @@ const PostProperty = () => {
     setFloorPlanUnits(prev => prev.map((unit, i) => (i === unitIndex ? { ...unit, ...patch } : unit)));
   };
 
-  const handleUnitFloorPlanFileChange = (unitIndex: number, e: ChangeEvent<HTMLInputElement>) => {
+  const handleUnitFloorPlanFileChange = async (unitIndex: number, e: ChangeEvent<HTMLInputElement>) => {
     const incoming = Array.from(e.target.files || []);
+    if (!incoming.length) return;
     setFloorPlanUnits(prev => prev.map((unit, i) => {
       if (i !== unitIndex) return unit;
       const combined = [...unit.files, ...incoming].slice(0, MAX_UNIT_IMAGES);
       return { ...unit, files: combined };
     }));
     e.target.value = '';
+    // Auto-extract room dimensions from first image using AI
+    const firstImage = incoming.find(f => f.type.startsWith('image/'));
+    if (!firstImage) return;
+    try {
+      const formPayload = new FormData();
+      formPayload.append('image', firstImage);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/analyze-floor-plan`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formPayload
+      });
+      if (!res.ok) return;
+      const { rooms } = await res.json();
+      if (!Array.isArray(rooms) || !rooms.length) return;
+      setFloorPlanUnits(prev => prev.map((unit, i) => {
+        if (i !== unitIndex) return unit;
+        const existing = unit.rooms.filter(r => r.name || r.dimension);
+        const newRooms = rooms
+          .filter((r: any) => r.name)
+          .map((r: any) => ({ name: String(r.name || ''), dimension: String(r.dimension || '') }));
+        return { ...unit, rooms: existing.length ? existing : newRooms };
+      }));
+    } catch {
+      // silent — AI extraction is best-effort
+    }
   };
   const removeUnitFile = (unitIndex: number, fileIndex: number) => {
     setFloorPlanUnits(prev => prev.map((unit, i) =>
@@ -3285,7 +3312,7 @@ const PostProperty = () => {
           </label>
         </div>
         <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
-          <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />Flat Floor Plans by Unit</span>
+          <span className="mb-2 flex items-center gap-2 font-semibold text-slate-800"><Image className="h-5 w-5 text-teal-700" />{formData.developmentType ? formData.developmentType.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Flat'} Floor Plans by Unit</span>
           <p className="mb-3 text-xs text-slate-500">
             If this project has different unit sizes, add one card per unit with its size, price, floor plan, and room dimensions (up to {MAX_FLOOR_PLAN_UNITS}).
           </p>
@@ -3334,7 +3361,7 @@ const PostProperty = () => {
 
                 <div className="mt-3">
                   <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Floor Plan Images (up to {MAX_UNIT_IMAGES})
+                    Floor Plan Images (up to {MAX_UNIT_IMAGES}) — Room dimensions auto-filled by AI
                   </p>
                   {unit.existingImageUrls.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-2">

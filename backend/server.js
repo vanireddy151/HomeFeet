@@ -11,6 +11,7 @@ const propertyRoutes = require('./routes/property');
 const adminRoutes = require('./routes/admin');
 const whatsappRoutes = require('./routes/whatsapp');
 const builderLogoRoutes = require('./routes/builderLogos');
+const analyzeFloorPlanRoute = require('./routes/analyzeFloorPlan');
 const Property = require('./models/Property');
 const VisitorStats = require('./models/VisitorStats');
 const Testimonial = require('./models/Testimonial');
@@ -41,6 +42,7 @@ app.use('/api/builder-logos', builderLogoRoutes);
 // Apply routes
 app.use('/api', authRoutes);
 app.use('/api', propertyRoutes);
+app.use('/api', analyzeFloorPlanRoute);
 
 const getIndiaDateKey = () => {
   const parts = new Intl.DateTimeFormat('en-CA', {
