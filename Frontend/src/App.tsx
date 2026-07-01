@@ -1244,37 +1244,33 @@ function HomePage() {
                   key={pick._id}
                   className="grid h-[340px] w-[min(90vw,820px)] shrink-0 grid-cols-[280px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 shadow-sm"
                 >
-                  <div className="flex h-full flex-col justify-between p-4">
-                    <div>
-                      {getBuilderLogo(pick) ? (
-                        <img
-                          src={getBuilderLogo(pick)}
-                          alt={getBuilderLabel(pick)}
-                          className="h-12 w-12 rounded-lg object-contain"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      ) : (
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-[#0AA6A6] text-lg font-black text-white shadow-sm">
-                          {getBuilderInitial(pick)}
-                        </div>
-                      )}
-                      <p className="mt-2 line-clamp-1 text-sm font-black leading-snug text-slate-950">{getBuilderLabel(pick)}</p>
-                      <Link to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`} className="text-xs font-bold text-indigo-700 underline">
-                        View Projects
-                      </Link>
-                      <p className="mt-3 line-clamp-1 font-black text-slate-950">{pick.projectName || pick.developmentType}</p>
-                      <p className="line-clamp-1 text-sm text-slate-600">{pick.locality}, {pick.city}</p>
-                    </div>
-                    <div>
-                      <p className="line-clamp-1 font-black text-slate-950">{getProjectPriceRange(pick)}</p>
-                      <p className="line-clamp-1 text-sm text-slate-600">{getProjectConfiguration(pick)}</p>
-                      <Link
-                        to={`/property/${pick._id}`}
-                        className="mt-3 block rounded-lg bg-[#0AA6A6] px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-[#088f8f]"
-                      >
-                        Contact
-                      </Link>
-                    </div>
+                  <div className="flex flex-col p-4">
+                    {getBuilderLogo(pick) ? (
+                      <img
+                        src={getBuilderLogo(pick)}
+                        alt={getBuilderLabel(pick)}
+                        className="h-12 w-12 rounded-lg object-contain"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-[#0AA6A6] text-lg font-black text-white shadow-sm">
+                        {getBuilderInitial(pick)}
+                      </div>
+                    )}
+                    <p className="mt-2 line-clamp-1 text-sm font-black leading-snug text-slate-950">{getBuilderLabel(pick)}</p>
+                    <Link to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`} className="text-xs font-bold text-indigo-700 underline">
+                      View Projects
+                    </Link>
+                    <p className="mt-3 line-clamp-1 font-black text-slate-950">{pick.projectName || pick.developmentType}</p>
+                    <p className="line-clamp-1 text-sm text-slate-600">{pick.locality}, {pick.city}</p>
+                    <p className="mt-3 line-clamp-1 font-black text-slate-950">{getProjectPriceRange(pick)}</p>
+                    <p className="line-clamp-1 text-sm text-slate-600">{getProjectConfiguration(pick)}</p>
+                    <Link
+                      to={`/property/${pick._id}`}
+                      className="mt-3 block rounded-lg bg-[#0AA6A6] px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-[#088f8f]"
+                    >
+                      Contact
+                    </Link>
                   </div>
                   <div className="flex h-full w-full items-center justify-center bg-slate-100">
                     <img src={getProjectImage(pick)} alt={pick.projectName} className="h-full w-full object-contain" />
