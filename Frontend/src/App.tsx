@@ -1242,10 +1242,10 @@ function HomePage() {
               {happeningProjects.map((pick) => (
                 <div
                   key={pick._id}
-                  className="grid h-[340px] w-[min(90vw,820px)] shrink-0 grid-cols-[260px_1fr] overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-slate-200"
+                  className="w-[min(90vw,820px)] shrink-0 overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-slate-200 sm:grid sm:h-[340px] sm:grid-cols-[260px_1fr]"
                 >
-                  {/* Info panel — 4 children with justify-between fills card evenly */}
-                  <div className="flex flex-col justify-between p-5">
+                  {/* Info panel */}
+                  <div className="flex flex-col gap-4 p-5 sm:justify-between sm:gap-0">
                     {/* Builder */}
                     <div className="flex items-center gap-2.5">
                       {getBuilderLogo(pick) ? (
@@ -1292,8 +1292,8 @@ function HomePage() {
                     </Link>
                   </div>
 
-                  {/* Image panel */}
-                  <div className="relative overflow-hidden bg-slate-100">
+                  {/* Image panel — hidden on mobile, shown on sm+ */}
+                  <div className="relative hidden overflow-hidden bg-slate-100 sm:block">
                     <img
                       src={getProjectImage(pick)}
                       alt={pick.projectName}
