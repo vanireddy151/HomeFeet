@@ -57,8 +57,13 @@ export const fetchHappeningProjects = async (city: string, limit = 8) => {
   const response = await fetch(`${API_BASE}/search?listingIntent=sell&city=${encodeURIComponent(city)}`);
   const data = await response.json();
   if (!response.ok || !Array.isArray(data)) throw new Error('Unable to load happening projects');
-  return data
-    .filter((property: any) => SALE_FLAT_TYPES.includes(String(property.developmentType || '').toLowerCase()))
-    .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-    .slice(0, limit);
+  const filtered = data.filter((property: any) =>
+    SALE_FLAT_TYPES.includes(String(property.developmentType || '').toLowerCase())
+  );
+  // Fisher-Yates shuffle so a different set appears on every page load
+  for (let i = filtered.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+  }
+  return filtered.slice(0, limit);
 };
