@@ -1244,7 +1244,7 @@ function HomePage() {
                   key={pick._id}
                   className="grid h-[340px] w-[min(90vw,820px)] shrink-0 grid-cols-[280px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 shadow-sm"
                 >
-                  <div className="flex flex-col justify-between p-5">
+                  <div className="flex flex-col p-5">
                     <div>
                       {getBuilderLogo(pick) ? (
                         <img
@@ -1263,17 +1263,17 @@ function HomePage() {
                         View Projects
                       </Link>
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-3">
                       <p className="line-clamp-1 font-black text-slate-950">{pick.projectName || pick.developmentType}</p>
                       <p className="line-clamp-1 text-sm text-slate-600">{pick.locality}, {pick.city}</p>
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-3">
                       <p className="line-clamp-1 font-black text-slate-950">{getProjectPriceRange(pick)}</p>
                       <p className="line-clamp-1 text-sm text-slate-600">{getProjectConfiguration(pick)}</p>
                     </div>
                     <Link
                       to={`/property/${pick._id}`}
-                      className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#0AA6A6] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#088f8f]"
+                      className="mt-auto block rounded-lg bg-[#0AA6A6] px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-[#088f8f]"
                     >
                       Contact
                     </Link>
