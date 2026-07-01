@@ -141,6 +141,7 @@ const PropertyDetails: React.FC = () => {
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [shortlistLoading, setShortlistLoading] = useState(false);
   const [activeFloorPlanUnitIndex, setActiveFloorPlanUnitIndex] = useState(0);
+  const [activeFloorPlanImageIndex, setActiveFloorPlanImageIndex] = useState(0);
   const [floorPlanView, setFloorPlanView] = useState<'3D' | '2D'>('3D');
   const floorPlanSizeTabsRef = useRef<HTMLDivElement | null>(null);
 
@@ -398,11 +399,11 @@ const PropertyDetails: React.FC = () => {
 
   const amenities: string[] = Array.isArray(property?.selectedAmenities) ? property.selectedAmenities : [];
 
-  const floorPlanUnits: Array<{ bedrooms: string; size: string; price: string; imageUrl: string; rooms: { name: string; dimension: string }[] }> = property
+  const floorPlanUnits: Array<{ bedrooms: string; size: string; price: string; imageUrl: string; imageUrls?: string[]; rooms: { name: string; dimension: string }[] }> = property
     ? (Array.isArray(property.floorPlanUnits) && property.floorPlanUnits.length
       ? property.floorPlanUnits
       : (property.floorPlanUrl
-        ? [{ bedrooms: (property.bedrooms || '').split(',')[0]?.trim() || '', size: property.flatSize || '', price: property.totalBudget || '', imageUrl: property.floorPlanUrl, rooms: [] }]
+        ? [{ bedrooms: (property.bedrooms || '').split(',')[0]?.trim() || '', size: property.flatSize || '', price: property.totalBudget || '', imageUrl: property.floorPlanUrl, imageUrls: [property.floorPlanUrl], rooms: [] }]
         : []))
     : [];
 
@@ -823,7 +824,7 @@ const PropertyDetails: React.FC = () => {
                         <button
                           key={group.label}
                           type="button"
-                          onClick={() => { setActiveBhkGroupIndex(groupIndex); setActiveFloorPlanUnitIndex(0); }}
+                          onClick={() => { setActiveBhkGroupIndex(groupIndex); setActiveFloorPlanUnitIndex(0); setActiveFloorPlanImageIndex(0); }}
                           className={`inline-flex flex-col items-start rounded-lg border px-4 py-2 text-left transition ${
                             groupIndex === activeBhkGroupIndex
                               ? 'border-teal-600 bg-teal-50'
@@ -857,7 +858,7 @@ const PropertyDetails: React.FC = () => {
                           <button
                             key={unitIndex}
                             type="button"
-                            onClick={() => setActiveFloorPlanUnitIndex(unitIndex)}
+                            onClick={() => { setActiveFloorPlanUnitIndex(unitIndex); setActiveFloorPlanImageIndex(0); }}
                             className={`shrink-0 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold ${
                               unitIndex === activeFloorPlanUnitIndex
                                 ? 'bg-teal-50 text-teal-800 ring-1 ring-teal-600'
@@ -901,23 +902,61 @@ const PropertyDetails: React.FC = () => {
                       </div>
 
                       <div className="mt-4">
-                        {isDisplayableImage(selectedFloorPlanUnit.imageUrl) ? (
-                          <img
-                            src={`${API_ORIGIN}${selectedFloorPlanUnit.imageUrl}`}
-                            alt={`${title} floor plan`}
-                            className="w-full rounded-lg border border-slate-200 object-contain"
-                          />
-                        ) : selectedFloorPlanUnit.imageUrl ? (
-                          <a
-                            href={`${API_ORIGIN}${selectedFloorPlanUnit.imageUrl}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-sm font-bold text-teal-700 hover:text-teal-900"
-                          >
-                            <Download className="h-4 w-4" />
-                            View floor plan document
-                          </a>
-                        ) : null}
+                        {(() => {
+                          const allImages = (selectedFloorPlanUnit.imageUrls && selectedFloorPlanUnit.imageUrls.length
+                            ? selectedFloorPlanUnit.imageUrls
+                            : selectedFloorPlanUnit.imageUrl ? [selectedFloorPlanUnit.imageUrl] : [])
+                            .filter(isDisplayableImage);
+                          const currentImg = allImages[activeFloorPlanImageIndex] || allImages[0];
+                          if (!currentImg && !selectedFloorPlanUnit.imageUrl) return null;
+                          if (!currentImg && selectedFloorPlanUnit.imageUrl) {
+                            return (
+                              <a href={`${API_ORIGIN}${selectedFloorPlanUnit.imageUrl}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-bold text-teal-700 hover:text-teal-900">
+                                <Download className="h-4 w-4" /> View floor plan document
+                              </a>
+                            );
+                          }
+                          return (
+                            <div className="relative">
+                              <img
+                                src={`${API_ORIGIN}${currentImg}`}
+                                alt={`${title} floor plan ${activeFloorPlanImageIndex + 1}`}
+                                className="w-full rounded-lg border border-slate-200 object-contain"
+                              />
+                              {allImages.length > 1 && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveFloorPlanImageIndex(i => (i - 1 + allImages.length) % allImages.length)}
+                                    className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/60 text-white shadow-lg hover:bg-slate-950/80"
+                                    aria-label="Previous image"
+                                  >
+                                    <ChevronLeft className="h-5 w-5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveFloorPlanImageIndex(i => (i + 1) % allImages.length)}
+                                    className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/60 text-white shadow-lg hover:bg-slate-950/80"
+                                    aria-label="Next image"
+                                  >
+                                    <ChevronRight className="h-5 w-5" />
+                                  </button>
+                                  <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+                                    {allImages.map((_, dotIdx) => (
+                                      <button
+                                        key={dotIdx}
+                                        type="button"
+                                        onClick={() => setActiveFloorPlanImageIndex(dotIdx)}
+                                        className={`h-2 w-2 rounded-full transition ${dotIdx === activeFloorPlanImageIndex ? 'bg-white' : 'bg-white/40'}`}
+                                        aria-label={`Image ${dotIdx + 1}`}
+                                      />
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {selectedFloorPlanUnit.rooms.length > 0 && (
