@@ -350,16 +350,17 @@ const PostProperty = () => {
     bedrooms: string;
     size: string;
     price: string;
-    file: File | null;
-    existingImageUrl: string;
+    files: File[];
+    existingImageUrls: string[];
     rooms: { name: string; dimension: string }[];
   };
+  const MAX_UNIT_IMAGES = 5;
   const emptyFloorPlanUnit = (): FloorPlanUnit => ({
     bedrooms: (formData.bedrooms || '').split(',')[0]?.trim() || '',
     size: '',
     price: '',
-    file: null,
-    existingImageUrl: '',
+    files: [],
+    existingImageUrls: [],
     rooms: []
   });
   const [floorPlanUnits, setFloorPlanUnits] = useState<FloorPlanUnit[]>([]);
@@ -706,12 +707,12 @@ const PostProperty = () => {
             bedrooms: unit.bedrooms || '',
             size: unit.size || '',
             price: unit.price || '',
-            file: null,
-            existingImageUrl: unit.imageUrl || '',
+            files: [],
+            existingImageUrls: Array.isArray(unit.imageUrls) && unit.imageUrls.length ? unit.imageUrls : (unit.imageUrl ? [unit.imageUrl] : []),
             rooms: Array.isArray(unit.rooms) ? unit.rooms.map((room: any) => ({ name: room.name || '', dimension: room.dimension || '' })) : []
           })));
         } else if (property.floorPlanUrl) {
-          setFloorPlanUnits([{ bedrooms: (property.bedrooms || '').split(',')[0]?.trim() || '', size: property.flatSize || '', price: property.totalBudget || '', file: null, existingImageUrl: property.floorPlanUrl, rooms: [] }]);
+          setFloorPlanUnits([{ bedrooms: (property.bedrooms || '').split(',')[0]?.trim() || '', size: property.flatSize || '', price: property.totalBudget || '', files: [], existingImageUrls: [property.floorPlanUrl], rooms: [] }]);
         }
         if (coordinates) {
           setTimeout(() => moveMapToLocation(coordinates.lat, coordinates.lng), 300);
@@ -1643,8 +1644,23 @@ const PostProperty = () => {
   };
 
   const handleUnitFloorPlanFileChange = (unitIndex: number, e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    updateFloorPlanUnit(unitIndex, { file });
+    const incoming = Array.from(e.target.files || []);
+    setFloorPlanUnits(prev => prev.map((unit, i) => {
+      if (i !== unitIndex) return unit;
+      const combined = [...unit.files, ...incoming].slice(0, MAX_UNIT_IMAGES);
+      return { ...unit, files: combined };
+    }));
+    e.target.value = '';
+  };
+  const removeUnitFile = (unitIndex: number, fileIndex: number) => {
+    setFloorPlanUnits(prev => prev.map((unit, i) =>
+      i === unitIndex ? { ...unit, files: unit.files.filter((_, fi) => fi !== fileIndex) } : unit
+    ));
+  };
+  const removeExistingUnitImage = (unitIndex: number, imgIndex: number) => {
+    setFloorPlanUnits(prev => prev.map((unit, i) =>
+      i === unitIndex ? { ...unit, existingImageUrls: unit.existingImageUrls.filter((_, ei) => ei !== imgIndex) } : unit
+    ));
   };
 
   const addRoomToUnit = (unitIndex: number) => {
@@ -2204,15 +2220,15 @@ const PostProperty = () => {
       bedrooms: unit.bedrooms,
       size: unit.size,
       price: unit.price,
-      existingImageUrl: unit.existingImageUrl,
-      hasNewFile: Boolean(unit.file),
+      existingImageUrls: unit.existingImageUrls,
+      newFileCount: unit.files.length,
       rooms: unit.rooms.filter((room) => room.name || room.dimension)
     }));
     data.append('floorPlanUnits', JSON.stringify(floorPlanUnitsMeta));
     floorPlanUnits.forEach((unit) => {
-      if (unit.file) {
-        data.append('floorPlan', unit.file);
-      }
+      unit.files.forEach((file) => {
+        data.append('floorPlan', file);
+      });
     });
     if (formData.propertyForm) {
       data.append('propertyForm', formData.propertyForm);
@@ -3317,16 +3333,45 @@ const PostProperty = () => {
                 </div>
 
                 <div className="mt-3">
-                  {unit.existingImageUrl && !unit.file && (
-                    <p className="mb-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">Current floor plan is saved. Upload a new one only if you want to replace it.</p>
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Floor Plan Images (up to {MAX_UNIT_IMAGES})
+                  </p>
+                  {unit.existingImageUrls.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      {unit.existingImageUrls.map((url, imgIdx) => (
+                        <div key={imgIdx} className="relative">
+                          <img src={`${API_ORIGIN}${url}`} alt={`Floor plan ${imgIdx + 1}`} className="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingUnitImage(unitIndex, imgIdx)}
+                            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow"
+                          >×</button>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                  <input
-                    type="file"
-                    onChange={(e) => handleUnitFloorPlanFileChange(unitIndex, e)}
-                    className="w-full rounded bg-white p-2"
-                    accept="image/*,.pdf"
-                  />
-                  {unit.file && <p className="mt-1 text-xs font-semibold text-teal-700">Selected: {unit.file.name}</p>}
+                  {unit.files.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      {unit.files.map((file, fi) => (
+                        <div key={fi} className="flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-800">
+                          {file.name}
+                          <button type="button" onClick={() => removeUnitFile(unitIndex, fi)} className="ml-1 text-red-500 hover:text-red-700">×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(unit.existingImageUrls.length + unit.files.length) < MAX_UNIT_IMAGES && (
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-teal-400 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-100">
+                      + Add Images ({MAX_UNIT_IMAGES - unit.existingImageUrls.length - unit.files.length} remaining)
+                      <input
+                        type="file"
+                        multiple
+                        onChange={(e) => handleUnitFloorPlanFileChange(unitIndex, e)}
+                        className="hidden"
+                        accept="image/*"
+                      />
+                    </label>
+                  )}
                 </div>
 
                 <div className="mt-3">

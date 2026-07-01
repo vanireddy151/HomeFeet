@@ -311,7 +311,7 @@ const propertyUpload = upload.fields([
   { name: 'images', maxCount: 10 },
   { name: 'plotDiagram', maxCount: 1 },
   { name: 'video', maxCount: 1 },
-  { name: 'floorPlan', maxCount: 6 },
+  { name: 'floorPlan', maxCount: 30 },
   { name: 'propertyForm', maxCount: 1 },
   { name: 'companyLogo', maxCount: 1 }
 ]);
@@ -435,16 +435,23 @@ const buildFloorPlanUnits = async (rawUnitsJson, floorPlanFiles = [], uploadNami
   let fileCursor = 0;
   const units = [];
   for (const unit of unitsMeta) {
-    let imageUrl = unit.existingImageUrl || '';
-    if (unit.hasNewFile && floorPlanFiles[fileCursor]) {
-      imageUrl = await saveFileToGridFS(floorPlanFiles[fileCursor], uploadNamingData);
-      fileCursor += 1;
+    const existingUrls = Array.isArray(unit.existingImageUrls) ? unit.existingImageUrls : (unit.existingImageUrl ? [unit.existingImageUrl] : []);
+    const newFileCount = Number(unit.newFileCount) || 0;
+    const newUrls = [];
+    for (let i = 0; i < newFileCount; i++) {
+      if (floorPlanFiles[fileCursor]) {
+        const url = await saveFileToGridFS(floorPlanFiles[fileCursor], uploadNamingData);
+        newUrls.push(url);
+        fileCursor += 1;
+      }
     }
+    const imageUrls = [...existingUrls, ...newUrls];
     units.push({
       bedrooms: unit.bedrooms || '',
       size: unit.size || '',
       price: unit.price || '',
-      imageUrl,
+      imageUrl: imageUrls[0] || '',
+      imageUrls,
       rooms: Array.isArray(unit.rooms)
         ? unit.rooms.map((room) => ({ name: room.name || '', dimension: room.dimension || '' }))
         : []

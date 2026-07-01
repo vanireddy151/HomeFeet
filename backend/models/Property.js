@@ -264,6 +264,7 @@ const propertySchema = new mongoose.Schema({
       size: { type: String, default: '' },
       price: { type: String, default: '' },
       imageUrl: { type: String, default: '' },
+      imageUrls: { type: [String], default: [] },
       rooms: {
         type: [{
           name: { type: String, default: '' },
