@@ -1984,7 +1984,7 @@ const PropertiesListingPage: React.FC = () => {
                             {property.dealStatus === 'closed' ? 'Closed' : 'Available'}
                           </span>
                         </div>
-                        <div className="flex min-w-0 flex-col">
+                        <div className="flex min-w-0 flex-1 flex-col">
                           <h3 className="line-clamp-1 text-[15px] font-semibold capitalize leading-6 text-slate-950">
                             {propertyIntent === 'buy' ? `Buyer requirement in ${getDisplayLocality(property)}` : propertyTitle(property)}
                           </h3>
@@ -2098,17 +2098,17 @@ const PropertiesListingPage: React.FC = () => {
                               {property.description}
                             </p>
                           )}
-                          <div className="mt-2 flex gap-1.5">
+                          <div className="mt-auto flex gap-1.5 pt-2">
                             <button
                               onClick={() => requireLoginForDetails(property)}
                               disabled={detailLoadingId === property._id}
-                              className="h-7 flex-1 min-w-[112px] self-start rounded-md bg-slate-950 px-4 text-[12px] font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
+                              className="h-7 flex-1 min-w-[112px] rounded-md bg-slate-950 px-4 text-[12px] font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
                             >
                               {detailLoadingId === property._id ? 'Opening...' : 'View Details'}
                             </button>
                             <button
                               onClick={() => handleCardContact(property)}
-                              className="h-7 flex-1 min-w-[112px] self-start rounded-md border border-teal-600 bg-white px-4 text-[12px] font-semibold text-teal-700 hover:bg-teal-50"
+                              className="h-7 flex-1 min-w-[112px] rounded-md border border-teal-600 bg-white px-4 text-[12px] font-semibold text-teal-700 hover:bg-teal-50"
                             >
                               Contact
                             </button>

@@ -202,7 +202,11 @@ const buildAutoDescription = (formData: Record<string, any>, isApartment: boolea
   }
 
   const priceBits: string[] = [];
-  if (formData.totalBudget) priceBits.push(`total budget of Rs. ${Number(formData.totalBudget).toLocaleString('en-IN')}`);
+  if (formData.totalBudget) {
+    const budgetNum = Number(parseBudgetValue(formData.totalBudget));
+    const budgetStr = budgetNum ? `Rs. ${budgetNum.toLocaleString('en-IN')}` : formData.totalBudget;
+    priceBits.push(`total budget of ${budgetStr}${formData.totalBudgetOnwards ? ' Onwards' : ''}`);
+  }
   if (formData.squareFeetPrice) priceBits.push(`Rs. ${Number(formData.squareFeetPrice).toLocaleString('en-IN')} per Sq Ft`);
   if (formData.squareYardPrice) priceBits.push(`Rs. ${Number(formData.squareYardPrice).toLocaleString('en-IN')} per Sq Yard`);
   if (priceBits.length) sentences.push(`Priced at ${priceBits.join(', ')}.`);
@@ -210,8 +214,29 @@ const buildAutoDescription = (formData: Record<string, any>, isApartment: boolea
   if (Array.isArray(formData.selectedAmenities) && formData.selectedAmenities.length) {
     sentences.push(`Amenities include ${formData.selectedAmenities.join(', ')}.`);
   }
+  if (formData.amenitiesChargeExtra) {
+    sentences.push(`Amenities charge extra: ${formData.amenitiesChargeExtra}.`);
+  }
 
   return sentences.join(' ');
+};
+
+const parseBudgetValue = (val: string): string => {
+  const s = val.trim().toLowerCase().replace(/,/g, '');
+  const lakh = s.match(/^([\d.]+)\s*(?:l|lakh|lakhs?)$/);
+  if (lakh) return String(Math.round(parseFloat(lakh[1]) * 100000));
+  const crore = s.match(/^([\d.]+)\s*(?:cr|crore|crores?)$/);
+  if (crore) return String(Math.round(parseFloat(crore[1]) * 10000000));
+  return s.replace(/[^\d.]/g, '');
+};
+
+const formatBudgetHint = (val: string): string => {
+  const parsed = parseBudgetValue(val);
+  const num = parseFloat(parsed);
+  if (!num || isNaN(num)) return '';
+  if (num >= 10000000) return `= ₹${(num / 10000000).toFixed(num % 10000000 === 0 ? 0 : 2)} Cr`;
+  if (num >= 100000) return `= ₹${(num / 100000).toFixed(num % 100000 === 0 ? 0 : 1)} L`;
+  return `= ₹${num.toLocaleString('en-IN')}`;
 };
 
 const PostProperty = () => {
@@ -275,6 +300,8 @@ const PostProperty = () => {
     squareYardPrice: '',
     squareFeetPrice: '',
     totalBudget: '',
+    totalBudgetOnwards: false,
+    amenitiesChargeExtra: '',
     purchaseTimeline: '',
     description: '',
     selectedAmenities: [] as string[],
@@ -288,7 +315,8 @@ const PostProperty = () => {
     companyLogo: null as File | null,
   });
   const [showParcelShapePicker, setShowParcelShapePicker] = useState(false);
-  const formSteps = ['Property Details', 'Apartment Details', 'Pricing & Amenities', 'Media Uploads', 'Location Details'];
+  const step1Label = formData.developmentType.trim().toLowerCase() === 'villa' ? 'Villa Details' : 'Apartment Details';
+  const formSteps = ['Property Details', step1Label, 'Pricing & Amenities', 'Media Uploads', 'Location Details'];
   const [currentStep, setCurrentStep] = useState(0);
   const [assistedOwner, setAssistedOwner] = useState({
     accountType: 'owner',
@@ -419,6 +447,8 @@ const PostProperty = () => {
       squareYardPrice: prefill.squareYardPrice || prev.squareYardPrice,
       squareFeetPrice: prefill.squareFeetPrice || prev.squareFeetPrice,
       totalBudget: prefill.totalBudget || prev.totalBudget,
+      totalBudgetOnwards: prefill.totalBudgetOnwards ?? prev.totalBudgetOnwards,
+      amenitiesChargeExtra: prefill.amenitiesChargeExtra || prev.amenitiesChargeExtra,
       description: prefill.description || prev.description,
       selectedAmenities: Array.isArray(prefill.selectedAmenities) && prefill.selectedAmenities.length
         ? prefill.selectedAmenities
@@ -646,6 +676,8 @@ const PostProperty = () => {
           squareYardPrice: property.squareYardPrice || '',
           squareFeetPrice: property.squareFeetPrice || '',
           totalBudget: property.totalBudget || '',
+          totalBudgetOnwards: Boolean(property.totalBudgetOnwards),
+          amenitiesChargeExtra: property.amenitiesChargeExtra || '',
           purchaseTimeline: normalizePurchaseTimeline(property.purchaseTimeline),
           description: property.description || '',
           selectedAmenities: Array.isArray(property.selectedAmenities) ? property.selectedAmenities : [],
@@ -2121,7 +2153,9 @@ const PostProperty = () => {
     data.append('advance', formData.listingIntent === 'development' ? formData.advance : '');
     data.append('squareYardPrice', formData.listingIntent === 'development' ? '' : formData.squareYardPrice);
     data.append('squareFeetPrice', formData.squareFeetPrice);
-    data.append('totalBudget', formData.totalBudget);
+    data.append('totalBudget', parseBudgetValue(formData.totalBudget));
+    data.append('totalBudgetOnwards', String(formData.totalBudgetOnwards));
+    data.append('amenitiesChargeExtra', formData.amenitiesChargeExtra);
     data.append('description', formData.description);
     data.append('selectedAmenities', JSON.stringify(formData.selectedAmenities));
     if (isAdminEditMode) {
@@ -2257,9 +2291,11 @@ const PostProperty = () => {
   const normalizedDevelopmentType = formData.developmentType.trim().toLowerCase();
   const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
   const isApartment = apartmentLikeTypes.includes(normalizedDevelopmentType);
+  const isVilla = normalizedDevelopmentType === 'villa';
+  const isApartmentOrVilla = isApartment || isVilla;
 
   useEffect(() => {
-    const generated = buildAutoDescription(formData, isApartment);
+    const generated = buildAutoDescription(formData, isApartmentOrVilla);
     if (formData.description === autoDescriptionRef.current && generated !== formData.description) {
       autoDescriptionRef.current = generated;
       setFormData((prev) => ({ ...prev, description: generated }));
@@ -2268,8 +2304,8 @@ const PostProperty = () => {
     formData.developmentType, formData.bedrooms, formData.bathrooms, formData.flatSize, formData.flatFacing,
     formData.floorNumber, formData.totalFloors, formData.furnishingStatus, formData.possessionStatus,
     formData.totalArea, formData.areaUnit, formData.facing, formData.locality, formData.city,
-    formData.totalBudget, formData.squareFeetPrice, formData.squareYardPrice, formData.selectedAmenities,
-    isApartment
+    formData.totalBudget, formData.totalBudgetOnwards, formData.amenitiesChargeExtra, formData.squareFeetPrice, formData.squareYardPrice, formData.selectedAmenities,
+    isApartmentOrVilla
   ]);
 
   const requiresPlotBoundaryDetails =
@@ -2798,9 +2834,9 @@ const PostProperty = () => {
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3">
           <Building2 className="h-6 w-6 text-teal-700" />
-          <h2 className="text-xl font-bold text-slate-900">Apartment Details</h2>
+          <h2 className="text-xl font-bold text-slate-900">{isVilla ? 'Villa Details' : 'Apartment Details'}</h2>
         </div>
-        {isApartment ? (
+        {isApartmentOrVilla ? (
           <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
             <input
               name="projectName"
@@ -2858,7 +2894,7 @@ const PostProperty = () => {
               name="flatSize"
               value={formData.flatSize}
               onChange={handleChange}
-              placeholder="Flat Size (Sq Ft)"
+              placeholder={isVilla ? 'Villa Built-up Area (Sq Ft)' : 'Flat Size (Sq Ft)'}
               className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
               type="number"
               min="0"
@@ -2870,7 +2906,7 @@ const PostProperty = () => {
               value={formData.flatFacing}
               className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
             >
-              <option value="">Flat Facing</option>
+              <option value="">{isVilla ? 'Villa Facing' : 'Flat Facing'}</option>
               {flatFacingOptions.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
             <div className="grid grid-cols-2 gap-4 md:col-span-2">
@@ -2878,7 +2914,7 @@ const PostProperty = () => {
                 name="flatSizeMin"
                 value={formData.flatSizeMin}
                 onChange={handleChange}
-                placeholder="Min Flat Size (Sq Ft) - if range"
+                placeholder={isVilla ? 'Min Villa Area (Sq Ft) - if range' : 'Min Flat Size (Sq Ft) - if range'}
                 className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
                 type="number"
                 min="0"
@@ -2888,7 +2924,7 @@ const PostProperty = () => {
                 name="flatSizeMax"
                 value={formData.flatSizeMax}
                 onChange={handleChange}
-                placeholder="Max Flat Size (Sq Ft) - if range"
+                placeholder={isVilla ? 'Max Villa Area (Sq Ft) - if range' : 'Max Flat Size (Sq Ft) - if range'}
                 className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
                 type="number"
                 min="0"
@@ -2896,7 +2932,7 @@ const PostProperty = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <p className="mb-2 text-sm font-semibold text-slate-700">Bedrooms (BHK) *</p>
+              <p className="mb-2 text-sm font-semibold text-slate-700">{isVilla ? 'Bedrooms (BHK)' : 'Bedrooms (BHK) *'}</p>
               <div className="flex flex-wrap gap-3">
                 {bedroomOptions.map(option => (
                   <label key={option} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
@@ -2941,6 +2977,7 @@ const PostProperty = () => {
                 {bathroomOptions.map(option => <option key={option} value={option}>{option}</option>)}
               </select>
             )}
+            {!isVilla && (
             <input
               name="floorNumber"
               value={formData.floorNumber}
@@ -2951,12 +2988,13 @@ const PostProperty = () => {
               min="0"
               step="1"
             />
+            )}
             <input
               name="totalFloors"
               value={formData.totalFloors}
               onChange={handleChange}
               className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-              placeholder="Total Floors (e.g. 12)"
+              placeholder={isVilla ? 'Number of Floors in Villa (e.g. 2)' : 'Total Floors (e.g. 12)'}
               type="number"
               min="0"
               step="1"
@@ -2981,7 +3019,7 @@ const PostProperty = () => {
             </select>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">This section applies to apartment-type listings only. Click Next to continue.</p>
+          <p className="text-sm text-slate-500">This section applies to apartment or villa listings only. Click Next to continue.</p>
         )}
       </section>
       )}
@@ -3109,17 +3147,39 @@ const PostProperty = () => {
             step="any"
             required
           />
-          <input
-            name="totalBudget"
-            onChange={handleChange}
-            value={formData.totalBudget}
-            placeholder={formData.listingIntent === 'buy' ? 'Total Budget (Rs)' : 'Total Budget / Expected Price (Rs)'}
-            className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
-            type="number"
-            min="0"
-            step="any"
-          />
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <input
+                name="totalBudget"
+                onChange={handleChange}
+                value={formData.totalBudget}
+                placeholder={formData.listingIntent === 'buy' ? 'Total Budget — e.g. 72 Lakhs or 7200000' : 'Expected Price — e.g. 72 Lakhs or 7200000'}
+                className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+                type="text"
+              />
+              <label className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-700 hover:border-teal-400 hover:bg-teal-50">
+                <input
+                  type="checkbox"
+                  checked={formData.totalBudgetOnwards}
+                  onChange={e => setFormData(prev => ({ ...prev, totalBudgetOnwards: e.target.checked }))}
+                  className="h-4 w-4 accent-teal-700"
+                />
+                Onwards
+              </label>
+            </div>
+            {formData.totalBudget && formatBudgetHint(formData.totalBudget) && (
+              <p className="pl-1 text-xs font-semibold text-teal-700">{formatBudgetHint(formData.totalBudget)}{formData.totalBudgetOnwards ? ' Onwards' : ''}</p>
+            )}
+          </div>
         </div>
+        <input
+          name="amenitiesChargeExtra"
+          onChange={handleChange}
+          value={formData.amenitiesChargeExtra}
+          placeholder="Amenities Charge Extra — e.g. ₹50,000 or 2500/month (optional)"
+          className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
+          type="text"
+        />
       )}
       <div>
         <textarea

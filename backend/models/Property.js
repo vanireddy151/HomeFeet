@@ -144,6 +144,14 @@ const propertySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  totalBudgetOnwards: {
+    type: Boolean,
+    default: false
+  },
+  amenitiesChargeExtra: {
+    type: String,
+    default: ''
+  },
   purchaseTimeline: {
     type: String,
     default: ''
