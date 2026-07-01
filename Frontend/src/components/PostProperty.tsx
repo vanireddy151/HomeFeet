@@ -3135,6 +3135,7 @@ const PostProperty = () => {
         </div>
       )}
       {formData.listingIntent !== 'development' && (
+        <>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <input
             name="squareFeetPrice"
@@ -3180,6 +3181,7 @@ const PostProperty = () => {
           className="w-full rounded-lg border border-slate-300 p-3 focus:ring-2 focus:ring-teal-500"
           type="text"
         />
+        </>
       )}
       <div>
         <textarea
