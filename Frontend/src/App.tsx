@@ -1242,38 +1242,64 @@ function HomePage() {
               {happeningProjects.map((pick) => (
                 <div
                   key={pick._id}
-                  className="grid h-[340px] w-[min(90vw,820px)] shrink-0 grid-cols-[280px_1fr] overflow-hidden rounded-lg bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 shadow-sm"
+                  className="grid h-[340px] w-[min(90vw,820px)] shrink-0 grid-cols-[260px_1fr] overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-slate-200"
                 >
-                  <div className="flex flex-col p-4">
-                    {getBuilderLogo(pick) ? (
-                      <img
-                        src={getBuilderLogo(pick)}
-                        alt={getBuilderLabel(pick)}
-                        className="h-12 w-12 rounded-lg object-contain"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-[#0AA6A6] text-lg font-black text-white shadow-sm">
-                        {getBuilderInitial(pick)}
+                  {/* Info panel — 4 children with justify-between fills card evenly */}
+                  <div className="flex flex-col justify-between p-5">
+                    {/* Builder */}
+                    <div className="flex items-center gap-2.5">
+                      {getBuilderLogo(pick) ? (
+                        <img
+                          src={getBuilderLogo(pick)}
+                          alt={getBuilderLabel(pick)}
+                          className="h-10 w-10 shrink-0 rounded-lg object-contain"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#0AA6A6] text-base font-black text-white">
+                          {getBuilderInitial(pick)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="line-clamp-1 text-sm font-black text-slate-900">{getBuilderLabel(pick)}</p>
+                        <Link
+                          to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`}
+                          className="text-xs font-semibold text-[#0AA6A6] hover:underline"
+                        >
+                          View Projects →
+                        </Link>
                       </div>
-                    )}
-                    <p className="mt-2 line-clamp-1 text-sm font-black leading-snug text-slate-950">{getBuilderLabel(pick)}</p>
-                    <Link to={`/properties?view=marketplace&city=${encodeURIComponent(selectedCity)}`} className="text-xs font-bold text-indigo-700 underline">
-                      View Projects
-                    </Link>
-                    <p className="mt-3 line-clamp-1 font-black text-slate-950">{pick.projectName || pick.developmentType}</p>
-                    <p className="line-clamp-1 text-sm text-slate-600">{pick.locality}, {pick.city}</p>
-                    <p className="mt-3 line-clamp-1 font-black text-slate-950">{getProjectPriceRange(pick)}</p>
-                    <p className="line-clamp-1 text-sm text-slate-600">{getProjectConfiguration(pick)}</p>
+                    </div>
+
+                    {/* Project name & location */}
+                    <div>
+                      <p className="line-clamp-1 text-base font-black leading-tight text-slate-950">{pick.projectName || pick.developmentType}</p>
+                      <p className="mt-0.5 line-clamp-1 text-sm text-slate-500">{pick.locality}, {pick.city}</p>
+                    </div>
+
+                    {/* Price & config */}
+                    <div>
+                      <p className="line-clamp-1 font-black text-[#0AA6A6]">{getProjectPriceRange(pick)}</p>
+                      <p className="mt-0.5 line-clamp-1 text-sm text-slate-500">{getProjectConfiguration(pick)}</p>
+                    </div>
+
+                    {/* Contact button */}
                     <Link
                       to={`/property/${pick._id}`}
-                      className="mt-3 block rounded-lg bg-[#0AA6A6] px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-[#088f8f]"
+                      className="block rounded-lg bg-[#0AA6A6] px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-[#088f8f]"
                     >
                       Contact
                     </Link>
                   </div>
-                  <div className="flex h-full w-full items-center justify-center bg-slate-100">
-                    <img src={getProjectImage(pick)} alt={pick.projectName} className="h-full w-full object-contain" />
+
+                  {/* Image panel */}
+                  <div className="relative overflow-hidden bg-slate-100">
+                    <img
+                      src={getProjectImage(pick)}
+                      alt={pick.projectName}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/30 to-transparent" />
                   </div>
                 </div>
               ))}
