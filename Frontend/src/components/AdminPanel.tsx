@@ -85,6 +85,8 @@ const getPropertyCategory = (property: Pick<Property, 'listingIntent' | 'develop
   if (intent === 'buy') return 'Buyers';
   if (intent === 'sell' && commercialDevelopmentTypes.includes(type)) return 'Commercial Plot';
   if (intent === 'sell' && apartmentLikeDevelopmentTypes.includes(type)) return 'Sell Flat';
+  if (intent === 'sell' && type === 'villa') return 'Sell Villa';
+  if (intent === 'sell' && type === 'farm-house') return 'FarmHouse';
   if (intent === 'sell') return 'Sell Plot';
   return 'ForDevelopers';
 };
@@ -92,6 +94,8 @@ const getPropertyCategory = (property: Pick<Property, 'listingIntent' | 'develop
 const getPropertyCategoryClass = (category: string) => {
   if (category === 'Buyers') return 'bg-blue-50 text-blue-800 border-blue-100';
   if (category === 'Sell Flat') return 'bg-emerald-50 text-emerald-800 border-emerald-100';
+  if (category === 'Sell Villa') return 'bg-orange-50 text-orange-800 border-orange-100';
+  if (category === 'FarmHouse') return 'bg-green-50 text-green-800 border-green-100';
   if (category === 'Sell Plot') return 'bg-amber-50 text-amber-800 border-amber-100';
   if (category === 'Commercial Plot') return 'bg-purple-50 text-purple-800 border-purple-100';
   return 'bg-teal-50 text-teal-800 border-teal-100';
