@@ -1142,6 +1142,23 @@ function HomePage() {
     container.scrollBy({ left: direction * (card.offsetWidth + gap), behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    if (happeningProjects.length <= 1) return;
+    const interval = setInterval(() => {
+      const container = housingPicksScrollRef.current;
+      const card = container?.firstElementChild as HTMLElement | null;
+      if (!container || !card) return;
+      const gap = parseFloat(getComputedStyle(container).columnGap || '0') || 16;
+      const atEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 10;
+      if (atEnd) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: card.offsetWidth + gap, behavior: 'smooth' });
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [happeningProjects]);
+
   const visibleHotSellingProjects = selectedHotSellingZone === 'All'
     ? hotSellingProjects
     : hotSellingProjects.filter((project) => project.zone === selectedHotSellingZone);
