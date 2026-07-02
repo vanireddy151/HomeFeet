@@ -1421,7 +1421,7 @@ function HomePage() {
           <div className="ld-container">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Premium Properties in {selectedCity}</h2>
+                <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">Premium <span className="text-[#0AA6A6]">Properties</span> in {selectedCity}</h2>
                 <p className="mt-1 text-sm text-slate-500">Explore the latest and ongoing luxury projects in {selectedCity}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
