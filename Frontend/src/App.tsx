@@ -1473,7 +1473,7 @@ function HomePage() {
                     </span>
                   </div>
 
-                  <div className="mt-5">
+                  <div className="mt-10">
                     <p className="text-sm text-slate-500">Starting price</p>
                     <p className="mt-1 text-3xl font-black text-slate-950">{getExclusiveProjectPrice(activeExclusiveProject)}</p>
 
