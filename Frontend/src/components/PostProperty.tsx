@@ -2124,7 +2124,7 @@ const PostProperty = () => {
       setIsSubmitting(false);
       return;
     }
-    const isApartmentListing = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'].includes(formData.developmentType.trim().toLowerCase());
+    const isApartmentListing = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house', 'newly-launched'].includes(formData.developmentType.trim().toLowerCase());
     if (!isApartmentListing && !formData.roadFacingDirection) {
       alert('Please select the road facing direction');
       setIsSubmitting(false);
@@ -2361,7 +2361,7 @@ const PostProperty = () => {
   const furnishingOptions = ['Unfurnished', 'Semi-Furnished', 'Fully-Furnished'];
   const possessionOptions = ['Ready to Move', 'Under Construction'];
   const normalizedDevelopmentType = formData.developmentType.trim().toLowerCase();
-  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house'];
+  const apartmentLikeTypes = ['apartment', 'standalone', 'high-rise', 'gated-community', 'group-house', 'newly-launched'];
   const isApartment = apartmentLikeTypes.includes(normalizedDevelopmentType);
   const isVilla = normalizedDevelopmentType === 'villa';
   const isApartmentOrVilla = isApartment || isVilla;
@@ -2727,6 +2727,7 @@ const PostProperty = () => {
         <option value="">{formData.listingIntent === 'development' ? 'Select Development Type *' : 'Select Property Type *'}</option>
         {formData.listingIntent === 'development' ? (
           <>
+            <option value="newly-launched">Newly Launched</option>
             <option value="villa">Villa</option>
             <option value="standalone">Standalone</option>
             <option value="high-rise">High-rise</option>
@@ -2744,6 +2745,7 @@ const PostProperty = () => {
           </>
         ) : (
           <>
+            <option value="newly-launched">Newly Launched</option>
             <option value="standalone">Standalone</option>
             <option value="high-rise">High-rise</option>
             <option value="gated-community">Gated Residential Community</option>
